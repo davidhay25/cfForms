@@ -1,0 +1,333 @@
+<div ng-controller="modelTermCtrl">
+
+  <style>
+    .issue {
+      background-color: #f2dede;
+    }
+  </style>
+
+  <br/>
+  <div ng-click="updateTermSummary()" class="clickable pull-right">Refresh reports</div>
+
+  <uib-tabset>
+
+    <uib-tab heading="ValueSets">
+      <div class="pull-right"> All ValueSets and where they are used. Also lists Options.
+      </div>
+
+
+
+      <div class="clearfix"></div>
+
+      <h4>Elements with ValueSets</h4>
+      <div class="tableFixHead">
+        <table class="table table-bordered">
+          <thead>
+          <tr><th>ValueSet Name</th><th>Where used</th></tr>
+          </thead>
+          <tbody>
+          <tr ng-repeat="v in arVsSummary" ng-class="{issue:v.issue}" ng-if="v[0].isValueSet">
+            <td>
+              <span class = 'clickable' ng-click="viewVS(v.url)">{{v.url}}</span>
+            </td>
+
+            <td>
+              <div ng-repeat = "item in ::v">
+                <div ng-if="item.DGName">
+                  DG: <span class="clickable" ng-click="termSelectDG(item)" >{{::item.DGName}}</span>.
+                  Path: <span class="clickable" ng-click="termSelectDGItem(item)">{{::item.path}}</span>
+                  <span ng-if = item.options>
+                  There are <span class="clickable " ng-click="viewOptions(item)">{{::item.options.length}} options</span> defined.
+                </span>
+                </div>
+
+                <div ng-if="item.compName">
+                  Comp: <span class="clickable" ng-click="termSelectComp(item)" >{{::item.compName}}</span>.
+                  Path: <span class="clickable" ng-click="termSelectCompItem(item)">{{::item.path}}</span>
+                  <span ng-if = item.options>
+                  There are <span class="clickable " ng-click="viewOptions(item)">{{::item.options.length}} options</span> defined.
+                </span>
+                </div>
+
+              </div>
+            </td>
+          </tr>
+          </tbody>
+
+        </table>
+      </div>
+
+
+    </uib-tab>
+
+    <uib-tab heading="Options only">
+      <div class="pull-right"> All ValueSets and where they are used. Also lists Options.
+      </div>
+
+
+
+      <div class="clearfix"></div>
+
+      <h4>Elements with Options but no ValueSets</h4>
+      <div class="tableFixHead">
+        <table class="table table-bordered">
+          <thead>
+          <tr><th>DG Name-Path</th><th>Where used</th></tr>
+          </thead>
+          <tbody>
+          <tr ng-repeat="v in ::arVsSummary" ng-class="{issue:v.issue}" ng-if="! v[0].isValueSet">
+            <td>
+              {{v.url}}
+            </td>
+
+            <td>
+              <div ng-repeat = "item in ::v">
+                <div ng-if="item.DGName">
+                  DG: <span class="clickable" ng-click="termSelectDG(item)" >{{::item.DGName}}</span>.
+                  Path: <span class="clickable" ng-click="termSelectDGItem(item)">{{::item.path}}</span>
+                  <span ng-if = item.options>
+                  There are <span class="clickable " ng-click="viewOptions(item)">{{::item.options.length}} options</span> defined.
+                </span>
+                </div>
+
+                <div ng-if="item.compName">
+                  Comp: <span class="clickable" ng-click="termSelectComp(item)" >{{::item.compName}}</span>.
+                  Path: <span class="clickable" ng-click="termSelectCompItem(item)">{{::item.path}}</span>
+                  <span ng-if = item.options>
+                  There are <span class="clickable " ng-click="viewOptions(item)">{{::item.options.length}} options</span> defined.
+                </span>
+                </div>
+
+              </div>
+            </td>
+          </tr>
+          </tbody>
+
+        </table>
+      </div>
+
+
+    </uib-tab>
+
+    <uib-tab heading = "DataGroups">
+
+
+      <div class="pull-right"> CodeableConcepts in the DataGroup. This is only in the DG - not in referenced DGs.
+       </div>
+
+
+
+      <div class="clearfix"></div>
+
+      <div class="tableFixHead">
+        <table class="table table-bordered">
+          <thead>
+          <tr><th>DG Name</th><th>DG title</th><th>Element path</th>
+            <th>Element title</th><th>Element description</th><th>Element ValueSet</th><th># options</th></tr>
+          </thead>
+          <tbody>
+          <tr ng-repeat="item in termSummary">
+            <td>
+              <span class="clickable" ng-click="termSelectDG(item)">{{::item.DGName}}</span>
+            </td>
+            <td>{{item.DGTitle}}</td>
+
+            <td>
+              <span class="clickable" ng-click="termSelectDGItem(item)">{{::item.path}}</span>
+            </td>
+
+
+
+            <td>{{item.title}}</td>
+            <td>{{item.description}}</td>
+            <td>
+              <span class = 'clickable' ng-click="viewVS(item.valueSet)">{{::item.valueSet}}</span>
+
+            </td>
+            <td>
+              <span class="clickable " ng-click="viewOptions(item)">{{::item.options.length}}</span>
+            </td>
+          </tr>
+          </tbody>
+
+
+        </table>
+      </div>
+    </uib-tab>
+
+    <uib-tab heading = "Codes">
+      <div class="row">
+        <div class="col-md-2">
+          <input type="text" class="form-control" placeholder="Filter" ng-model="input.filterCodeReport"/>
+        </div>
+      </div>
+
+      <div class="tableFixHead">
+        <table class="table table-bordered table-condensed">
+          <thead>
+            <tr><th>Code|System</th><th>Display</th><th>Where used</th></tr>
+          </thead>
+          <tbody>
+          <tr ng-repeat="(k,v) in ::codeSummary" ng-if="canShowCodeReportLine(k)">
+            <td>{{k}}</td>
+            <td>{{v.display}}</td>
+            <td>
+              <div ng-repeat="item in v.lst">
+                DG: <span class="clickable" ng-click="termSelectDG(item)" >{{::item.DGName}}</span>
+                Path: <span class="clickable" ng-click="termSelectDGItem(item)">{{::item.path}}</span>
+                Type: <span>{{item.type}}</span>
+
+              </div>
+            </td>
+          </tr>
+          </tbody>
+
+        </table>
+      </div>
+
+
+    </uib-tab>
+
+    <uib-tab heading="Adhoc extensions">
+      <div class="pull-right">Adhoc extensions defined across all DGs
+      </div>
+
+      <div class="clearfix"/>
+
+      <div class="tableFixHead">
+        <table class="table table-bordered">
+          <thead>
+          <tr><th>DG</th><th>Path</th><th>Extensions</th></tr>
+          </thead>
+          <tbody>
+          <tr ng-repeat="item in ::allAdHocExt">
+            <td>
+              <span class="clickable" ng-click="termSelectDG({DGName:item.dg})" >{{::item.dg}}</span>
+            </td>
+            <td>
+
+              <span class="clickable" ng-click="termSelectDGItem({hiddenDGName:item.dg,path:item.path})">{{::item.path}}</span>
+
+
+
+            </td>
+            <td><pre>{{item.adHocExt | json}}</pre></td>
+
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </uib-tab>
+
+    <uib-tab heading = "Leaf DGs">
+      <em>DG's that are not parents to any other</em>
+      <div class="myScroll">
+        <table class="table-bordered table">
+          <tr><th>Name</th></tr>
+          <tr ng-repeat="rowDG in leafDGs">
+            <td><div class="clickable" ng-click="termSelectDG({DGName:rowDG.name})">{{rowDG.name}}</div></td>
+            <td>{{rowDG}}</td>
+          </tr>
+        </table>
+      </div>
+
+    </uib-tab>
+
+    <uib-tab heading = "DG usage summary">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="banner">DGs and the number of other DGs that contain them</div>
+          <div class="myScroll">
+            <table class="table-bordered table">
+              <tr><th>Name</th><th>Title</th><th>Count</th></tr>
+              <tr ng-repeat="row in usageSummary"
+                  style="cursor: pointer"
+                  ng-click="input.selectedDGUsage = row"
+                ng-class="{listItemSelected:row == input.selectedDGUsage}">
+                <td class="clickable" ng-click="termSelectDG({DGName:row.name})">
+                  {{row.name}}
+                </td>
+                <td>{{row.title}}</td>
+                <td>{{row.cnt}}</td>
+              </tr>
+
+            </table>
+          </div>
+
+        </div>
+        <div class="col-md-6" ng-if="input.selectedDGUsage">
+          <div class="banner">DGs that contain {{input.selectedDGUsage.title}}</div>
+          <div class="myScroll">
+            <div ng-repeat="(k,v) in input.selectedDGUsage.names">
+              <span class="clickable" ng-click="termSelectDG({DGName:k})">{{k}} </span>  ({{v}})
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+
+    </uib-tab>
+
+    <uib-tab heading="Diff analysis">
+      <table class="table table-bordered">
+        <tr><td>DG Name</td><td>Diff count</td><td>Zero diff</td><td>% zero</td></tr>
+        <tr ng-repeat="diff in diffAnalysis">
+          <td class="clickable" ng-click="termSelectDG({DGName:diff.name})" >{{diff.name}}</td>
+          <td>{{diff.cnt}}</td>
+          <td>{{diff.zero}}</td>
+          <td>{{  Math.trunc( (diff.zero / diff.cnt) * 100 ) }}
+          </td>
+
+        </tr>
+      </table>
+
+    </uib-tab>
+
+
+
+    <uib-tab heading="Notes">
+      <div class="pull-right">Notes across all DataGroups
+      </div>
+
+      <div class="clearfix"/>
+
+      <div class="tableFixHead">
+        <table class="table table-bordered">
+          <thead>
+          <tr><th>Name</th><th>Type</th><th>Path</th><th>Note</th></tr>
+          </thead>
+          <tbody>
+          <tr ng-repeat="item in ::notesSummary">
+            <td>
+              <span class="clickable" ng-click="termSelectDG(item)">{{::item.hiddenDGName}}</span>
+            </td>
+            <td>{{item.type}}</td>
+            <td>
+              <span class="clickable" ng-click="termSelectDGItem(item)">{{::item.path}}</span>
+
+            </td>
+            <td>{{item.notes}}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </uib-tab>
+
+    <uib-tab heading="Id Check">
+      <div class="clickable pull-right" ng-click="checkIds()">Analyse Ids</div>
+
+      <br/>
+           <pre>{{idAnalysis | json}}</pre>
+
+    </uib-tab>
+
+
+
+  </uib-tabset>
+
+
+</div>
+
+

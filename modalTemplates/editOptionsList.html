@@ -1,0 +1,76 @@
+
+<div>
+  <!--<div ng-controller="newResourceCtrl">-->
+
+  <div class="modal-header">
+    <div class="row">
+      <div class="col-md-6 col-sm-6">
+        <h3 class="modal-title">
+          Options list
+        </h3>
+      </div>
+
+
+      <div class="col-md-6 col-sm-6">
+        <button class="btn btn-link pull-right" ng-click="$dismiss()">Cancel</button>
+        <button ng-show = "input.dirty" class="btn btn-primary pull-right" ng-click="save()">Save and Close</button>
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-body">
+
+    <uib-tabset>
+      <uib-tab heading="Current List">
+        <table class="table table-bordered">
+          <tr><th>Code</th><th>Display</th><th>FSN</th></tr>
+          <tr ng-repeat="row in ed.options">
+            <td>{{row.code}}</td>
+            <td>{{row.display}}</td>
+            <td>{{row.fsn}}</td>
+          </tr>
+        </table>
+
+      </uib-tab>
+
+      <uib-tab heading="Update list (SNOMED)" ng-hide="readOnly">
+        <div class="row">
+          <div class="col-sm-1 col-md-1">
+
+          </div>
+          <div class="col-sm-10 col-md-10">
+            <em>Paste in selection from spreadsheet. 3 cols: code, display, FSN.</em>
+            <br/>
+            <textarea class="form-control" rows = "8" ng-model="input.optionsSnomed"></textarea>
+
+            <button class="btn-link btn pull-right" ng-click="parseSnomed(input.optionsSnomed)">Parse</button>
+
+          </div>
+        </div>
+      </uib-tab>
+
+      <uib-tab heading="Update list" ng-hide="readOnly">
+        <div class="row">
+          <div class="col-sm-1 col-md-1">
+
+          </div>
+          <div class="col-sm-10 col-md-10">
+            <em>A simple list of terms</em>
+            <textarea class="form-control"
+                      rows = "8" ng-model="input.optionsList"></textarea>
+
+            <button class="btn-link btn pull-right" ng-click="parseList(input.optionsList)">Parse</button>
+          </div>
+        </div>
+      </uib-tab>
+
+    </uib-tabset>
+
+
+
+  </div>
+  <div class="modal-header">
+    <em  ng-hide="readOnly">When updating, paste in the text and then click 'Parse'. This will activate the save button.</em>
+
+  </div>
+</div>

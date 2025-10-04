@@ -1,0 +1,566 @@
+
+<div>
+
+
+  <style>
+    .dtDifferent {
+      background-color: lightgoldenrodyellow;
+    }
+    .dtDeleted {
+      text-decoration: line-through;
+    }
+  </style>
+
+  <div class="modal-header">
+    <div class="row">
+      <div class="col-md-8 col-sm-8">
+        <h3 class="modal-title">
+          Library
+        </h3>
+      </div>
+
+
+      <div class="col-md-4 col-sm-4">
+        <button class="btn btn-link pull-right" ng-click="close()">Close</button>
+
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-body">
+
+    <uib-tabset active="input.mainTabActive">
+
+      <uib-tab ng-if="userMode == 'library'" heading="DataGroups list" >
+        <br/>
+        <div class="row">
+          <div class="col-md-4">
+            <div>Library DG count: {{libraryDGCount}}</div>
+            <div>Local DG count: {{localDGCount}}</div>
+          </div>
+          <div class="col-md-3">
+            <div ng-if="user.email" class="pull-right clickable" ng-click="checkAllDGIn()">Check all DGs in</div>
+          </div>
+          <div class="col-md-5">
+            <div class="pull-right">
+              <checkbox  ng-change="refreshDGSummary(input.includeDeleted)"
+                         ng-model="input.includeDeleted"></checkbox> Include deleted DG in list
+            </div>
+
+          </div>
+        </div>
+
+
+
+
+        <div class="row">
+             <div class="col-md-7">
+               <div class="myScroll">
+                 <table class="table table-bordered table-condensed">
+                   <tr><th>Title</th><th>Local count</th><th>Library count</th><th>Checked out</th></tr>
+                   <tr ng-repeat="item in summary"
+                       ng-class="{listItemSelected:item == input.selectedItem,
+                       dtDifferent:item.local.diff.length !== item.library.diff.length,
+                       dtDeleted:! item.library.active}">
+                     <td>
+                       <div class="clickable" ng-click="input.selectedItem = item">{{item.title}}</div>
+                     </td>
+                     <td>{{item.local.diff.length}}
+
+
+                     </td>
+                     <td>{{item.library.diff.length}}</td>
+                     <td>
+                     <div class="clickable" ng-click="checkin(item.local)">
+                               {{item.library.checkedOut}}
+                     </div>
+                       {{item.note}}
+                     </td>
+                   </tr>
+                 </table>
+               </div>
+
+             </div>
+          <div class="col-md-5">
+            <div ng-if="input.selectedItem">
+
+              <div class="clickable pull-right"
+                   ng-if = "input.selectedItem.library"
+                   ng-click="downloadDG(input.selectedItem.library )">Download</div>
+
+              <div class="clickable pull-right"
+                   ng-if = "input.selectedItem.library"
+                   style="margin-right: 8px"
+                   ng-click="showHistory(input.selectedItem.library )">History</div>
+
+
+
+              <uib-tabset>
+                <uib-tab heading="Local">
+                  <div class="myScroll">
+                    <pre>{{input.selectedItem.local | json}}</pre>
+                  </div>
+
+                </uib-tab>
+                <uib-tab heading="Library">
+
+                  <button class="btn btn-link pull-right"
+                          ng-if="user && input.selectedItem.library"
+                          ng-click="deleteDG(input.selectedItem.library)">Delete in library</button>
+                  <div class="clearfix"/>
+
+                  <div class="myScroll">
+                    <pre>{{input.selectedItem.library | json}}</pre>
+                  </div>
+                </uib-tab>
+              </uib-tabset>
+
+            </div>
+
+          </div>
+        </div>
+
+      </uib-tab>
+
+      <uib-tab ng-if="userMode == 'library'" heading="DataGroups sync" >
+
+        <div ng-if="syncOutcomeDownloadSummary">
+          <br/>
+          <em>Resources have been downloaded. Please refresh the browser.</em>
+          <strong>Summary of download from Library</strong>
+
+          <table class="table table-bordered">
+            <tr ng-repeat="item in syncOutcomeDownloadSummary.details">
+              <td>{{item.msg}}</td>
+            </tr>
+          </table>
+
+        </div>
+
+        <div ng-if="syncOutcomeUpload">
+          <br/>
+          <strong>Summary of upload to Library</strong>
+
+          <div ng-if = "syncOutcomeUploadSummary.changed == 0">
+            Nothing was uploaded. The DGs in your local store exactly matches the Library copies. (There may be library DG's not in your local store though).
+          </div>
+
+          <div ng-if = "syncOutcomeUploadSummary.changed > 0">
+            {{syncOutcomeUploadSummary.total}} resources were uploaded, {{syncOutcomeUploadSummary.changed}} were different to the Library version and were updated.
+            <br/>
+
+            The following resources were updated:
+            <table class="table table-bordered">
+              <tr ng-repeat="item in syncOutcomeUploadSummary.details">
+                <td>{{item.name}}</td>
+              </tr>
+            </table>
+          </div>
+
+
+
+
+
+        </div>
+
+
+        <div ng-hide="syncOutcomeUpload || syncOutcomeDownloadSummary">
+          <br/>
+          <div class="row" ng-if="user">
+            <div class="col-md-4">
+              <button class="btn btn-danger" ng-click="refreshFromRepo()">Refresh local store
+                <i class="glyphicon glyphicon-arrow-down"></i>
+              </button>
+            </div>
+            <div class="col-md-8">
+              Will <strong>download the latest copies</strong> of all the DataGroups from the Library. This will replace any local copies with the one from the library. eg
+              if you have changed a core DG locally, that change will be lost. If you have local custom DGs that haven't yet
+              been saved in the Library, they will still be there
+
+            </div>
+          </div>
+          <br/>
+
+          <div class="row" ng-if="canBulkUpdateDGLibrary()">
+            <div class="col-md-4">
+              <button class="btn btn-danger" ng-click="updateRepo()">Update Library  <i class="glyphicon glyphicon-arrow-up"></i></button>
+            </div>
+            <div class="col-md-8">
+              Will <strong>upload all the DataGroups</strong> to the Library from any local copies you may have. This includes
+              both core and custom (user created) DGs. Your local store will not be affected, but the library will be updated
+              with any changes you may have made to any DataGroup.
+
+            </div>
+          </div>
+
+
+          <br/>
+          <em>These options to synchronise ALL DataGroups between the library and the local browser store. If you just want to
+            upload / download a single DataGroup theres a 'Compare to Library' link on the tree details page of each DataGroup.</em>
+
+
+        </div>
+
+      </uib-tab>
+
+      <uib-tab ng-if="userMode == 'library'" heading="Compositions">
+
+
+
+        <div class="row">
+          <div class = "col-md-3" ng-repeat = "(k,v) in hashMetaProperties">
+            {{k}}:
+            <select class="form-control" ng-model="input.filter[k]"
+                    ng-options="v for v in hashMetaProperties[k]"></select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class = "col-md-6">
+            <div style="padding-top: 16px">
+
+                <button
+                      class="btn btn-link" ng-click="clearFilter()">Show all</button>
+
+              <button ng-if="user.email"
+                      class="btn btn-link" ng-click="downloadDisplayedComp()">Download all shown</button>
+
+              <button class="btn btn-link pull-right" ng-if="user.email" class="pull-right clickable" ng-click="checkAllCompIn()">Check all Compositions in</button>
+
+            </div>
+           </div>
+          <div class = "col-md-6">
+            <div class="pull-right" style="padding-top: 16px">
+              <checkbox  ng-change="refreshCompSummary(input.includeDeletedComp)"
+
+                         ng-model="input.includeDeletedComp"></checkbox> Include deleted Compositions in list
+            </div>
+          </div>
+
+        </div>
+
+
+
+
+
+
+        <table class="table table-bordered table-condensed">
+          <tr><th>Title</th><th>Local sections</th><th>Local Meta</th><th>Library sections</th><th>Library Meta</th><th>Note</th></tr>
+          <tr ng-repeat="item in summaryComp"
+              ng-class="{dtDeleted: item.library.deleted,dtDifferent:item.library.deleted}"
+              ng-if="showComp(item)">
+            <td>
+              <strong>{{item.title}}</strong>
+              <div class="clickable"
+
+                   ng-if="item.library && ! item.local"
+                   ng-click="downloadComp(item.library)">Download</div>
+
+
+
+              <div ng-if="item.library.checkedOut">
+                <br/>
+                CheckedOut: {{item.library.checkedOut}}
+              </div>
+
+              <div ng-if="item.local && (item.local.checkedOut !== item.library.checkedOut)">
+                Error! Local checkout is {{item.local.checkedOut}}, but library checkout is {{item.library.checkedOut}}
+
+              </div>
+
+
+
+
+            </td>
+            <td>
+              <ul class="list-unstyled">
+                <li ng-repeat="section in item.local.sections">
+                  {{section.name}} ({{section.items.length}})
+                </li>
+              </ul>
+
+
+            </td>
+
+            <td>
+              <div ng-repeat="(k,v) in item.local.meta">
+                {{k}}: {{v}}
+              </div>
+
+            </td>
+            <td>
+              <ul class="list-unstyled">
+                <li ng-repeat="section in item.library.sections">
+                  {{section.name}} ({{section.items.length}})
+                </li>
+              </ul>
+
+            </td>
+            <td>
+              <div ng-repeat="(k,v) in item.library.meta">
+                {{k}}: {{v}}
+              </div>
+
+            </td>
+            <td>
+              {{item.note}}
+              <div class="clickable" ng-if="item.library && user.email && ! item.library.deleted"
+                   ng-click="deleteComposition(item.library)">Delete in library</div>
+
+            </td>
+          </tr>
+        </table>
+
+      </uib-tab>
+
+      <uib-tab ng-if="userMode == 'library'" heading="Copy to form">
+        <em>Create a form from the Library. Useful as a version.</em>
+
+        <br/><br/>
+        <div class="row">
+          <div class="col-md-6">
+            <div>{{libraryComp.length}} Compositions</div>
+            <div>{{libraryDG.length}} DataGroups</div>
+          </div>
+          <div class="col-md-6">
+            <div><strong>Options</strong></div>
+            <!--
+                    <checkbox ng-model="input.freezeDG"></checkbox> Freeze all
+                    <br/><br/>
+                    -->
+          </div>
+        </div>
+
+
+        <br/><br/>
+
+        <input type="text" class="form-control"
+               placeholder="Playground name (must be unique)" ng-model="input.pgName"/>
+        <br/>
+        <textarea class="form-control" placeholder="Description" ng-model="input.pgDescription"/>
+
+        <button class="btn btn-primary"
+                ng-click="createPlayground(input.pgName,input.pgDescription)">Create form</button>
+
+      </uib-tab>
+
+      <uib-tab heading="Components">
+        <br/>
+
+        <div class="row">
+          <div class="col-md-8">
+
+            <span style="margin-right: 20px">Source:</span> <checkbox ng-model="input.showLibrary"></checkbox> LIM
+            <span style="margin-left: 20px">
+               <checkbox ng-model="input.showForm"></checkbox> Collection
+            </span>
+
+            <br/><br/>
+
+            <table class="table table-bordered">
+              <tr><th>Title</th><th>Source</th><th>Type</th><th>Description</th><th>Cnt</th><th></th></tr>
+              <tr ng-repeat="dg in components"
+                  ng-class="{listItemSelected:dg.name == clone.name}"
+                  ng-if="canShowComponent(dg)" >
+                <td>
+                  <div class="clickable" ng-click="selectFromComponent(dg)">
+                    {{dg.title}}
+                  </div>
+
+                </td>
+
+                <td>
+                  {{ { playground: "Form", library: "LIM" }[dg.source] || dg.source}}
+                </td>
+                <td>{{dg.type}}</td>
+                <td>{{dg.description}}
+                  <div style="color: red" ng-if = "dg.lockedTo" >Locked to: {{dg.lockedTo}}</div>
+
+
+                </td>
+
+                <td>{{dg.diff.length}}</td>
+
+                <td>
+                  <div ng-if="dg.nameExists">In collection</div>
+                  <div ng-if="! dg.nameExists" class="clickable"
+                       ng-click="importComponent(dg)">Import</div>
+                  <div class="clickable" ng-click="deleteComponent(dg)">Delete</div>
+
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-4">
+            <div>Id: {{clone.id | lastInUUID}}</div>
+
+            <div ng-show="dupsCount" class="alert alert-danger">
+              There are {{dupsCount}} elements with duplicate or missing ids which need to be fixed. This may
+              break conditionals which will need to be manually fixed (You can see them in the Dependencies tab).
+              The fix will be applied when the Component is imported. After fixing them in the Collection
+              copy, save the Component back to the library.
+
+
+            </div>
+
+            <br/>
+            <div id="componentTree"></div>
+          </div>
+        </div>
+
+
+
+
+      </uib-tab>
+
+      <uib-tab heading="Questionnaires">
+        <table class="table table-bordered">
+          <tr ng-repeat="vo in lstQ">
+            <td>
+              <div>{{vo.Q.name}}</div>
+            </td>
+            <td>{{vo.Q.description}}</td>
+            <td>
+              <div class="clickable"  ng-click="loadQ(vo.Q.name)">Load</div>
+            </td>
+          </tr>
+        </table>
+      </uib-tab>
+
+      <uib-tab heading="Named queries" >
+
+        <div class="myScroll">
+          <table class="table-bordered table">
+            <tr><th>Variable name
+
+              <i class="glyphicon glyphicon-info-sign clickable"
+                 uib-popover="The name used to identify this query in the app"
+                 popover-placement="top"
+                 popover-trigger="'mouseenter'"></i>
+
+            </th><th>Item name
+              <i class="glyphicon glyphicon-info-sign clickable"
+                 uib-popover="The name used by expressions to refer to the results of the query"
+                 popover-placement="top"
+                 popover-trigger="'mouseenter'"></i>
+            </th><th>Description</th><th>Contents</th><th></th></tr>
+
+
+            <tr ng-repeat="query in namedQueries">
+              <td>{{query.name}}</td>
+              <td>{{query.itemName}}</td>
+              <td>{{query.description}}</td>
+              <td>{{query.contents}}</td>
+              <td>
+
+                <i class="glyphicon glyphicon-flash clickable"
+                   style="color: green"
+                   uib-popover="Test"
+                   popover-placement="top"
+                   popover-trigger="'mouseenter'"
+                   ng-click="testxquery(query)"
+
+                ></i>
+
+                <i class="glyphicon glyphicon-remove clickable"
+                   style="color: red"
+                   uib-popover="Remove"
+                   popover-placement="top"
+                   popover-trigger="'mouseenter'"
+                   ng-click="updateNamedQuery(query.name,query.itemName,query.description,query.contents,false)"
+
+                ></i>
+
+
+<!--
+                <i class="glyphicon glyphicon-edit clickable"></i>
+
+
+                <div><button class="btn btn-link" ng-click="testxquery(query)">Execute</button></div>
+                <button class="btn btn-link" ng-click="updateNamedQuery(query.name,query.contents,false)">Delete</button>
+
+                -->
+              </td>
+            </tr>
+
+            <tr>
+              <td><input class="form-control" ng-model="input.nqName"/> </td>
+              <td><input class="form-control" ng-model="input.nqItemName"/> </td>
+              <td><input class="form-control" ng-model="input.nqDescription"/> </td>
+              <td>
+                <textarea class="form-control" ng-model="input.nqContents"></textarea>
+              </td>
+              <td>
+
+
+
+
+                <i class="glyphicon glyphicon-flash clickable"
+                   ng-if = "input.nqContents"
+                   uib-popover="Test"
+                   popover-placement="top"
+                   popover-trigger="'mouseenter'"
+                   ng-click="testxquery(query)"></i>
+
+
+                <i style="color: green" class="glyphicon glyphicon-ok clickable"
+                   ng-if = "input.nqName && input.nqItemName && input.nqContents"
+                   uib-popover="Test"
+                   popover-placement="top"
+                   popover-trigger="'mouseenter'"
+                   ng-click="updateNamedQuery(input.nqName,input.nqItemName,input.nqDescription,input.nqContents,true)"></i>
+
+<!--
+                <button
+                        ng-if = "input.nqContents"
+                        class="btn btn-link" ng-click="testxquery({contents:input.nqContents})">Execute</button>
+                <br/>
+                <button
+                        ng-if = "input.nqName && input.nqItemName && input.nqContents"
+                        class="btn btn-link" ng-click="updateNamedQuery(input.nqName,input.nqItemName,input.nqDescription,input.nqContents,true)">Add</button>
+              -->
+
+              </td>
+
+
+            </tr>
+          </table>
+        </div>
+
+
+
+       <h4>Links</h4>
+        <div><a target="_blank" href="https://build.fhir.org/ig/HL7/sdc/populate.html#exp-pop">SDC Expression pre-pop</a></div>
+        <div><a target="_blank" href="https://build.fhir.org/ig/HL7/sdc/expressions.html">Using expressions</a></div>
+        <div><a target="_blank" href="https://build.fhir.org/ig/HL7/sdc/expressions.html#fhirquery">Query enhancements</a></div>
+
+
+
+      </uib-tab>
+
+
+
+
+
+    </uib-tabset>
+
+
+
+<!--
+    <br/>
+    <div class="row">
+      <div class="col-md-4">
+        <button class="btn btn-primary" ng-click="updateRepo()">Reset local </button>
+      </div>
+      <div class="col-md-8">
+        Will <strong>reset the core DataGroups</strong> in your local store. This does
+
+      </div>
+    </div>
+    -->
+
+  </div>
+  <div class="modal-header">
+
+  </div>
+</div>

@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="/">
+    <meta charset="UTF-8">
+    <title>Forms editor</title>
+
+    <link rel="stylesheet" type="text/css" href="css/jsTreeStyle.css"/>
+    <link rel="stylesheet" type="text/css" href="css/jsTreeThemes/proton/style.css"/>
+
+    <style>
+
+        #graph {
+            width: 100%;
+            height: 400px;
+            border: 1px solid lightgray;
+        }
+
+        #graphAllDG {
+            width: 100%;
+            height: 400px;
+            border: 1px solid lightgray;
+        }
+
+        th,
+        td {
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+        }
+        th {
+            background: #eee;
+        }
+
+
+        /* change the selected colour as the text is hard to read*/
+        .jstree-proton .jstree-clicked {
+            background: #dedede;
+            /*background: #3392e3;*/
+            color: #ffffff;
+            border-radius: 3px;
+            box-shadow: inset 0 0 1px #3392e3;
+        }
+
+    </style>
+
+    <!-- Note that all scripts are at the bottom-->
+
+</head>
+<body style="padding: 8px;padding-top: 80px" >
+<div ng-app="topApp" ng-controller="modelsCtrl" class="container-fluid" ng-cloak>
+
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+
+        <div class="container-fluid">
+            <div class="col-md-3">
+
+                <a class="navbar-brand" href="#">
+                    Forms Editor
+
+                    <div style="padding-top: 8px">{{world.name}}</div>
+
+                </a>
+
+
+
+            </div>
+
+            <div class="col-md-1 col-sm-1">
+                <div class="navbar-text btn">
+                    <button class="btn btn-primary pull-right"
+                            ng-click="openPlaygrounds()">Collections</button>
+
+
+
+                </div>
+            </div>
+
+            <div class="col-md-1">
+                <div class="navbar-text btn" >
+                    <button
+                            class="btn btn-success pull-right" ng-click="library()">Library</button>
+                </div>
+            </div>
+
+            <div class="col-md-2">
+
+                <div class="navbar-text" ng-if="userMode == 'library'">
+                    <a href="query.html"
+                       target="_blank">Terminology</a>
+
+                    <div ng-if = "user.email">
+                        <a href="https://docs.google.com/document/d/1InT4HDIudFl4gUAF5htUNeLJG2QT8rBnMjB_E1fe78s"
+                           target="_blank">Documentation</a>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-md-1">
+                <div class="navbar-text">
+                    <div class="btn btn-link pull-right" ng-click="toggleLeftPanel()">Toggle list</div>
+                </div>
+            </div>
+
+            <div class="col-md-1 col-sm-1">
+                <form class="navbar-form navbar-left">
+                    <img ng-if="showWaiting" src="css/ajax_loader_blue_32.gif"/>
+
+                </form>
+            </div>
+
+            <div class="col-md-1">
+                <div class="navbar-text" >
+                    <div class="pull-right btn">{{version}}</div>
+                </div>
+            </div>
+
+            <div class="col-md-1 col-sm-1">
+                <div class="navbar-text " ng-hide="user">
+                    <span style="font-size:1.2em; cursor: pointer" uib-popover="Click to log in"
+                          popover-placement="left"
+                          popover-trigger="'mouseenter'">
+                        <div ng-click="login()">
+                            <i class="glyphicon glyphicon-log-in"></i>
+                        </div>
+                    </span>
+                </div>
+
+                <div class="navbar-text"  ng-if="user">
+                    <span class="btn" style="font-size:1.2em;  cursor: pointer" uib-popover="{{user.email}}"
+                          popover-placement="left"
+                          popover-trigger="'mouseenter'">
+                        <div ng-click="logout()">
+                            <i class="glyphicon glyphicon-log-out"></i>
+                        </div>
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="col-md-1">
+
+                <div ng-if = "systemConfig">
+
+                    <a href="https://teaho.govt.nz/" target="_blank">
+
+                        <img width="150" height="auto" class="pull-right"
+                             style="padding: 3px"
+                             ng-src="{{systemConfig.logoUrl}}"/>
+
+                        <!--
+                        <img width="150" height="auto" class="pull-right"
+                             style="padding: 3px"
+                             src="images/canshareLogo.png"/>
+                        -->
+                    </a>
+                </div>
+
+
+
+            </div>
+
+        </div>
+    </nav>
+
+    <div style="padding-top: 8px">
+
+        <div class="btn btn-primary pull-right"
+             ng-if = "canEdit()"
+             ng-click="updatePlayground(true)">Update Repository</div>
+
+        <div  ng-if = "! canEdit() && userMode == 'playground'" class="btn btn-warning pull-right">
+            Read only mode
+        </div>
+
+
+        <button class="pull-right btn-link btn"
+                ng-if="userMode == 'library'"
+                ng-click="clearLocal()">Clear local</button>
+
+        <button class="pull-right btn-link btn" ng-click="export()">Import / Export</button>
+
+
+
+        <div ng-if="userMode == 'playground'">
+            <div ng-repeat="(k,v) in hashAllDG">
+                <div ng-if="v.isContainer"
+                     class="btn btn-link pull-right"
+                     ng-click="showContainerQ(k)">
+
+                    {{k}} Questionnaire
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <uib-tabset active="input.mainTabActive">
+
+        <uib-tab heading="DataGroups" select="setInitialTab(0)">
+            <br/>
+            <div class="row">
+                <div ng-class="leftPanel">
+
+                    <uib-tabset  active="input.selectTabActive">
+
+                        <uib-tab heading = "Inheritance"  select="setSelectTab(0)">
+                            <div>
+
+
+
+
+                                <div class="pull-right clickable spacer"
+                                     ng-if = "(userMode == 'library' && user.email) || canEdit()"
+                                     ng-click="newModel('dg')">New DG</div>
+
+                                <div class="pull-right clickable spacer"
+                                     ng-if = "user.email && userMode == 'library' && selectedModel"
+                                     ng-click="newModel('dg',selectedModel)">New child</div>
+
+
+                            </div>
+
+                            <div class="clearfix"></div>
+
+                            <div class="myScrollSmall background">
+                                <div id="allDGTree"></div>
+                            </div>
+
+                        </uib-tab>
+
+
+                        <uib-tab heading="List" select="setSelectTab(1)">
+
+                            <div style="padding: 8px">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <input type="text" placeholder="Filter" class="form-control"
+                                               ng-model="input.dgFilter"/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button ng-if = "user.email" class="btn btn-link  pull-right" ng-click="newModel('dg')">New</button>
+                                        <button class="btn btn-link pull-right" ng-click="listAllDG()">List all</button>
+                                    </div>
+                                </div>
+
+
+
+                            </div>
+                            <div class="clearfix"></div>
+
+                            <div class="myScroll background">
+                                <div class="list-group">
+                                    <div ng-class="{'list-group-item':true,listItemSelected:selectedModel == v}" style="cursor: pointer"
+                                         ng-click="selectModel(v)"
+                                         ng-if="showDG(v,input.dgFilter)"
+                                         ng-repeat="v in sortedDGList">
+
+                                        <i ng-if="canEdit(v)"
+                                           class="glyphicon glyphicon-edit pull-right clickable"
+                                           ng-click="editModel(v)"></i>
+
+                                        <div ng-class="{isContainer:v.isContainer}">{{v.title}}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </uib-tab>
+
+                        <uib-tab ng-if="userMode !== 'playground'" select="setSelectTab(2)" heading="Tagged">
+                            <div class="row" style="padding: 8px">
+
+                                <div class="col-md-2">
+                                    <div style="padding-top: 8px">Tag</div>
+                                </div>
+                                <div class="col-md-7">
+                                    <select style="margin-top: 2px" class="form-control"
+                                            ng-options="k for k in tagNames"
+                                            ng-change = "rememberSelectedTag(input.selectedTag)"
+                                            ng-model = "input.selectedTag"></select>
+                                </div>
+                            </div>
+
+
+
+
+                            <div class="list-group background">
+                                <div ng-class="{'list-group-item':true,listItemSelected:selectedModel == v}" style="cursor: pointer"
+                                     ng-click="selectModel(v)"
+                                     ng-if="true || showDG(v,input.dgFilter)"
+                                     ng-repeat="v in tags[input.selectedTag] track by $index">
+
+                                    <i class="glyphicon glyphicon-edit pull-right clickable"
+                                       ng-click="editModel(v)"></i>
+
+                                    {{v.title}}
+                                </div>
+
+                            </div>
+
+
+                        </uib-tab>
+
+
+                        <uib-tab  ng-if="userMode !== 'playground'" select="setSelectTab(3)" heading = "Sections">
+                            <div>
+                                <div class="pull-right clickable spacer"
+                                     ng-if = "canEdit(selectedModel)"  ng-click="editModel(selectedModel)">Edit</div>
+                                <div class="pull-right clickable spacer" ng-if = "user.email"  ng-click="newModel('dg')">New dg</div>
+
+                                <div class="pull-right clickable spacer"
+                                     ng-if = "user.email && selectedModel"
+                                     ng-click="newModel('dg',selectedModel)">New child</div>
+
+                            </div>
+
+                            <div class="clearfix"></div>
+                            <div class="myScrollSmall background">
+                                <div id="sectionDGTree"></div>
+                            </div>
+                        </uib-tab>
+
+                        <uib-tab ng-if="false" heading = "Category">
+                            <em>Matching what's in the image</em>
+                            <div class="myScroll">
+                                <div id="categoryDGTree"></div>
+                            </div>
+
+                        </uib-tab>
+
+                    </uib-tabset>
+
+
+                </div>
+                <div ng-class="rightPanel">
+
+                    <div ng-show="!showDGList && selectedModel.kind == 'dg'">
+                        <ng-include src="'includes/showDG.html'"></ng-include>
+                    </div>
+
+
+                    <div ng-hide = "selectedModel">
+<!--
+                        <uib-tabset>
+
+                            <uib-tab heading="Model summary">
+                                <br/>
+                                <table class="table table-bordered">
+                                    <tr><td style="width: 15%">Mode</td><td>{{userMode}}</td></tr>
+                                    <tr><td>Name</td><td>
+                                        <input class="form-control" type="text" ng-model="world.name"/>
+                                    </td></tr>
+                                    <tr ng-if="false"><td>Id</td><td>{{world.id}}</td></tr>
+                                    <tr><td>Description</td><td><textarea class="form-control" ng-model="world.description"></textarea></td></tr>
+                                    <tr>
+                                        <td>Container DGs</td>
+                                        <td>
+                                            <div ng-repeat="(k,v) in hashAllDG">
+
+
+                                                <div ng-if="v.isContainer">
+                                                    {{k}}
+
+                                                    <div class="btn btn-link"
+                                                         ng-click="selectModel(hashAllDG[k])">
+                                                        Select
+                                                    </div>
+
+                                                     <div class="btn btn-link"
+                                                         ng-click="showContainerQ(k)">
+                                                        Questionnaire
+                                                     </div>
+                                                </div>
+
+
+                                            </div>
+                                        </td>
+                                    </tr>
+
+
+                                </table>
+
+                                <div>
+                                    <div class="btn btn-primary pull-right" ng-click="updatePlayground(true)">Update both Model Repository and Local Store</div>
+                                    <div class="btn btn-link pull-right" ng-click="savePGtoLocal()">Update to Local Store</div>
+                                    <div class="btn btn-link pull-right" ng-click="updatePlayground()">Update to Model Repository</div>
+
+                                </div>
+
+
+                                <br/> <br/>
+
+
+
+                            </uib-tab>
+
+                            <uib-tab heading="Resource types">
+                                <br/>
+                                <em>List of DataGroups with resource types </em>
+                                <br/>
+                                <div class="tableFixHead">
+                                    <table class="table table-condensed table-bordered">
+                                        <thead>
+                                        <tr><th>Title</th><th>Resource type</th><th>Description</th></tr>
+                                        </thead>
+                                        <tbody>
+
+
+                                        <tr ng-repeat="v in sortedDGList">
+                                            <td>
+                                                <div class="clickable" ng-click="selectModelFromList(v.name,v.kind)">{{v.title}}</div>
+                                            </td>
+                                            <td><div >{{v.type}}</div></td>
+                                            <td>{{v.description}}</td>
+
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+
+                            </uib-tab>
+
+                            <uib-tab ng-if="userMode == 'playground'" heading="Import Component">
+                                <br/>
+                                <table class="table table-bordered">
+                                    <tr><th>Title</th><th>Name</th><th>Type</th><th>Description</th><th># diff</th><th></th></tr>
+                                    <tr ng-repeat="dg in importableDG">
+                                        <td>{{dg.title}}</td>
+                                        <td>{{dg.name}}</td>
+                                        <td>{{dg.type}}</td>
+                                        <td>{{dg.description}}</td>
+
+                                        <td>{{dg.diff.length}}</td>
+
+                                        <td>
+                                            <div ng-if="dg.nameExists" class="clickable" ng-click="updateDG($index)">Update</div>
+                                            <div ng-if="!dg.nameExists"class="clickable" ng-click="importDG($index)">Import</div>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                            </uib-tab>
+
+
+                            <uib-tab heading="Graph" select="fitAllDGGraph()">
+                                <br>
+                                <div>
+                                    <div class="clickable pull-right" ng-click="createAllDGGraph()">
+                                        Create graph
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div id="graphAllDG"></div>
+                                    </div>
+                                    <div class="col-md-4">
+
+                                        <button class="btn-link btn pull-right"
+                                                ng-click="selectModel(selectedNodeFromFull.dg )">Select</button>
+
+                                        <uib-tabset>
+                                            <uib-tab heading="Tree">
+                                                <div id="dgFromAllGraph"></div>
+                                            </uib-tab>
+                                            <uib-tab heading="Json">
+                                                <div class="myScroll">
+                                                    <pre>{{selectedNodeFromFull.dg | json}}</pre>
+                                                </div>
+
+                                            </uib-tab>
+                                        </uib-tabset>
+
+                                    </div>
+                                </div>
+
+
+
+                            </uib-tab>
+
+
+                            <uib-tab ng-if="userMode == 'library'" heading="CanShare Data Model">
+                                <div class="banner">CanShare Data Model</div>
+                                <img width="100%" src="images/LIM-org.png" usemap="#image_map"/>
+
+                            </uib-tab>
+
+                        </uib-tabset>
+
+                        -->
+                    </div>
+
+                </div>
+            </div>
+
+        </uib-tab>
+
+
+        <uib-tab heading="Collection info">
+            <br/>
+            <uib-tabset>
+
+                <uib-tab heading="Model summary">
+                    <br/>
+                    <table class="table table-bordered">
+                        <tr><td style="width: 15%">Mode</td>
+                            <td>
+
+                                <div class="row">
+                                    <div class="col-md-9">
+                                        <div ng-if="userMode == 'playground'">Collections</div>
+                                        <div ng-if="userMode == 'library'">Library</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div>{{world.id}}</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                        </tr>
+                        <tr><td>Name</td><td>
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <input class="form-control" type="text" ng-model="world.name"/>
+                                </div>
+
+                                <div class="col-md-3">
+                                    Version: {{world.version}}
+                                    <div ng-if="world.lockedTo"
+                                         style="color: red">
+                                        Locked to: {{world.lockedTo}}
+
+                                    </div>
+                                </div>
+                            </div>
+
+                        </td>
+                        </tr>
+
+
+
+                        <tr><td>Description</td><td><textarea class="form-control" ng-model="world.description"></textarea></td></tr>
+                        <!--
+                        <tr ><td>Published version</td>
+                            <td>
+                                <div class="row">
+                                    <div class="col-md-9">
+                                        <div ng-if="world.publishedVersion > 0">
+                                            {{world.publishedVersion  }}
+                                        </div>
+                                        <div ng-hide = "world.publishedVersion > 0">
+                                            This model has not yet been published
+                                        </div>
+
+                                    </div>
+                                    <div class="col-md-3">
+
+                                        <button ng-if="userMode == 'playground' && canEdit()" class="pull-right btn-primary btn"
+                                                ng-click="savePGVersion()">Publish a version</button>
+                                    </div>
+                                </div>
+
+
+                            </td>
+                        </tr>
+                        -->
+                        <tr>
+                            <td>Container DGs</td>
+                            <td>
+                                <div ng-repeat="(k,v) in hashAllDG">
+
+
+                                    <div ng-if="v.isContainer">
+                                        {{k}}
+
+                                        <div class="btn btn-link"
+                                             ng-click="selectModel(hashAllDG[k])">
+                                            Select
+                                        </div>
+
+                                        <div class="btn btn-link"
+                                             ng-click="showContainerQ(k)">
+                                            Questionnaire
+                                        </div>
+                                    </div>
+
+
+                                </div>
+                            </td>
+                        </tr>
+
+
+                    </table>
+
+                    <div ng-if="false">
+                        <div class="btn btn-primary pull-right" ng-click="updatePlayground(true)">Update both Model Repository and Local Store</div>
+                        <div class="btn btn-link pull-right" ng-click="savePGtoLocal()">Update to Local Store only</div>
+                        <!--
+                        <div class="btn btn-link pull-right" ng-click="updatePlayground()">Update to Model Repository</div>
+                        -->
+
+                    </div>
+
+
+                    <br/> <br/>
+
+
+
+                </uib-tab>
+
+                <uib-tab heading="Resource types">
+                    <br/>
+                    <em>List of DataGroups with resource types </em>
+                    <br/>
+                    <div class="tableFixHead">
+                        <table class="table table-condensed table-bordered">
+                            <thead>
+                            <tr><th>Title</th><th>Resource type</th><th>Description</th></tr>
+                            </thead>
+                            <tbody>
+
+
+                            <tr ng-repeat="v in sortedDGList">
+                                <td>
+                                    <div class="clickable" ng-click="selectModelFromList(v.name,v.kind)">{{v.title}}</div>
+                                </td>
+                                <td><div >{{v.type}}</div></td>
+                                <td>{{v.description}}</td>
+
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+
+                </uib-tab>
+
+                <uib-tab ng-if="userMode == 'playground'" heading="Import Component">
+                    <br/>
+                    <div class="row">
+                        <div class="col-md-1">
+                            <div style="margin-top:8px">Filter</div>
+                        </div>
+                        <div class="col-md-2">
+                            <input class="form-control" type="input" ng-model="input.filter"/>
+                        </div>
+                        <div class="col-md-8">
+                            <div style="margin-top:8px"><em>Filter on Title or name</em></div>
+
+
+                        </div>
+                    </div>
+                    <br/>
+                    <table class="table table-bordered">
+                        <tr><th>Title</th><th>Name</th><th>Source</th><th>Type</th><th>Description</th><th>Cnt</th><th></th></tr>
+                        <tr ng-repeat="dg in importableDG" ng-show="canShowComponent(dg,input.filter)">
+                            <td>{{dg.title}}</td>
+                            <td>{{dg.name}}</td>
+                            <td>
+                                {{ { playground: "Collection", library: "Library" }[dg.source] || dg.source}}
+                            </td>
+                            <td>{{dg.type}}</td>
+                            <td>{{dg.description}}</td>
+
+                            <td>{{dg.diff.length}}</td>
+
+                            <td>
+                                <div ng-if="dg.nameExists" class="clickable" ng-click="updateDG($index)">Replace</div>
+                                <div ng-if="!dg.nameExists" class="clickable" ng-click="importDG($index)">Import</div>
+                            </td>
+                        </tr>
+                    </table>
+
+                </uib-tab>
+
+                <uib-tab heading="Questionnaire defaults" >
+
+                    <table class="table">
+                        <tr><td style="width: 15%">Default Terminology server</td>
+                            <td>
+                                <input type = "text" class="form-control" ng-model = "world.Q.termServer">
+                            </td>
+                            <td><em>Sets the default Terminology Server for the Questionnaire</em></td>
+                        </tr>
+                        <tr><td>Render VS as AnswerOption</td><td></td>
+                            <td><em></em></td>
+                        </tr>
+                    </table>
+
+
+
+                </uib-tab>
+
+
+                <uib-tab heading="Graph" select="fitAllDGGraph()">
+                    <br>
+                    <div>
+                        <div class="clickable pull-right" ng-click="createAllDGGraph()">
+                            Create graph
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div id="graphAllDG"></div>
+                        </div>
+                        <div class="col-md-4">
+
+                            <button class="btn-link btn pull-right"
+                                    ng-click="selectModel(selectedNodeFromFull.dg )">Select</button>
+
+                            <uib-tabset>
+                                <uib-tab heading="Tree">
+                                    <div id="dgFromAllGraph"></div>
+                                </uib-tab>
+                                <uib-tab heading="Json">
+                                    <div class="myScroll">
+                                        <pre>{{selectedNodeFromFull.dg | json}}</pre>
+                                    </div>
+
+                                </uib-tab>
+                            </uib-tabset>
+
+                        </div>
+                    </div>
+
+
+
+                </uib-tab>
+
+                <uib-tab heading="Component Diff">
+                    <div ng-controller="componentDiffCtrl">
+                        <ng-include src="'includes/componentDiff.html'"></ng-include>
+                    </div>
+
+                </uib-tab>
+
+                <uib-tab ng-if="userMode == 'playground'"  heading="Collection history">
+                    <pre>{{playGroundHistory | json}}</pre>
+                </uib-tab>
+
+
+
+            </uib-tabset>
+        </uib-tab>
+
+          <uib-tab heading="Reports"  select="setInitialTab(2)">
+
+              <ng-include src="'includes/terminology.html'"></ng-include>
+
+          </uib-tab>
+
+
+
+
+    </uib-tabset>
+
+</div>
+
+<script>
+    //add a function to determine if a given path is a child of another. Used when excluding paths
+    //eg seg1.seg2 is a child of seg1.  seg1path is not.
+    //Add here to ensure it is available before any functions that use it are loaded...
+    String.prototype.isChildPath = function (parent) {
+
+        let test = parent + "."
+        if (this.startsWith(test) ) {
+            return true
+        } else {
+            return false
+        }
+
+    };
+
+</script>
+
+<script src="js/libs/jquery-1.9.0.min.js"></script>
+<script src="js/libs/angular.min1-5.js"></script>
+<script src="js/libs/ui-bootstrap-tpls-2.0.1.min.js"></script>
+<script src="js/libs/moment.min.js"></script>
+
+<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
+<link rel="stylesheet" type="text/css" href="css/common.css"/>
+<link rel="stylesheet" type="text/css" href="css/vis.min.css"/>
+
+
+
+<script>
+    let app = angular.module("pocApp",['ui.bootstrap','ui.checkbox','ngStorage','ngSanitize',"firebase","LocalForageModule"]).config(function($locationProvider) {
+        $locationProvider.html5Mode(true);
+        $locationProvider.hashPrefix('!');
+
+    });
+
+
+
+    angular.module("pocApp").constant("moment", moment);
+
+    angular.module("pocApp").config(['$compileProvider', function ($compileProvider) {
+        $compileProvider.aHrefSanitizationWhitelist(/^\s*(http|https?|ftp|mailto|blob):/);
+    }]);
+
+    angular.module('pocApp').config(['$localForageProvider', function($localForageProvider){
+            $localForageProvider.config({
+                name        : 'lf' // name of the database and prefix for your data, it is "lf" by default
+            });
+        }]);
+
+    angular.module("formsApp",[])
+    angular.module('topApp', ['pocApp', 'formsApp'])
+
+    //https://www.tutorialsteacher.com/angularjs/angularjs-exception-handling
+    app.config(function ($provide) {
+
+        $provide.decorator('$exceptionHandler', function ($delegate) {
+            return function (exception, cause) {
+                //  $delegate(exception, cause);
+//console.log(cause)
+                console.log("Untrapped exception",exception.stack)
+                //$http.post("model/access",{})
+
+                // logErrorsToBackend(exception, cause);
+
+                let obj = {type:'err',module:'model',msg:exception.stack}
+                $.ajax({
+                    type: "POST",
+                    url: "telemetry",
+                    contentType: "application/json",
+                    data: JSON.stringify(obj)
+                });
+
+                let msg = "There was an unexpected error. Details have been saved to the server, " +
+                    "but your last action may have failed. You should restart the browser and check."
+
+                alert(msg);
+            };
+        });
+    });
+
+
+</script>
+
+
+<!--
+
+<link rel="stylesheet" type="text/css" href="css/codemirror.css"/>
+<link rel="stylesheet" type="text/css" href="css/foldgutter.css"/>
+
+<script src="js/editCompositionCtrl.js"></script>
+
+<script src="js/modelCompCtrl.js"></script>
+
+<script src="js/traceCtrl.js"></script>
+<script src="js/traceSvc.js"></script>
+
+
+<script src="js/fixValuesCtrl.js"></script>
+<script src="js/historyCtrl.js"></script>
+<script src="js/previewQCtrl.js"></script>
+<script src="js/getNameCtrl.js"></script>
+
+
+
+<script src="js/compVersionsCtrl.js"></script>
+<script src="js/compSectionsCtrl.js"></script>
+<script src="js/publishCompCtrl.js"></script>
+
+<script src="js/documentSvc.js"></script>
+
+
+
+
+-->
+<script src="js/vsSvc.js"></script>
+<script src="js/cmTesterSvc.js"></script>
+<script src="js/modelCompSvc.js"></script>
+<script src="js/modelTermSvc.js"></script>
+<script src="js/igSvc.js"></script>
+<script src="js/modelTermCtrl.js"></script>
+<script src="js/modelReviewSvc.js"></script>
+
+
+<script src="js/libs/ngStorage.min.js"></script>
+<script src="js/libs/angular-sanitize.js"></script>
+<script src="js/libs/angular-bootstrap-checkbox.js"></script>
+<script src="js/libs/jstree.min.js"></script>
+<script src="js/loginCtrl.js"></script>
+<script src="js/filters.js"></script>
+<script src="js/modelsCtrl.js"></script>
+<script src="js/modelsSvc.js"></script>
+<script src="js/libs/vis.min.js"></script>
+<script src="js/editDGCtrl.js"></script>
+
+
+<script src="js/modelDGCtrl.js"></script>
+<script src="js/modelDGSvc.js"></script>
+
+<script src="js/optionsCtrl.js"></script>
+<script src="js/viewVSCtrl.js"></script>
+<script src="js/showParameters.js"></script>
+<script src="js/editDGItemCtrl.js"></script>
+<script src="js/exportCtrl.js"></script>
+<script src="js/QutilitiesSvc.js"></script>
+<script src="js/modelDGDialogCtrl.js"></script>
+<script src="js/modelDGDialogSvc.js"></script>
+<script src="js/libraryCtrl.js"></script>
+<script src="js/libraryDGCtrl.js"></script>
+<script src="js/libraryCompCtrl.js"></script>
+
+
+<script src="js/changeTypeCtrl.js"></script>
+
+<script src="js/makeQSvc.js"></script>
+<script src="js/librarySvc.js"></script>
+
+
+
+<script src="js/utilsSvc.js"></script>
+
+<script>
+    angular.module('pocApp').run(function(utilsSvc) {
+        console.log(utilsSvc)
+        utilsSvc.loadConfig();
+    });
+</script>
+
+
+
+
+<script src="js/codedOptionsSvc.js"></script>
+
+<script src="js/exportSvc.js"></script>
+
+
+
+<script src="js/qHelperSvc.js"></script>
+<script src="js/xquery.js"></script>
+
+<link rel="stylesheet" type="text/css" href="css/jsTreeStyle.css"/>
+
+
+<script src="js/addEWCtrl.js"></script>
+
+
+
+<script src="js/orderingSvc.js"></script>
+
+
+
+<script src="js/orderingCtrl.js"></script>
+
+<script src="js/libs/firebase.js"></script>
+<script src="js/libs/angularfire.min.js"></script>
+
+
+<script src="js/snapShotSvc.js"></script>
+
+<script src="js/playgroundsCtrl.js"></script>
+<script src="js/playgroundsSvc.js"></script>
+
+<script src="js/makeQHelperSvc.js"></script>
+
+<script src="js/questionnaireSvc.js"></script>
+
+
+<script src="js/makeSDCExtensionCtrl.js"></script>
+<script src="js/selectEDCtrl.js"></script>
+
+<script src="js/dgDiff.js"></script>
+<script src="js/adHocExtensionCtrl.js"></script>
+<script src="js/componentDiff.js"></script>
+
+<script src="js/reportSvc.js"></script>
+
+<script src="js/publishQCtrl.js"></script>
+
+
+<script src="js/libs/fhirpath.min.js"></script>
+<script src="js/libs/fhirpath.r4.min.js"></script>
+
+<!--https://github.com/scotttrinh/angular-localForage-->
+
+<script src="js/libs/localforage.min.js"></script>
+<script src="js/libs/angular-localForage.min.js"></script>
+
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDG1ToLHycsMUX0CfX0OZVSRUUpFQeKE9o",
+        authDomain: "canshare-730e6.firebaseapp.com",
+        projectId: "canshare-730e6",
+        storageBucket: "canshare-730e6.appspot.com",
+        messagingSenderId: "12147821347",
+        appId: "1:12147821347:web:5963d577cb050259475a96"
+    };
+    if (firebase) {
+        console.log('init firebase')
+        firebase.initializeApp(firebaseConfig);
+
+    }
+</script>
+
+
+</body>
+</html>

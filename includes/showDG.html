@@ -1,0 +1,1888 @@
+<div ng-controller="modelDGCtrl">
+
+
+  <style>
+
+    .myIcon {
+      margin: 8px;
+    }
+
+    .hideElement {
+      background-color: mistyrose;
+    }
+
+    .error {
+      background-color: mistyrose;
+    }
+
+    .edIssue {
+      background-color: mistyrose;
+    }
+
+  </style>
+
+
+
+  <div ng-class="modelInfoClass">
+    <div class="row">
+      <div class="col-md-6">
+        <strong>{{selectedModel.title}} </strong> ({{selectedModel.name}}) <em>{{selectedModel.description}}</em>
+
+      <div ng-if="selectedModel.linkedDG">
+        Linked to  <em>{{selectedModel.linkedDG.split('-')[0]}}</em>
+      </div>
+
+        <div>
+          <div ng-if="selectedModel.dirty">
+            <strong  class="pull-right">DG has been updated</strong>
+            <!--  <strong ng-click="createDiff()" class="pull-right clickable">DG has been updated</strong>-->
+          </div>
+        </div>
+
+        <div>
+          <div ng-if="selectedModel.sourceReference">
+            <strong>Source reference</strong>: {{selectedModel.sourceReference}}
+          </div>
+        </div>
+
+        <br/>
+        <span ng-if = "canEdit(selectedModel)">
+          <span class="clickable" ng-click="cloneDG(selectedModel)">Make a copy</span>
+
+            <span class=" clickable spacer"
+                 ng-click="editModel(selectedModel)">Edit</span>
+
+            <span class=" clickable spacer"
+                 ng-click="newModel('dg',selectedModel)">New child</span>
+
+        </span>
+
+        <span class="clickable spacer"
+              ng-if = "canEdit(selectedModel)"
+              ng-click="updateComponent('dg',selectedModel)">Update component</span>
+        <br/>
+
+
+        <div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div ng-if="selectedModel.parent">
+                <strong>Parents</strong>
+
+                <div ng-repeat = "parent in relationshipsSummary.parents">
+                  <span class="clickable" style="margin-left: 8px"
+                        ng-click="termSelectDG({DGName:parent},selectedModel.name)">
+                    {{hashAllDG[parent].title}}  <!--  ({{parent}}) -->
+                  </span>
+                </div>
+
+
+              </div>
+
+            </div>
+
+            <div class="col-md-6">
+
+              <div ng-if="">
+                <strong>Direct children</strong> ({{relationshipsSummary.children.length}})
+
+                <span ng-if="relationshipsSummary.children.length > 0"
+                      class="clickable" ng-click="input.showDGChildren = ! input.showDGChildren">
+                <span ng-if="input.showDGChildren">Hide</span>
+                 <span ng-hide="input.showDGChildren">Show</span>
+              </span>
+                <div ng-if="input.showDGChildren"
+                     ng-repeat = "child in relationshipsSummary.children">
+                  <span class="clickable" style="margin-left: 8px"
+                        ng-click="termSelectDG({DGName:child},selectedModel.name)">
+                    {{hashAllDG[child].title}}  <!--  ({{parent}}) -->
+                  </span>
+                </div>
+              </div>
+
+
+
+            </div>
+
+
+          </div>
+
+        </div>
+
+
+
+
+      </div>
+      <div class="col-md-6">
+
+      <button class="btn btn-link"
+              ng-if = canEdit(selectedModel)
+              ng-click="deleteDG(selectedModel.name)">Delete</button>
+
+        <!--
+      <a class="btn btn-link"
+         ng-if="! canEdit(selectedModel)"
+         ng-href="modelReview.html?{{selectedModel.name}}" target="_blank">Review</a>
+
+
+-->
+
+        <button class="btn btn-link" ng-click="loadReview('dg')">Questionnaire</button>
+
+      <button class="btn btn-link" ng-click="showLink('dg')">Link</button>
+
+        <button class="btn btn-link"
+                ng-if = canEdit(selectedModel)
+                ng-click="publishQ(selectedModel)">Publish</button>
+
+      <div class="pull-right">
+        <div ng-if="user.email && (userMode == 'library')">
+
+
+
+          <button class="btn btn-success"
+                  ng-hide="selectedModel.checkedOut" class="clickable" ng-click="checkOut()">Check out</button>
+
+          <button class="btn btn-danger"
+                  ng-if="selectedModel.checkedOut && selectedModel.checkedOut == user.email"  ng-click="revert()">Revert</button>
+
+          <button class="btn btn-warning"
+                  ng-if="selectedModel.checkedOut && selectedModel.checkedOut == user.email"  ng-click="checkIn()">Check in</button>
+
+
+
+          <div ng-if = "selectedModel.checkedOut && selectedModel.checkedOut !== user.email">
+            <strong>Checked out to {{selectedModel.checkedOut}}</strong>
+          </div>
+        </div>
+
+
+
+      </div>
+<br/>
+     <div ng-if="snapshotSvc.getExtractResource(selectedModel.name)">
+       <strong style="padding-left: 12px">FHIR resource:</strong>
+       <a ng-href="{{fhirRoot}}{{snapshotSvc.getExtractResource(selectedModel.name) | lowercase}}.html" target="_blank">
+       {{snapshotSvc.getExtractResource(selectedModel.name) }}
+       </a>
+
+     </div>
+
+      <table ng-if="true" class="table table-condensed" style="margin-top: 8px">
+
+        <tr><td>Tags</td>
+          <td>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div ng-repeat = "tag in getTagListForDG(selectedModel) track by $index">
+                  <div>
+
+                    {{tag}}
+
+                      <i class="glyphicon glyphicon-remove-sign pull-right clickable"
+                         uib-popover="Remove this tag"
+                         popover-placement="left"
+                         popover-trigger="'mouseenter'"
+
+                         ng-click="removeTagFromDT(tag,selectedModel)"></i>
+
+
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-8">
+                    <input type="text" class = "form-control" placeholder="New tag" ng-model = "input.newBespokeTag"/>
+                  </div>
+                  <div class="col-md-4">
+                    <i class="glyphicon glyphicon-plus-sign pull-right"
+                       ng-if="input.newBespokeTag"
+                      style="padding-top: 8px;color: green"
+                       ng-click="addTagToDT(input.newBespokeTag)"></i>
+                  </div>
+                </div>
+
+
+              </div>
+              <div class="col-md-6">
+                <select class="form-control" ng-model="input.newTag"
+                        ng-options="tag for tag in tagNames"></select>
+                <div ng-if="input.newTag">
+                  <button class="btn btn-link pull-right" ng-click="addTagToDT(input.newTag)">Add this tag</button>
+                </div>
+
+              </div>
+            </div>
+
+
+
+          </td>
+        </tr>
+
+      </table>
+
+      <div ng-if = "hxDGLoad.length > 0">
+        <div ng-click="back()" class="clickable pull-right">
+          Reload {{ hashAllDG[hxDGLoad[hxDGLoad.length-1]].title }}
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+  </div>
+
+
+
+  <uib-tabset  active="input.dgTabActive">
+
+
+
+    <uib-tab heading="Tree">
+      <br/>
+      <div class="row">
+        <div class="col-md-6" >
+          <div class="background">
+            <div class="pull-right">
+              <div class="clickable myIcon" ng-click="expandDTTree()">Expand all ({{fullElementList.length -1}})</div>
+              <!--
+              <div class="clickable myIcon" ng-click="showSSLog(selectedModel.name)">Snapshot log</div>
+-->
+              <div class="clickable myIcon"
+                   ng-hide="selectedModel.ssOrder || userMode == 'playground'"
+                   ng-click="setOrder()">Set order</div>
+
+              <div class="clickable myIcon"
+                   ng-if="selectedModel.ssOrder"
+                   ng-click="setOrder()">Update order</div>
+
+
+              <div class="clickable myIcon"
+                   ng-if="selectedModel.ssOrder"
+                   ng-click="removeOrder()">Remove order</div>
+
+            </div>
+
+            <div id="dgTree"></div>
+
+          <div>
+            <div>
+              <div class="clickable pull-right" ng-if="canAdd(selectedModel,selectedNode)"
+                      ng-click="editDGItem()">Add new element
+                <span ng-if="selectedNode">to {{selectedNode.data.ed.path}}</span>
+
+              </div>
+            </div>
+            <div class="clearfix"></div>
+
+            <div>
+              <div class="clickable pull-right"
+
+                   ng-if="userMode == 'playground' && selectedModel.linkedDG &&
+                      (! selectedNode || selectedNode.data.ed.type[0] == 'Group' || selectedNode.data.ed.kind == 'root')"
+                   style="padding-top: 8px" ng-click="insertDGItem()">
+
+                Copy new element
+
+                <span ng-if="selectedNode">to {{selectedNode.data.ed.path}}</span>
+
+
+              </div>
+            </div>
+
+
+
+          </div>
+          <br/><br/>
+        <div><em>Legend:</em></div>
+          <div><strong style="margin-left: 8px">Bold</strong> elements are required</div>
+          <div><span style="color: blue; margin-left: 8px">Blue</span>  elements have a fixed value</div>
+          <div style=" margin-left: 8px">A trailing <strong>*</strong> indicates element can repeat.</div>
+          <div style=" margin-left: 8px"><span style="text-decoration: line-through">Strike-through</span> indicates the element does not appear in a Q or is hidden</div>
+          <div style=" margin-left: 8px">
+            <span style="text-decoration-line: underline;text-decoration-style: dotted">
+              Dotted underline</span> indicates the element is subject to conditional show in the Q</div>
+          </div>
+        </div>
+        <div class="col-md-6 ">
+
+          <div class="background" ng-if="selectedNode.data.ed">
+          <div ng-if="selectedNode.data.ed">
+
+
+          <div class="row">
+            <div class="col-md-4">
+
+            </div>
+            <div class="col-md-8">
+
+
+              <button class="btn btn-link pull-right"
+
+                      ng-if="canSlice(selectedNode.data.ed) && canEdit(selectedModel)"
+
+                      ng-click="slice(selectedNode.data.ed)">Slice</button>
+            </div>
+          </div>
+
+
+            <div ng-if = "selectedNode.data.ed.kind == 'root'">
+              <table class="table table-bordered table-condensed">
+                <tr><td>Name</td><td>{{selectedModel.name}}</td></tr>
+                <tr><td>Description</td><td>{{selectedModel.description}}</td></tr>
+
+                <tr ng-if="selectedModel.linkedDG"><td>Linked DG</td><td>{{selectedModel.linkedDG}}</td></tr>
+
+                <tr ng-if="selectedModel.type"><td>Resource type</td><td>{{selectedModel.type}}</td></tr>
+                <tr ng-if="selectedModel.sourceReference"><td>Source reference</td><td>{{selectedModel.sourceReference}}</td></tr>
+                <tr ng-if="selectedModel.checkedOut"><td>Checked out</td>
+                  <td>{{selectedModel.checkedOut}}</td></tr>
+
+                <tr ng-if="dgNamedQueries.length > 0"><td>Named Queries</td>
+                  <td>
+
+                    <div ng-repeat = "nq in dgNamedQueries">
+                      <div class="clickable" ng-click="testxquery(nq.name)">{{nq.itemName}} </div>
+
+
+                    </div>
+
+
+                  </td>
+                </tr>
+
+                <tr ng-if="selectedModel.fixedValues.length > 0"><td>Fixed values</td>
+                  <td>
+                    <div ng-repeat = "fv in selectedModel.fixedValues">
+
+                      <div>{{fv.path}}</div>
+                      <div style="padding-bottom: 6px"><em  style="padding-left: 8px">{{fv.value}}</em></div>
+
+                    </div>
+
+                  </td>
+                </tr>
+
+                <tr>
+                  <td class="detailName">Ad hoc extension</td>
+                  <td>
+                    <div class="pull-right">
+                      <div class="btn btn-link" ng-click="editAdHocExtension(null,selectedModel)">Edit</div>
+                    </div>
+
+                    <div ng-if="selectedModel.adHocExtension.length > 0"
+                            class="clickableDotted"
+                            popover-append-to-body="true"
+                            uib-popover-html="popoverText(selectedModel.adHocExtension)"
+                            popover-placement="left"
+                            popover-class="custom-popover-big"
+                            popover-trigger="'mouseenter'">
+
+                      Extension
+
+                    </div>
+                  </td>
+                </tr>
+
+                <tr ng-if="componentVersion">
+                  <td>Component</td>
+                  <td>
+                    <div class="clickable" ng-click="createDiff()">View differences to component</div>
+                  </td>
+                </tr>
+
+
+              </table>
+
+              <div>Descendants and DG's that reference this one or any descendants ({{dgContainingThis.length -1}})</div>
+
+              <div class="myScrollSmall">
+                <ul>
+                  <li ng-repeat="dgName in dgContainingThis"
+                      class="clickable"
+                      ng-if = "$index > 0"
+                      ng-click="termSelectDG({DGName:dgName},selectedModel.name)">
+                    {{dgName}}
+                  </li>
+                </ul>
+              </div>
+
+            </div>
+
+
+
+
+
+            <uib-tabset ng-hide="selectedNode.data.ed.kind == 'root'">
+
+              <button class="btn-link btn pull-right"
+                      ng-if="selectedNode && canEditED(selectedModel,selectedNode)"
+                      ng-click="editDGItem(selectedNode.data)">Edit </button>
+
+              <uib-tab heading="Details">
+                <table class="table table-bordered table-condensed">
+
+                  <tr ng-if = "selectedNode.data.ed.path !== selectedModel.name">
+                    <td class="detailName" style="width : 20%">Path</td>
+
+                    <td>
+                      {{selectedNode.data.ed.path | dropFirstInPath}}
+
+
+                      <!--  <span class="pull-right clickable" ng-click="hideInQ(selectedNode.data.ed)"> -->
+                      <span class="pull-right" >
+                        <span ng-if="selectedNode.data.ed.hideInQ">Not copied into Q</span>
+                         <span ng-if="selectedNode.data.ed.hiddenInQ">Present but hidden in Q</span>
+                        <span ng-hide="selectedNode.data.ed.hideInQ || selectedNode.data.ed.hiddenInQ">Appears in Q</span>
+                      </span>
+
+                    </td>
+
+
+                  </tr>
+                  <tr>
+                    <td class="detailName">Id</td>
+
+                    <td>
+                      {{selectedNode.data.ed.id}}
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td class="detailName" style="width : 20%">Source model</td>
+                    <td>
+<!--
+                      <div ng-hide="selectedNode.data.ed.sourceModelName == selectedModel.name"
+                           class="pull-right clickable"
+                           style="padding-right: 12px"
+                           ng-click="termSelectDG({DGName:selectedNode.data.ed.sourceModelName},selectedModel.name)">
+                        Load
+                      </div>
+-->
+
+
+
+                      <div class = 'clickable'
+                            ng-click="termSelectDG({DGName:selectedNode.data.ed.sourceModelName},selectedModel.name)">
+                        <em>{{selectedNode.data.ed.sourceModelName}}</em>
+
+
+                      </div>
+                      <!--
+                      <span>{{hashAllDG[selectedNode.data.ed.sourceModelName].title}}</span>
+-->
+
+                    </td>
+                  </tr>
+
+                  <tr ng-if="selectedNode.data.ed.itemCode">
+                    <td class="detailName" style="width : 20%">Item code</td>
+                    <td>
+                      <span class="clickable" ng-click="lookup(selectedNode.data.ed.itemCode.code,selectedNode.data.ed.itemCode.system)">{{selectedNode.data.ed.itemCode.code}}</span>  |
+                      {{selectedNode.data.ed.itemCode.display}} |
+                      {{selectedNode.data.ed.itemCode.system}}
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td class="detailName" style="width : 20%">Present in diff</td>
+                    <td>
+
+                      <div ng-if="presentInDiff(selectedNode.data.ed.path)">
+                        There is an entry in the diff for this path
+                      </div>
+
+                      <div ng-hide ="presentInDiff(selectedNode.data.ed.path)">
+                        There is no diff entry
+                      </div>
+
+
+                    </td>
+                  </tr>
+
+
+                  <tr><td class="detailName" style="width : 20%">Title</td>
+                    <td>
+
+                   {{selectedNode.data.ed.title}}</td>
+                  </tr>
+
+                  <tr><td class="detailName">Description</td><td>
+
+                    {{selectedNode.data.ed.description}}
+                  </td></tr>
+
+                  <tr><td class="detailName">Type</td>
+                    <td>
+
+                      <div ng-repeat="type in selectedNode.data.ed.type">
+
+
+                      <div ng-if="fhirDataTypes.indexOf(type) > -1" class="pull-right">
+                        <a style="padding-right: 12px" target = "_blank" ng-href="{{fhirRoot}}datatypes.html#{{type}}">Details in spec </a>
+                      </div>
+
+
+                      <div ng-hide="fhirDataTypes.indexOf(type) > -1 || type == 'display'" class="clickable"
+                           style="padding-right: 12px"
+                           ng-click="termSelectDG({DGName:type},selectedModel.name)">
+                        {{type}}&nbsp;
+                      </div>
+
+                        <div ng-show="fhirDataTypes.indexOf(type) > -1 || type == 'display'">
+                          {{type}}&nbsp;
+                        </div>
+
+
+
+
+
+                      <div ng-if="selectedNode.data.ed.type[0] == 'CodeableConcept'">
+                        <div ng-if="selectedNode.data.ed.otherType">
+                          'Other' type: {{selectedNode.data.ed.otherType}}
+                        </div>
+                      </div>
+
+                    </div>
+                    </td></tr>
+
+                  <tr ng-if = "selectedNode.data.ed.path !== selectedModel.name && selectedNode.data.ed.type[0] !== 'Group'" && qControlOptions>
+                    <td class="detailName">Input control</td>
+                    <td>
+                      <div class="row">
+                        <div class="col-md-12">
+
+
+
+                          {{selectedNode.data.ed.controlHint}}
+
+                          <!-- Apr 8
+                          <span ng-repeat = "opt in qControlOptions">
+                            <input type="radio"
+                                   ng-change="setControlHint(selectedNode.data.ed,opt)"
+                                   ng-model="input.controlHint" value="{{opt}}"> {{opt}}
+                          </span>
+                          -->
+
+
+
+                        </div>
+
+                      </div>
+
+                    </td>
+
+
+                    </td>
+                  </tr>
+
+
+                  <tr><td class="detailName">Cardinality</td><td>
+
+                    {{selectedNode.data.ed.mult}}
+                  </td></tr>
+
+                  <tr ng-if="selectedNode.data.ed.type[0] == 'CodeableConcept'">
+                    <td class="detailName">ValueSet</td>
+                    <td>
+
+
+                      <div>
+                        <span ng-if="selectedNode.data.ed.valueSet"
+                              ng-click="viewVS(selectedNode.data.ed.valueSet)"
+                              class="clickable pull-right">View VS</span>
+
+                      </div>
+                      <div>{{selectedNode.data.ed.valueSet}}</div>
+
+                    </td>
+                  </tr>
+
+                  <tr ng-if="selectedNode.data.ed.notes">
+                    <td class="detailName">Notes</td>
+                    <td>
+
+                      {{selectedNode.data.ed.notes}}
+                    </td>
+                  </tr>
+
+                  <tr ng-if="selectedNode.data.ed.rules">
+                    <td class="detailName">Rules</td>
+                    <td>
+                      {{selectedNode.data.ed.rules}}
+                    </td>
+                  </tr>
+
+                  <tr ng-if="selectedNode.data.ed.placeHolder">
+                    <td class="detailName">Placeholder</td>
+                    <td>
+                      {{selectedNode.data.ed.placeHolder}}
+                    </td>
+                  </tr>
+
+                  <tr ng-if="selectedNode.data.ed.autoPop">
+                    <td class="detailName">Auto populated</td>
+                    <td>
+                      Yes
+                    </td>
+                  </tr>
+
+                  <tr ng-if="selectedNode.data.ed.type[0] == 'CodeableConcept'">
+                    <td class="detailName">Options</td>
+                    <td>
+                      <div ng-if="selectedNode.data.ed.options">
+                        <span
+                                ng-click = "editDGOptionsList(selectedNode.data.ed,true)"
+                                class="clickable pull-right">View list</span>
+
+                        There are {{selectedNode.data.ed.options.length}} options defined
+                      </div>
+
+                      <div ng-hide="selectedNode.data.ed.options">
+                        There are no options defined
+                      </div>
+
+                    </td>
+                  </tr>
+
+                  <tr ng-if="selectedNode.data.ed.type[0] == 'Quantity'">
+                    <td class="detailName">Units</td>
+                    <td>
+
+
+                      <span ng-repeat="unit in selectedNode.data.ed.units">
+                        {{unit}}&nbsp;
+                      </span>
+
+
+                    </td>
+                  </tr>
+
+                  <tr ng-if="isFixedType(selectedNode.data.ed)">
+                    <td class="detailName">Fixed value</td>
+
+                    <td>
+                      <div ng-if="selectedNode.data.ed.fixedCode">
+                        {{selectedNode.data.ed.fixedCode}}
+                      </div>
+
+                      <div ng-if="selectedNode.data.ed.fixedRatio">
+                        <div ng-if="selectedNode.data.ed.fixedRatio.numerator.unit">Numerator unit: {{selectedNode.data.ed.fixedRatio.numerator.unit}}</div>
+                        <div ng-if="selectedNode.data.ed.fixedRatio.denominator.unit">Denominator unit: {{selectedNode.data.ed.fixedRatio.denominator.unit}}</div>
+                        <div ng-if="selectedNode.data.ed.fixedRatio.denominator.value">Denominator value: {{selectedNode.data.ed.fixedRatio.denominator.value}}</div>
+                      </div>
+
+                      <div ng-if="selectedNode.data.ed.fixedQuantity">
+                        <span ng-if = "selectedNode.data.ed.fixedQuantity.unit">
+                          Unit: {{selectedNode.data.ed.fixedQuantity.unit}}
+                        </span>
+
+                        <span ng-if = "selectedNode.data.ed.fixedQuantity.value">
+                          Value: {{selectedNode.data.ed.fixedQuantity.value}}
+                        </span>
+
+                      </div>
+
+
+                      <div ng-if="selectedNode.data.ed.fixedCoding">
+                        {{selectedNode.data.ed.fixedCoding.code}} | {{selectedNode.data.ed.fixedCoding.display}} | {{selectedNode.data.ed.fixedCoding.system}}
+                      </div>
+
+                      <span ng-if="selectedNode.data.ed.fixedCoding ||
+                        selectedNode.data.ed.fixedQuantity || selectedNode.data.ed.fixedRatio"
+                            class="pull-right">
+
+                        <span ng-hide ="presentInDiff(selectedNode.data.ed.path)">
+                          set on {{getSourceModelName(selectedNode.data.ed)}}
+                        </span>
+
+
+                      </span>
+
+                      <!-- todo - what is this
+                      <div ng-if="selectedNode.data.ed.itemCode">
+                        <em style="padding-left: 8px">item.code will be set to this value in the Questionnaire</em>
+                      </div>
+                      -->
+
+                    </td>
+                  </tr>
+
+
+
+
+                  <tr ng-if="isFixedType(selectedNode.data.ed)">
+                    <td class="detailName">Default value</td>
+
+                    <td>
+                      <div ng-if="selectedNode.data.ed.defaultCode">
+                        {{selectedNode.data.ed.defaultCode}}
+                      </div>
+
+
+                      <div ng-if="selectedNode.data.ed.defaultRatio">
+                        <div ng-if="selectedNode.data.ed.defaultRatio.numerator.unit">Numerator unit: {{selectedNode.data.ed.defaultRatio.numerator.unit}}</div>
+                        <div ng-if="selectedNode.data.ed.defaultRatio.denominator.unit">Denominator unit: {{selectedNode.data.ed.defaultRatio.denominator.unit}}</div>
+                        <div ng-if="selectedNode.data.ed.defaultRatio.denominator.value">Denominator value: {{selectedNode.data.ed.defaultRatio.denominator.value}}</div>
+                      </div>
+
+                      <div ng-if="selectedNode.data.ed.defaultQuantity">
+                        <span ng-if="selectedNode.data.ed.defaultQuantity.unit">
+                          Unit: {{selectedNode.data.ed.defaultQuantity.unit}}
+                        </span>
+                        <span ng-if="selectedNode.data.ed.defaultQuantity.value">
+                          Value: {{selectedNode.data.ed.defaultQuantity.value}}
+                        </span>
+                      </div>
+
+                      <div ng-if="selectedNode.data.ed.defaultCoding">
+                        {{selectedNode.data.ed.defaultCoding.code}} | {{selectedNode.data.ed.defaultCoding.display}} | {{selectedNode.data.ed.defaultCoding.system}}
+                      </div>
+
+                      <span ng-if="selectedNode.data.ed.defaultCoding  || selectedNode.data.ed.defaultQuantity"
+                            class=" pull-right">
+
+                        <span ng-if="getSourceModelName(selectedNode.data.ed) !== selectedModel.name">
+                          set on {{getSourceModelName(selectedNode.data.ed)}}
+                        </span>
+
+
+
+                      </span>
+
+                    </td>
+                  </tr>
+
+                  <tr ng-if="selectedNode.data.ed.sourceReference">
+                    <td class="detailName">Source reference</td>
+                    <td>
+
+                      {{selectedNode.data.ed.sourceReference}}
+                    </td>
+                  </tr>
+
+
+                  <tr ng-if="selectedNode.data.ed.instructions">
+                    <td class="detailName">Instructions</td>
+                    <td>
+
+                      {{selectedNode.data.ed.instructions}}
+                    </td>
+                  </tr>
+
+                  <tr ng-if="getExtractType(selectedNode.data.ed)">
+                    <td class="detailName">Extraction Type</td>
+                    <td>
+                      {{getExtractType(selectedNode.data.ed) }}
+                    </td>
+                  </tr>
+
+
+                  <tr ng-if="selectedNode.data.ed.definition">
+                    <td class="detailName">Extraction</td>
+                    <td>
+                      {{selectedNode.data.ed.definition}}
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td class="detailName">Ad hoc extension</td>
+                    <td>
+
+                      <div class="pull-right">
+                        <div class="btn btn-link" ng-click="editAdHocExtension(selectedNode.data.ed)">Edit</div>
+                      </div>
+
+                      <span ng-if="selectedNode.data.ed.adHocExtension.length > 0"
+                           class="clickableDotted"
+                           uib-popover-html="popoverText(selectedNode.data.ed.adHocExtension)"
+                           popover-placement="left"
+                           popover-class="custom-popover-big"
+                           popover-trigger="'mouseenter'"> Extension </span>
+
+
+
+                    </td>
+                  </tr>
+
+
+                  <tr ng-if="selectedNode.data.ed.identifierSystem">
+                    <td class="detailName">Identifier system</td>
+                    <td>
+                      {{selectedNode.data.ed.identifierSystem}}
+                    </td>
+                  </tr>
+
+
+                  <tr ng-if="selectedNode.data.ed.extractExtensionUrl">
+                    <td class="detailName">Extension Url</td>
+                    <td>
+                      {{selectedNode.data.ed.extractExtensionUrl}}
+                    </td>
+                  </tr>
+
+                  <tr ng-if="selectedNode.data.ed.prePop">
+                    <td class="detailName">Prepop</td>
+                    <td>
+
+                      {{selectedNode.data.ed.prePop}}
+                    </td>
+                  </tr>
+
+
+
+
+                  <tr ng-if="selectedNode.data.ed.collapsible">
+                    <td class="detailName">Collapsible</td>
+                    <td>
+
+                      {{selectedNode.data.ed.collapsible}}
+                    </td>
+                  </tr>
+
+                  <tr ng-if="selectedNode.data.ed.sdcGrid">
+                    <td class="detailName">Grid layout</td>
+                    <td>
+                      Child nodes in columns
+                    </td>
+                  </tr>
+
+                  <tr ng-if="selectedNode.data.ed.selectedNQ">
+                    <td  class="detailName">Selected Named query</td>
+                    <td>
+
+
+                      {{selectedNode.data.ed.selectedNQ}}
+
+                    </td>
+                  </tr>
+
+
+                  <tr ng-if = "selectedNode.data.ed.insertAfter">
+                    <td  class="detailName">Insert after</td>
+                    <td>
+
+                      {{selectedNode.data.ed.insertAfter | dropFirstInPath}}
+                    </td>
+                  </tr>
+
+                </table>
+
+
+
+
+              </uib-tab>
+
+              <uib-tab ng-if = 'false'>
+                <uib-tab-heading>References <span class="badge">
+                  {{dgContainingThis.length || 0}}</span>
+                </uib-tab-heading>
+
+                <br/>
+                <div class="myScroll">
+                  <ul>
+                    <li ng-repeat="dg in dgContainingThis">
+                      {{dg}}
+                    </li>
+                  </ul>
+                </div>
+              </uib-tab>
+
+              <uib-tab>
+
+
+
+
+                <uib-tab-heading>Conditional <span class="badge">
+                  {{selectedNode.data.ed.enableWhen.length || 0}} | {{selectedNode.data.ed.conditionalVS.length || 0}}</span>
+                </uib-tab-heading>
+                <br/>
+
+
+                <div ng-if = "selectedNode.data.ed.enableWhen">
+                <strong>Show this element if: </strong>
+
+                <table class="table table-bordered">
+                  <tr><th>Source</th><th>Operator</th><th>Value</th></tr>
+                  <tr ng-repeat="dep in selectedNode.data.ed.enableWhen">
+                    <td>
+                      {{dep.source | dropFirstInPath}}
+
+                      <span ng-if="! hashFullElementsById[dep.sourceId]">
+                        <i style="color: red"
+                           uib-popover="The source {{dep.source}} and sourceId {{dep.sourceId}} does not match an element in the DG: "
+                           popover-placement="right"
+                           popover-trigger="'mouseenter'"
+                           class="pull-right glyphicon glyphicon-warning-sign"></i>
+                      </span>
+
+                      <span ng-if="!dep.sourceId">
+                        <i style="color: red"
+                           uib-popover="The sourceId is missing "
+                           popover-placement="right"
+                           popover-trigger="'mouseenter'"
+                           class="pull-right glyphicon glyphicon-warning-sign"></i>
+                      </span>
+
+
+                    </td>
+
+                    <td>{{dep.operator}}</td>
+                    <td>
+                      <div ng-if="dep.value.code">{{dep.value.code}} | {{dep.value.display}}</div>
+                      <div ng-hide="dep.value.code">{{dep.value}}</div>
+                    </td>
+                    <td> <i style="color: red" class="glyphicon glyphicon-remove clickable"
+                            ng-if = "canEdit(selectedModel)"
+                            ng-click="removeEnableWhen($index,selectedNode.data.ed.path)"></i></td>
+                  </tr>
+                </table>
+                <em ng-if="selectedNode.data.ed.enableWhen.length > 0">This element will be hidden in a form unless one of the above conditions is true</em>
+
+
+
+                </div>
+
+                <!-- TODO - come back to this after bug fixes -->
+                <div ng-if="canEdit(selectedModel)" class="btn-link btn pull-right"
+                     ng-click="addEWNew()">Add new control element</div>
+
+
+                <div ng-if = "selectedNode.data.ed.conditionalVS">
+                  <hr/>
+                  <strong>Conditional ValueSet</strong>
+
+                  <table class="table table-bordered">
+                    <tr><th>Path</th><th>Value</th><th>ValueSet</th></tr>
+                    <tr ng-repeat="row in selectedNode.data.ed.conditionalVS">
+                      <td>{{row.path}}</td>
+                      <td>{{row.value.display}}</td>
+                      <td>{{row.valueSet}}</td>
+
+                    </tr>
+                  </table>
+
+                </div>
+
+
+
+
+
+              </uib-tab>
+
+              <uib-tab heading="Json">
+
+                New
+                <pre>{{edForJsonDisplay | json}}</pre>
+                Old
+
+<!--
+                <pre ng-show="selectedNode">{{selectedNode.data.ed | json}}</pre>
+                -->
+
+              </uib-tab>
+            </uib-tabset>
+
+
+            <br/><br/>
+            <div ng-hide="selectedNode.data.ed.kind == 'root' || ! canEdit(selectedModel)">
+              {{selectedNode.data.ed.title}}
+              <button class="btn-link btn"
+                      ng-if="userMode == 'library'"
+                      ng-click="deleteDGItem(selectedNode.data.ed)">
+                Delete this item
+              </button>
+
+            </div>
+
+          </div>
+
+          <br/>
+
+          </div>
+        </div>
+      </div>
+
+    </uib-tab>
+
+
+    <uib-tab heading="Views">
+      <br/>
+      <uib-tabset>
+
+
+        <uib-tab heading="Table">
+          <br/>
+          <div class="tableFixHead">
+            <table class="table-bordered table">
+              <thead>
+              <tr><th>Path</th><th>Title</th><th>Description</th><th>DG Type</th><th>Card.</th><th>SDC attributes</th><th>Source</th></tr>
+              </thead>
+              <tbody>
+
+              <tr ng-repeat="element in fullElementList"
+                  ng-hide="$index==0 || (element.ed.mult.indexOf('..0') > -1)">
+                <td>
+                  <div  ng-style="{ 'padding-left': (element.ed.path | pathindent) }">
+
+                   <div class="clickable" ng-click="termSelectDGItem({hiddenDGName:selectedModel.name,path:element.ed.path})">
+                     {{element.ed.path | lastInPath}}
+                   </div>
+
+
+                  </div>
+
+
+                </td>
+                <td>{{element.ed.title}}</td>
+                <td>
+
+                  {{element.ed.description}}
+                </td>
+                <td>
+                  <div ng-repeat="type in element.ed.type">
+                    {{type}}
+                  </div>
+                  <div>
+                    <em class="clickable" ng-if = "element.ed.valueSet"
+                        uib-popover="{{element.ed.valueSet}}"
+                        popover-placement="top"
+                        popover-trigger="'mouseenter'"
+                        ng-click="viewVS(element.ed.valueSet)">
+                      View VS
+                   <!--   {{element.ed.valueSet}}-->
+                    </em>
+                  </div>
+
+                  <div ng-if="element.ed.options.length > 0" >
+                    <em class="clickable"
+                        ng-click = "editDGOptionsList(element.ed)">View {{element.ed.options.length}} options
+                    </em> </div>
+
+                </td>
+                <td>{{element.ed.mult}}</td>
+
+                <td>
+
+
+                  <div ng-if="element.ed.fixedCode || element.ed.fixedCoding || element.ed.fixedDecimal ||
+                      element.ed.fixedString || ed.fixedQuantity">
+                    Fixed value
+
+                  </div>
+<!--
+                  {{element.ed.fixedCode}}{{element.ed.fixedCoding}}
+                  {{element.ed.fixedDecimal}}{{element.ed.fixedString}}
+                  {{element.ed.fixedQuantity.value}} {{element.ed.fixedQuantity.unit}}
+                  -->
+
+                  <div ng-if="element.ed.itemCode">Code: {{element.ed.itemCode.code}}</div>
+                  <div ng-if="element.ed.definition">Extract: {{element.ed.definition}}</div>
+                  <div ng-if="element.ed.prePop">PrePop: {{element.ed.prePop}}</div>
+
+
+
+                  {{getExtractType(element.ed)}}
+
+
+                  <div ng-if="element.ed.adHocExtension && element.ed.adHocExtension.length > 0"
+                       class="clickableDotted"
+                       uib-popover-html="popoverText(element.ed.adHocExtension)"
+                       popover-placement="left"
+                       popover-class="custom-popover-big"
+                       popover-trigger="'mouseenter'">
+
+                    Extension
+
+                  </div>
+
+
+
+
+                </td>
+                <td>{{element.ed.sourceModelName}}</td>
+
+
+
+
+              </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </uib-tab>
+
+
+        <uib-tab heading="Codes">
+          <br/>
+          <div class="tableFixHead">
+            <table class="table-bordered table">
+              <thead>
+              <tr><th>Path</th><th>Description</th><th>DG Type</th><th>OE Code</th></tr>
+              </thead>
+              <tbody>
+
+              <tr ng-repeat="element in fullElementList"
+                  ng-hide="$index==0 || (element.ed.mult.indexOf('..0') > -1)">
+                <td>
+                  <div  ng-style="{ 'padding-left': (element.ed.path | pathindent) }">
+
+                    <div class="clickable" ng-click="termSelectDGItem({hiddenDGName:selectedModel.name,path:element.ed.path})">
+                      {{element.ed.title}}
+                      <!--{{element.ed.path | lastInPath}}-->
+                    </div>
+
+
+                  </div>
+
+
+                </td>
+
+                <td>
+
+                  {{element.ed.description}}
+                </td>
+                <td>
+                  <div ng-repeat="type in element.ed.type">
+                    {{type}}
+                  </div>
+                  <div>
+                    <em class="clickable" ng-if = "element.ed.valueSet"
+                        uib-popover="{{element.ed.valueSet}}"
+                        popover-placement="top"
+                        popover-trigger="'mouseenter'"
+                        ng-click="viewVS(element.ed.valueSet)">
+                      View VS
+                      <!--   {{element.ed.valueSet}}-->
+                    </em>
+                  </div>
+
+                  <div ng-if="element.ed.options.length > 0" >
+                    <em class="clickable"
+                        ng-click = "editDGOptionsList(element.ed)">View {{element.ed.options.length}} options
+                    </em> </div>
+
+                </td>
+
+                <td>
+                  <span class="clickable" ng-click="lookup(element.ed.itemCode.code,element.ed.itemCode.system)">{{element.ed.itemCode.code}}</span>  {{element.ed.itemCode.system}}
+                  <div>{{element.ed.itemCode.display}}</div>
+                </td>
+
+
+
+              </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </uib-tab>
+
+
+
+
+        <uib-tab heading="Graph" select="fitGraph()">
+
+          <em>Directly referenced DataTypes</em>
+          <br/>
+          <div class="row">
+            <div class="col-md-6">
+              <div id="graph"></div>
+            </div>
+            <div class="col-md-6">
+
+
+              <uib-tabset ng-if="selectedModelFromGraph">
+
+                <uib-tab heading="Table">
+
+                  <div class="row">
+                    <div class="col-md-2">Name:</div>
+                    <div class="col-md-10">
+
+                      <div class="clickable"
+                           ng-if="selectedModelFromGraph.name !== selectedModel.name"
+                           ng-click="termSelectDG({DGName:selectedModelFromGraph.name},selectedModel.name)">{{selectedModelFromGraph.name}}
+                      </div>
+
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-2">Title:</div>
+                    <div class="col-md-10">{{selectedModelFromGraph.title}}</div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-2">Description:</div>
+                    <div class="col-md-10">{{selectedModelFromGraph.description}}</div>
+                  </div>
+                  <div ng-if="selectedModelFromGraph.parent" class="row">
+                    <div class="col-md-2">Parent:</div>
+                    <div class="col-md-10">
+                      <div class="clickable"
+                              ng-click="termSelectDG({DGName:selectedModelFromGraph.parent},selectedModel.name)">
+                        {{selectedModelFromGraph.parent}}
+                      </div>
+
+                    </div>
+                  </div>
+
+
+                  <br/>
+
+                  <uib-tabset>
+
+                    <uib-tab heading="Full list">
+
+                      <table class="table-bordered table table-condensed">
+                        <tr><th>Path</th><th>Type</th><th>Card.</th></tr>
+                        <tr ng-repeat="item in selectedModelFromGraphFull">
+                          <td>
+                            <div class="clickableDotted" uib-popover="{{item.ed.description}}"
+                                 popover-placement="top"
+                                 popover-trigger="'mouseenter'">{{item.ed.path | dropFirstInPath}}</div>
+
+                          </td>
+                          <td>{{item.ed.type[0]}}
+                            <div class="clickable"><em ng-click="viewVS(item.ed.valueSet)">{{item.ed.valueSet}}</em></div>
+
+                            <div><em>{{item.ed.fixedCoding}}</em></div>
+                          </td>
+
+                          <td>{{item.ed.mult}}</td>
+                        </tr>
+                      </table>
+                      <em>These are all elements, including inherited</em>
+
+                    </uib-tab>
+
+                    <uib-tab heading="SDC">
+                      <table class="table-bordered table">
+                        <tr>
+                          <td>FHIR resource type</td>
+                          <td>
+                            {{snapshotSvc.getExtractResource(selectedModelFromGraph.name)}}
+                          </a>
+
+                          </td>
+                        </tr>
+                      </table>
+
+                      <table class="table-bordered table">
+                        <tr ng-repeat="item in selectedModelFromGraphFull track by item.ed.path"
+                            ng-if="item.ed.definition || item.ed.prePop">
+                          <td>{{item.ed.path}}</td>
+                          <td>
+                            <div ng-show="item.ed.definition">Definition: {{item.ed.definition}}</div>
+                            <div ng-show="item.ed.prePop">Pre-pop: {{item.ed.prePop}}</div>
+                          </td>
+                        </tr>
+                      </table>
+
+                    </uib-tab>
+
+                    <uib-tab heading="Directly defined">
+                      <table class="table-bordered table table-condensed">
+                        <tr><th>Path</th><th>Type</th><th>Card.</th></tr>
+                        <tr ng-repeat="ed in selectedModelFromGraph.diff">
+                          <td>
+                            <div class="clickableDotted" uib-popover="{{ed.description}}"
+                                 popover-placement="right"
+                                 popover-trigger="'mouseenter'">{{ed.path}}</div>
+
+
+                          </td>
+                          <td>{{ed.type[0]}}
+                            <div class="clickable"><em>{{ed.valueSet}}</em></div>
+                            <div><em>{{ed.fixedCoding}}</em></div>
+                          </td>
+
+                          <td>{{ed.mult}}</td>
+                        </tr>
+                      </table>
+                      <em>This is only elements directly defined in the DG, including overrides</em>
+
+                    </uib-tab>
+                  </uib-tabset>
+
+
+                </uib-tab>
+                <uib-tab heading="DG Json">
+                  <pre>{{selectedModelFromGraph | json}}</pre>
+                </uib-tab>
+              </uib-tabset>
+
+
+            </div>
+          </div>
+
+
+        </uib-tab>
+
+        <uib-tab heading="Extensions">
+          <br/>
+          <em>User specified extensions defined in extract items (not SDC ones)</em>
+          <table class="table-bordered table">
+            <tr><th>Path</th><th>Title</th><th>Description</th><th>Url</th></tr>
+
+            <tr ng-repeat="element in fullElementList"
+                ng-if="element.ed.definition.indexOf('extension') > -1">
+              <td>
+
+                <div ng-repeat = "segment in element.ed.path.split('.') track by $index">
+                  {{segment}}
+                </div>
+              </td>
+              <td>{{element.ed.title}}</td>
+              <td>
+
+                {{element.ed.description}}
+              </td>
+
+              <td>{{element.ed.extractExtensionUrl}}</td>
+            </tr>
+
+            </tr>
+
+          </table>
+
+        </uib-tab>
+
+        <uib-tab heading="AdHoc Extensions">
+          <br/>
+
+          <em class="pull-right">All AdHoc extensions in the model - not just this DG</em>
+          <table class="table-bordered table">
+            <tr><th>Path</th><th>Extensions</th></tr>
+
+            <tr ng-repeat="item in allAdHocExt"
+                ng-show="item.dg == selectedModel.name">
+              <td>
+                <span class="clickable"
+                      ng-click="termSelectDGItem({hiddenDGName:item.dg,path:item.path})">{{::item.path}}</span>
+
+              </td>
+              <td><pre>{{item.adHocExt | json}}</pre></td>
+            </tr>
+          </table>
+        </uib-tab>
+
+        <uib-tab heading="SDC Expressions">
+          <br/>
+
+          <table class="table table-bordered">
+            <tr><th>Expression</th><th>Language</th><th>Url</th><th>Path</th></tr>
+            <tr ng-repeat="item in variablesForDG">
+              <td>{{item.expression.expression}}</td>
+              <td>{{item.expression.language}}</td>
+              <td>
+                {{item.url | lastInUrl}}
+                <div
+                        class="clickableDotted"
+                        uib-popover-html="popoverText(item.ext)"
+                        popover-placement="top"
+                        popover-class="custom-popover-big"
+                        popover-trigger="'mouseenter'">
+
+                  Extension
+
+                </div>
+
+              </td>
+              <td>
+                <div class="clickable" ng-click="termSelectDGItem({hiddenDGName:selectedModel.name,path:item.path})">
+                  {{item.path }}
+                </div>
+
+
+              </td>
+
+
+            </tr>
+          </table>
+
+
+        </uib-tab>
+
+
+        <uib-tab heading="Logical Model">
+          The FHIR shorthand that represents this DataGroup as a FHIR Logical Model.
+          <span class="pull-right">
+       <i class="glyphicon glyphicon-paperclip pull-right clickable"
+          ng-click="copyFshToClipboard(dgFshLM)"></i>
+      </span>
+          <br/>
+          <pre>{{dgFshLM}}</pre>
+
+
+        </uib-tab>
+
+        <uib-tab ng-if = "false" heading="Order element">
+          <pre>{{selectedModel.ssOrder | json}}</pre>
+
+        </uib-tab>
+
+
+      </uib-tabset>
+
+
+
+
+
+    </uib-tab>
+
+
+    <uib-tab heading="Relationships">
+
+      <strong>DataGroups related to this one via the hierarchy</strong>
+      <br/> <br/>
+      <div class="row">
+        <div class="col-md-3">
+
+          <strong>Ancestry</strong>
+          <br/>
+          <div>
+            <div ng-repeat="parent in relationshipsSummary.parents">
+              <div class = 'clickable' ng-click="termSelectDG({DGName:parent},selectedModel.name)">{{hashAllDG[parent].title}}</div>
+              <div>
+                <i style="margin-left: 40px" class="glyphicon glyphicon-arrow-down"></i>
+              </div>
+            </div>
+
+            <div ng-if="relationshipsSummary.parents.length > 0">
+              <div  class="rounded-box">{{selectedModel.title}}</div>
+            </div>
+
+            <div  ng-if="relationshipsSummary.parents.length == 0">
+              <em>There is no parent</em>
+            </div>
+
+          </div>
+
+        </div>
+        <div class="col-md-3">
+          <strong>Direct children</strong>
+          <br/>
+          <div ng-repeat="child in relationshipsSummary.children">
+            <div class = 'clickable' ng-click="termSelectDG({DGName:child},selectedModel.name)">{{hashAllDG[child].title}}</div>
+          </div>
+
+        </div>
+        <div class="col-md-6">
+          <strong>References directly from this DG</strong>
+          <br/>
+
+
+          <table class="table table-bordered">
+            <tr><th>Path</th><th>Type</th></tr>
+            <tr ng-repeat="reference in relationshipsSummary.references">
+              <td>{{reference.path}}</td>
+              <td>
+                <div class = 'clickable' ng-click="termSelectDG({DGName:reference.dgName},selectedModel.name)">
+                  {{reference.dgName}}
+                </div>
+              </td>
+            </tr>
+          </table>
+<!--
+          <table class="table table-bordered">
+            <tr><th>Path</th><th>Type</th></tr>
+            <tr ng-repeat="reference in relationshipsSummary.references">
+              <td>{{reference.path}}</td>
+              <td>
+                <div class = 'clickable' ng-click="termSelectDG({DGName:reference.type},selectedModel.name)">
+                  {{reference.type}}
+                </div>
+              </td>
+            </tr>
+          </table>
+
+          -->
+
+        </div>
+      </div>
+
+<hr/>
+
+      <strong>DataGroups and Compositions that reference this one</strong>
+      <table class="table table-bordered">
+        <tr><th>Title (name)</th><th>Path</th><th>Kind</th><th>Card.</th><th>Mode</th></tr>
+
+        <tr ng-repeat="item in xref[selectedModel.name] track by $index">
+          <td>
+            <div class="clickable" ng-click="selectModelFromList(item.name,item.kind)">
+              {{item.title}} ({{item.name}})
+            </div>
+
+
+          </td>
+          <td>{{item.path}}</td>
+          <td>{{item.kind}}</td>
+          <td>{{item.mult}}</td>
+          <td>{{item.mode}}</td>
+        </tr>
+      </table>
+
+
+<!--
+      <pre>{{relationshipsSummary | json}}</pre>
+-->
+    </uib-tab>
+
+    <uib-tab ng-if="false">
+      <uib-tab-heading>Referenced by</uib-tab-heading>
+
+
+      <table class="table table-bordered">
+        <tr><th>Name</th><th>Path</th><th>Kind</th></tr>
+        <tr ng-repeat="item in xref[selectedModel.name] track by $index">
+          <td>
+            <div class="clickable" ng-click="selectModelFromList(item.name,item.kind)">
+              {{item.name}}
+            </div>
+
+
+          </td>
+          <td>{{item.path}}</td>
+          <td>{{item.kind}}</td>
+        </tr>
+      </table>
+
+
+
+
+
+    </uib-tab>
+
+    <uib-tab >
+
+
+
+      <uib-tab-heading>
+        Dependencies <span class="badge"> {{allDependencies.length}}</span>
+      </uib-tab-heading>
+
+
+
+
+      <h4>Dependencies</h4>
+
+      <table class="table-bordered table">
+        <tr><th>Target (what to show/hide)</th><th>Controlling element</th><th>Controller description</th><th>Op</th>
+          <th>Value (that will show target)</th>
+
+
+        </tr>
+        <tr ng-repeat="dep in allDependencies"
+          ng-class="{error:dep.error}">
+          <td>
+            <div class="clickable" ng-click="selectCondElement(dep.path)">
+              {{dep.path | dropFirstInPath}}
+
+            </div>
+            <div><em>{{fullElementHash[dep.path].title}}</em></div>
+          </td>
+
+          <td>
+            {{dep.ew.source | dropFirstInPath}}
+            <div><em>{{dep.ed.title}}</em></div>
+          </td>
+
+          <td>{{dep.ed.description}}
+            <div ng-if="dep.error">
+              <div class="alert alert-danger">{{dep.error}}</div>
+            </div>
+          </td>
+
+          <td>{{dep.ew.operator}}</td>
+          <td>
+            <div ng-if="dep.ew.value.code">{{dep.ew.value.code}} | {{dep.ew.value.display}}</div>
+            <div ng-hide="dep.ew.value.code">{{dep.ew.value}}</div>
+          </td>
+
+        </tr>
+      </table>
+
+      <em>All of the hide / show dependencies in this DG</em>
+
+
+
+    </uib-tab>
+
+
+    <uib-tab ng-if="userMode == 'library'">
+      <uib-tab-heading>
+        Ordering <span class="badge"> {{selectedModel.ordering.length}}</span>
+      </uib-tab-heading>
+
+      <br/>
+      <div ng-controller="orderingCtrl">
+        <ng-include src="'includes/ordering.html'"></ng-include>
+      </div>
+
+      <hr/>
+    </uib-tab>
+
+
+
+
+
+
+    <uib-tab>
+      <uib-tab-heading>Diff <span class="badge">{{selectedModel.diff.length}}</span> </uib-tab-heading>
+      <em>The element definitions in the .diff element. ie directly defined in the DG. The Json has the expanded DG.
+      Clicking on an element in the table, selects it in the list (to see details)</em>
+      <br/><br/>
+
+<!--
+      <button class="btn-link btn pull-right" ng-click="fixGroups()">Fix groups order in Diff</button>
+      -->
+
+      <uib-tabset>
+        <uib-tab heading="Table">
+          <table class="table-condensed table table-bordered">
+            <thead style="position:sticky;top:0">
+            <tr><th>Path</th><th>Title</th><th>Description</th><th>Card.</th><th>Type</th><th></th></tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="ed in selectedModel.diff">
+              <td>
+                <!--
+                <div class="clickableDotted" ng-click="input.selectedDiff = ed">{{ed.path}}</div>
+-->
+                <div class="clickable"
+                     ng-click="termSelectDGItem({hiddenDGName:selectedModel.name,path:ed.path})">{{ed.path}}</div>
+
+
+
+
+              </td>
+              <td>{{ed.title}}</td>
+              <td>{{ed.description}}</td>
+              <td>{{ed.mult}}</td>
+              <td>{{ed.type[0]}}</td>
+              <td>
+                <i ng-if="canEdit(selectedModel)" class="btn btn-link glyphicon glyphicon-remove clickable"
+                   ng-click="deleteDGDiff($index)"></i>
+              </td>
+            </tr>
+            </tbody>
+
+
+          </table>
+        </uib-tab>
+        <uib-tab heading="List">
+          <div class="row">
+            <div class="col-md-6">
+              <input class="form-control" placeholder="Filter on path" ng-model="input.diffFilter"/>
+
+              <div class="list-group myScroll">
+                <div ng-class="{'list-group-item':true,listItemSelected:input.selectedDiff.path == ed.path}"
+                     ng-click="input.selectedDiff = ed"
+                     ng-if="showDiff(input.diffFilter,ed.path)"
+                     ng-repeat="ed in selectedModel.diff">
+                  {{ed.path}}
+                </div>
+              </div>
+
+            </div>
+            <div class="col-md-6">
+              <pre>{{input.selectedDiff | json}}</pre>
+            </div>
+          </div>
+
+        </uib-tab>
+
+      </uib-tabset>
+
+
+
+
+
+
+    </uib-tab>
+
+
+    <uib-tab>
+      <uib-tab-heading>Snapshot <span class="badge">{{fullElementList.length -1}}</span></uib-tab-heading>
+
+
+
+      <uib-tabset>
+        <uib-tab heading="List">
+          <div class="tableFixHead">
+            <table class="table-bordered table">
+              <thead>
+              <tr><th>Path</th><th>Title</th>
+                <th>Description</th><th>Type</th><th>Mult.</th><th>Source</th><th ng-if="canEdit(selectedModel)"><span >Edit</span></th>
+              </tr>
+              </thead>
+              <tbody>
+
+              <!---     <tr ng-repeat="element in fullElementList">-->
+              <tr ng-repeat="element in fullElementList"
+                  ng-class="{edIssue: element.ed.issue.length > 0}"
+                  ng-if="$index > 0">
+
+
+
+
+                <td>
+
+                  <div ng-repeat = "segment in element.ed.path.split('.') track by $index">
+                    {{segment}}
+                  </div>
+
+                  <div ng-repeat="issue in element.ed.issue track by $index">
+                    <em>{{issue}}</em>
+                  </div>
+
+                  <!--
+                                    <div  ng-style="{ 'padding-left': (element.ed.path | pathindent) }">
+
+                                      <div ng-hide="input.showFullModel">
+                                        {{element.ed.path | dropFirstInPath}}
+                                      </div>
+                                      <div ng-if="input.showFullModel">
+                                        {{element.ed.path | lastInPath}}
+
+                                      </div>
+                                    </div>
+                                    -->
+
+
+
+
+                </td>
+
+
+                <td>{{element.ed.title}}</td>
+                <td>
+
+                  {{element.ed.description}}
+                </td>
+                <td>
+                  <div ng-repeat="type in element.ed.type">
+                    {{type}}
+                  </div>
+                  <div><em class="clickable" ng-click="viewVS(element.ed.valueSet)">{{element.ed.valueSet}}</em></div>
+                </td>
+                <td>{{element.ed.mult}}</td>
+
+                <td>{{getSourceModelName(element.ed)}}</td>
+
+                <td ng-if="canEdit(selectedModel)">
+                  <i class="glyphicon glyphicon-edit clickable"
+                     ng-click="editDGItem(element)"></i>
+                </td>
+
+              </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </uib-tab>
+        <uib-tab heading="Json">
+          <pre>{{fullElementList | json}}</pre>
+        </uib-tab>
+      </uib-tabset>
+
+    </uib-tab>
+
+
+    <uib-tab ng-if="false" heading="Audit">
+      <!-- Audit only looks at hierarchy - not referenced DG-->
+      <uib-tab-heading>Audit <span ng-if="dgAudit.lstRedundantEd.length > 0" class="badge">{{dgAudit.lstRedundantEd.length}}</span> </uib-tab-heading>
+        <br/>
+        <uib-tabset>
+
+          <uib-tab heading="Diff Analysis">
+
+            <div ng-if="dgAudit.lstRedundantEd.length > 0">
+              <h4>Redundant diff entries - no matching parent element</h4>
+              <table class="table-bordered table">
+                <tr><th>Path</th><th>Title</th><th>Type</th><th>Card.</th></tr>
+                <tr ng-repeat="row in dgAudit.lstRedundantEd">
+                  <td>{{row.path}}</td>
+                  <td>{{row.title}}</td>
+                  <td>{{row.type[0]}}</td>
+                  <td>{{row.mult}}</td>
+                </tr>
+              </table>
+              <div>
+                <div class="btn btn-link pull-right" ng-click="deleteAllRedundantDiff()">Delete all redundant diff</div>
+              </div>
+              <div class="clearfix"></div>
+
+            </div>
+
+
+
+
+            <h4>Diff entries that match a parent element</h4>
+            <table class="table-bordered table">
+              <tr><th>Path</th><th>Where defined</th><th>Type</th><th>Card.</th></tr>
+              <tr ng-repeat="row in dgAudit.allElements" ng-if="row.mult == '0..0'">
+                <td>{{row.path}}</td>
+                <td>{{row.definedTitle}}</td>
+                <td>{{row.type[0]}}</td>
+                <td>{{row.mult}}</td>
+              </tr>
+            </table>
+
+
+
+          </uib-tab>
+
+
+          <uib-tab heading="All elements">
+
+            <div class="row">
+              <div class="col-md-12">
+                <h4>All elements</h4>
+                <table class="table-bordered table">
+                  <tr><th>Path</th><th>Where defined</th><th>Type</th><th>Card.</th></tr>
+                  <tr ng-repeat="row in dgAudit.allElements" ng-if="row.mult !== '0..0'">
+                    <td>{{row.path}}</td>
+                    <td>{{row.definedTitle}}</td>
+                    <td>{{row.type[0]}}</td>
+                    <td>{{row.mult}}</td>
+                  </tr>
+                </table>
+              </div>
+              <div class="col-md-0">
+
+
+
+              </div>
+            </div>
+
+
+
+          </uib-tab>
+          <uib-tab heading="Json">
+            <pre>{{dgAudit | json}}</pre>
+          </uib-tab>
+        </uib-tabset>
+
+
+
+
+
+    </uib-tab>
+
+    <uib-tab heading="Json">
+      <em>The definition for this model (not expanded)</em>
+      <span class="pull-right">
+       <i class="glyphicon glyphicon-paperclip pull-right clickable"
+          ng-click="copyToClipboard(selectedModel)"></i>
+      </span>
+      <pre>{{selectedModel | json}}</pre>
+    </uib-tab>
+
+
+  </uib-tabset>
+
+
+</div>

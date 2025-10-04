@@ -1,0 +1,137 @@
+
+<div>
+  <!--<div ng-controller="newResourceCtrl">-->
+
+  <div class="modal-header">
+    <div class="row">
+      <div class="col-md-8 col-sm-8">
+        <h3 class="modal-title">
+          <div ng-show="kind =='fixed'">Set fixed value: {{type}}</div>
+          <div ng-show="kind =='default'">Set default value: {{type}}</div>
+        </h3>
+      </div>
+
+
+      <div class="col-md-4 col-sm-4">
+        <button ng-show = "canSave()"
+                class="btn btn-primary pull-right" ng-click="save()">Save</button>
+
+        <button class="btn btn-link pull-right" ng-click="$dismiss()">Close</button>
+
+
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-body">
+
+
+    <div ng-show = "type == 'code'">
+      <div class="row">
+        <div class="col-md-6">
+          code
+        </div>
+        <div class="col-md-3">
+          <input type="text" class="form-control" ng-model="input.code"/>
+        </div>
+        <div class="col-md-3">
+
+        </div>
+      </div>
+
+    </div>
+
+    <div ng-show = "type == 'Ratio'">
+      <div class="row">
+        <div class="col-md-6">
+          Numerator Unit of measure
+        </div>
+        <div class="col-md-3">
+          <input type="text" class="form-control" ng-model="input.numeratorUnit"/>
+        </div>
+        <div class="col-md-3">
+
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          Denominator Unit of measure
+        </div>
+        <div class="col-md-3">
+          <input type="text" class="form-control" ng-model="input.denominatorUnit"/>
+        </div>
+        <div class="col-md-3">
+
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          Denominator value
+        </div>
+        <div class="col-md-3">
+          <input type="text" class="form-control" ng-model="input.denominatorValue"/>
+        </div>
+        <div class="col-md-3">
+
+        </div>
+      </div>
+    </div>
+
+
+    <div ng-show = "type == 'Quantity'">
+      <div class="row">
+        <div class="col-md-3">
+          Unit of measure
+        </div>
+        <div class="col-md-3">
+          <input type="text" class="form-control" ng-model="input.unit"/>
+        </div>
+        <div class="col-md-3">
+
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-3">
+          Value
+        </div>
+        <div class="col-md-3">
+          <input type="text" class="form-control" ng-model="input.fixedValue"/>
+        </div>
+        <div class="col-md-3">
+
+        </div>
+      </div>
+    </div>
+    <div ng-show = "type == 'Coding'">
+
+     <table class="table">
+       <tr><td>System</td> <td><input type="text" class="form-control" ng-model="input.system"/> </td></tr>
+       <tr><td>Code</td>
+         <td>
+         <div class="row">
+           <div class="col-md-9">
+             <input type="text" class="form-control" ng-model="input.code"/>
+           </div>
+           <div class="col-md-3">
+            <div ng-show="input.code" class="btn btn-info pull-right" ng-click = "lookupFSN()">Lookup</div>
+           </div>
+         </div>
+
+         </td>
+       </tr>
+       <tr><td>Display</td> <td><input type="text" class="form-control" ng-model="input.display"/> </td></tr>
+       <tr><td>FSN</td> <td><input type="text" class="form-control" ng-model="input.fsn"/> </td></tr>
+     </table>
+
+    </div>
+
+
+
+  </div>
+  <div class="modal-header">
+    <div ng-show="tsQuery">
+      TS Query: {{tsQuery}}
+    </div>
+
+  </div>
+</div>

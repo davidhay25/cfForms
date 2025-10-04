@@ -1,0 +1,212 @@
+
+
+
+<div ng-show="entry.type == 'group' || entry.item.type == 'group'">
+  <div class="group">{{entry.item.text }}</div>
+
+</div>
+
+<div ng-show="entry.type == 'leaf'">
+  <div ng-class="{leaf:true, disabled:entry.isDisabled}">
+    <div style="cursor: pointer" ng-click="onFocus(entry)">
+      {{entry.title }}
+
+    </div>
+
+    <div style="padding-left: 15px; padding-right: 15px" ng-switch="entry.item.type">
+
+      <div ng-switch-when = "display" >
+        <!-- Don't need anything as the text was displayed above-->
+      </div>
+
+      <div ng-switch-when = "choice" >
+
+        <div ng-show="entry.ed.fixedCoding">
+          <div class="row">
+            <div class="col-md-10">
+              <div ng-click="onFocus(entry)">
+                Fixed value: {{entry.ed.fixedCoding.code}} | {{entry.ed.fixedCoding.display}} | {{entry.ed.fixedCoding.system}}
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+
+
+        <div ng-hide="entry.ed.fixedCoding">
+
+        <!-- Just have radio & dropdown for now...-->
+        <div ng-show="entry.ed.controlHint == 'radio'">
+          <div ng-repeat="concept in getOptions(entry.item)">
+            <input type="radio" ng-model="dataEntered[entry.linkId]"
+                   ng-focus="onFocus(entry)"
+                   ng-change = "dataUpdated(entry.item)"
+                    ng-value="{{concept}}"/> {{concept.display}}
+          </div>
+        </div>
+
+          <div ng-show="entry.ed.controlHint == 'check-box'">
+            <div ng-repeat="concept in getOptions(entry.item)">
+              <input type="checkbox" ng-model="dataEntered[entry.linkId+$index]"
+                     ng-focus="onFocus(entry)"
+                     ng-change = "dataUpdated(entry.item)"
+                     ng-value="{{concept}}"/> {{concept.display}}
+            </div>
+
+          </div>
+
+
+
+        <!-- Default is the drop down-->
+        <div ng-hide=" entry.ed.controlHint == 'radio' || entry.ed.controlHint == 'check-box'">
+          <div class="row">
+            <div class="col-md-10">
+              <select class="form-control"  ng-model="dataEntered[entry.linkId]"
+                      ng-focus="onFocus(entry.item)"
+                      ng-change = "dataUpdated(entry.item)"
+
+                      ng-options="concept.display for concept in getOptions(entry.item)">
+              </select>
+            </div>
+            <div class="col-md-2">
+              {{getOptions(entry.item).length}}
+            </div>
+          </div>
+
+
+        </div>
+
+
+      </div>
+
+
+
+      </div>
+
+      <div ng-switch-when = "quantity">
+
+        <div class="row">
+          <div class="col-md-10">
+            <input type="number" class="form-control"
+                   ng-focus="onFocus(entry.item)"
+                   ng-blur = "dataUpdated(entry.item)"
+                   ng-model="dataEntered[entry.linkId]"/>
+          </div>
+          <div class="col-md-2">
+            {{entry.ed.units[0]}}
+            {{entry.ed.fixedQuantity.unit}}
+          </div>
+        </div>
+
+
+
+
+
+      </div>
+
+      <div ng-switch-when = "boolean" >
+
+        <input type="radio" ng-model="dataEntered[entry.linkId]"
+               ng-focus="onFocus(entry)"
+               name = "{{entry.linkId}}"
+               ng-change = "dataUpdated(entry.item)"
+               ng-value="yes"/> Yes
+
+        <input type="radio" ng-model="dataEntered[entry.linkId]"
+               ng-focus="onFocus(entry)"
+               name = "{{entry.linkId}}"
+               ng-change = "dataUpdated(entry.item)"
+               ng-value="no"/> No
+
+      </div>
+
+      <div ng-switch-when = "date">
+        <div class="row">
+          <div class="col-md-10">
+            <input ng-change = "dataUpdated(entry.item)"
+                   ng-focus="onFocus(entry)"
+                   class="form-control" type="date" ng-model="dataEntered[entry.linkId]">
+
+          </div>
+          <div class="col-md-2">
+          </div>
+        </div>
+      </div>
+
+      <div ng-switch-when = "dateTime">
+        <div class="row">
+          <div class="col-md-10">
+            <input ng-change = "dataUpdated(entry.item)"
+                   ng-focus="onFocus(entry)"
+                   class="form-control" type="datetime-local" ng-model="dataEntered[entry.linkId]">
+
+          </div>
+          <div class="col-md-2">
+          </div>
+        </div>
+
+<!--
+        <p class="input-group">
+
+          <input type="text" class="form-control" uib-datepicker-popup="dd-MMMM-yyyy"
+                 ng-model="dataEntered[entry.linkId]" is-open="datePopup[entry.linkId].opened"
+                 ng-focus="onFocus(cell)"
+                 ng-change = "dataUpdated(entry.item)"/>
+
+          <span class="input-group-btn">
+                  <button type="button" class="btn btn-default" ng-click="openDate(entry.linkId)">
+                      <i class="glyphicon glyphicon-calendar"></i>
+                  </button>
+                </span>
+
+        </p>
+
+        -->
+
+
+      </div>
+
+      <div ng-switch-default>
+        <div class="row">
+          <div class="col-md-10">
+            <input class="form-control"
+
+                   ng-focus="onFocus(entry)"
+                   ng-change = "dataUpdated(entry.item)"
+                   placeholder="{{cell.meta.placeholder}}"
+                   ng-model="dataEntered[entry.linkId]"/>
+          </div>
+          <div class="col-md-2">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ?what is disabled doing
+    <div ng-repeat="ew in entry.ed.enableWhen" ng-show="entry.isDisabled">
+      -->
+
+      <div ng-repeat="ew in entry.ed.enableWhen" ng-show="entry.isDisabled">
+      <em>{{ew.source}} ({{hashEd[ew.source].title}}) {{ew.operator}} {{ew.value.display}}</em>
+    </div>
+
+
+
+<!-- Other doesn't have a corresponding ED-->
+    <div ng-repeat="ew in entry.item.enableWhen">
+      <em ng-show="ew.answerCoding.code == '74964007'">{{ew.question | dropFirstInPath}} is 'Other'</em>
+    </div>
+
+<!--
+    <div ng-show="entry.ed.prePop && ! entry.ed.autoPop"><em style="padding-left: 12px; color: grey">Pre-populated</em></div>
+
+    <div ng-show="entry.ed.autoPop"><em style="padding-left: 12px; color: grey">{{entry.ed.autoPop}}</em></div>
+-->
+
+  </div>
+
+</div>
+
+<br/>

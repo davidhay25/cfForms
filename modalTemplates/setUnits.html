@@ -1,0 +1,44 @@
+
+<div>
+    <!--<div ng-controller="newResourceCtrl">-->
+
+    <div class="modal-header">
+
+        <div class="row">
+            <div class="col-md-8 col-sm-8">
+                <h3 class="modal-title">Set units for {{ED.path}}</h3>
+            </div>
+
+
+            <div class="col-md-4 col-sm-4">
+                <button class="btn btn-primary pull-right" ng-click="save()">Close</button>
+            </div>
+
+
+        </div>
+
+    </div>
+    <div class="modal-body">
+
+        <table class="table-bordered">
+            <tr ng-repeat = "unit in ED.units track by $index">
+                <td>{{unit}}</td>
+                <td><i class="glyphicon glyphicon-minus pull-right clickable"
+                       ng-click="deleteUnit($index)"></i></td>
+            </tr>
+            <tr>
+                <td><input type="text" class="form-control" ng-model="input.unit"/> </td>
+                <td><i class="glyphicon glyphicon-plus pull-right clickable"
+                       ng-click="addUnit(input.unit)"></i></td>
+            </tr>
+        </table>
+
+
+    </div>
+
+
+    <div class="modal-header">
+
+        <em>Set the units allowed for this element. Later, maybe select from UCUM</em>
+    </div>
+</div>

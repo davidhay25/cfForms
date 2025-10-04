@@ -1,0 +1,166 @@
+<div>
+  <!--<div ng-controller="newResourceCtrl">-->
+
+  <div class="modal-header">
+    <div class="row">
+      <div class="col-md-4">
+        <h3 class="modal-title">
+          Named Query tester
+        </h3>
+      </div>
+
+        <div class="col-md-4">
+        <div>
+            <a ng-href="{{linkToSpec}}" target="_blank">{{resourceType}} resource in spec</a>
+
+            <a href="https://hl7.org/fhir/R4B/search.html" target="_blank">Query in spec</a>
+
+
+
+        </div>
+        </div>
+
+
+
+      <div class="col-md-4 col-sm-4">
+        <button class="btn btn-link pull-right" ng-click="$dismiss()">Close</button>
+        <button ng-show = "input.dirty"
+                class="btn btn-primary pull-right" ng-click="save()">Save</button>
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-body">
+
+      <div class="row">
+          <div class="col-md-1">
+              Query
+          </div>
+          <div class="col-md-9">
+              <textarea class="form-control" ng-model="input.expression"
+                ng-change="input.dirty = true"
+              ></textarea>
+          </div>
+          <div class="col-md-2">
+              <button class="btn btn-link" ng-click="execute(input.expression)">Execute</button>
+
+
+          </div>
+      </div>
+
+      <div class="row">
+          <div class="col-md-1">
+              Item name
+          </div>
+          <div class="col-md-9">
+              {{query.itemName}}
+          </div>
+          <div class="col-md-2">
+
+          </div>
+      </div>
+
+
+      <hr/>
+
+      <uib-tabset ng-show="response">
+
+          <uib-tab heading="Json response">
+              <div class="row">
+                  <div class="col-md-6">
+                      <div class="myScroll">
+                          <pre>{{response | json}}</pre>
+                      </div>
+
+                  </div>
+                  <div class="col-md-6">
+
+                      <div class="row">
+
+                          <div class="col-md-10">
+                              <textarea class="form-control"
+                                        placeholder="FhirPath"
+                                        ng-model="input.fhirPathBundle"></textarea>
+
+                          </div>
+                          <div class="col-md-2">
+                              <button class="btn btn-link"
+                                      ng-click="executeFhirPathOnBundle(input.fhirPathBundle)">Execute</button>
+                          </div>
+                      </div>
+
+                      <div>
+                          <div ng-repeat="item in fhirPathResultBundle track by $index">
+                              <pre>{{item | json}}</pre>
+                          </div>
+                          <!--
+                          {{fhirPathResultBundle}}
+                          -->
+                      </div>
+
+
+
+
+                  </div>
+              </div>
+
+
+          </uib-tab>
+
+          <uib-tab ng-if="response.entry.length > 0" heading="Bundle contents">
+              <div class="row">
+                  <div class="col-md-3">
+                      <div class="myScroll">
+                          <div class="list-group">
+                              <div ng-class="{'list-group-item':true, listItemSelected:selectedResource.id == entry.resource.id}"
+                                   ng-click="selectResource(entry.resource)"
+                                   style="cursor: pointer"
+                                   ng-repeat="entry in response.entry">
+                                  {{entry.resource.id}}
+                              </div>
+                          </div>
+                      </div>
+
+                  </div>
+                  <div class="col-md-9">
+
+                      <div class="row" ng-if="selectedResource">
+                          <div class="col-md-2">
+                              FHIRPath
+                          </div>
+                          <div class="col-md-8">
+                              <textarea class="form-control" ng-model="input.fhirPath"></textarea>
+                              <div>
+                                  {{fhirPathResult}}
+                              </div>
+                          </div>
+                          <div class="col-md-2">
+                              <button class="btn btn-link" ng-click="executeFhirPath(input.fhirPath,selectedResource)">Execute</button>
+                          </div>
+                      </div>
+
+
+                      <pre ng-show="selectedResource">{{selectedResource | json}}</pre>
+
+
+                  </div>
+              </div>
+          </uib-tab>
+      </uib-tabset>
+
+
+
+  </div>
+  <div class="modal-header">
+      <div class="row">
+          <div class="col-md-2">
+              Patient Id
+          </div>
+          <div class="col-md-2">
+              <input type="text" class="form-control" ng-model="input.patientId"/>
+          </div>
+
+      </div>
+
+  </div>
+</div>

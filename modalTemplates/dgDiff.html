@@ -1,0 +1,129 @@
+
+<div>
+
+
+  <style>
+    .table-container {
+      width: 100%;          /* Make the container take up the full available width */
+      max-width: 100%;      /* Prevent it from expanding beyond its container */
+      overflow-x: auto;     /* Add horizontal scrolling if necessary */
+    }
+
+    table {
+      width: 100%;          /* Ensure the table fits within the container */
+      table-layout: fixed;  /* Control column widths */
+    }
+
+    th, td {
+      padding: 8px;         /* Add some padding for clarity */
+      border: 1px solid #ddd;
+      text-align: left;
+      word-wrap: break-word;     /* Allows long words to wrap */
+      word-break: break-word;    /* Ensures words break and wrap when needed */
+    }
+  </style>
+
+  <div class="modal-header">
+
+    <div class="row">
+      <div class="col-md-8 col-sm-8">
+        <h3 class="modal-title">DG Diff</h3>
+      </div>
+
+
+      <div class="col-md-4 col-sm-4">
+        <button class="btn btn-link pull-right" ng-click="$dismiss()">Close</button>
+      </div>
+
+
+    </div>
+
+  </div>
+  <div class="modal-body">
+
+    <uib-tabset>
+
+      <uib-tab heading="MetaData">
+        <table class="table table-bordered table-container">
+
+
+          <tr><th>Path</th><th>Local value</th><th>{{otherDisplay}} value</th></tr>
+          <tr ng-repeat="(k,v) in dgHashSummary"
+              style="cursor: pointer"
+              ng-class="{pass : v.isEqual,fail:! v.isEqual}">
+            <td>{{k}}</td>
+            <td style="width: 40%">{{v.local}}</td>
+            <td style="width: 40%">{{v.component}}</td>
+          </tr>
+        </table>
+      </uib-tab>
+
+
+      <uib-tab heading="Contents (diff)">
+        <br/>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="banner">Elements in Current and {{otherDisplay}} DG</div>
+            <div class="myScroll">
+              <table class="table table-bordered table-container">
+
+
+                <tr><th>Path</th><th>Current title</th><th> {{otherDisplay}} title</th></tr>
+                <tr ng-repeat="(k,v) in rowsHash"
+                    style="cursor: pointer"
+                    ng-class="{listItemSelected:k == selectedPath,pass : v.isEqual,fail:! v.isEqual}"
+                    ng-classXX="{listItemSelected:k == selectedPath,pass:! elDifferences[k],fail:elDifferences[k]}"
+                    ng-click="selectRow(k,v)">
+                  <td>{{k}}</td>
+                  <td style="width: 40%">{{v.local.title}}</td>
+                  <td style="width: 40%">{{v.component.title}}</td>
+                </tr>
+              </table>
+            </div>
+
+          </div>
+          <div class="col-md-6" ng-if="selectedPath">
+
+
+            <table class="table table-bordered">
+              <div class="banner">Attributes of the {{selectedPath}} path</div>
+              <tr><th>Path</th><th>Current value</th><th>{{otherDisplay}} value</th></tr>
+              <tr ng-repeat="(k,v) in elementsHash"
+                  ng-class="{listItemSelected:k == selectedPath,pass : v.isEqual,fail:! v.isEqual}"
+                  ng-click="selectRowXX(k,v)">
+                <td>{{k}}</td>
+                <td>{{v.local}}</td>
+                <td>{{v.component}}</td>
+              </tr>
+            </table>
+
+
+
+            <strong>Current Element</strong>
+            <pre>{{selectedLocalEl | json}}</pre>
+
+            <strong>{{otherDisplay}} Element</strong>
+            <pre>{{selectedComponentEl | json}}</pre>
+          </div>
+        </div>
+
+      </uib-tab>
+
+      <uib-tab heading="Json">
+
+        <div class="row">
+          <div class="col-md-6">
+            <strong>Current DG</strong>
+            <pre>{{localDG | json}}</pre>
+          </div>
+          <div class="col-md-6">
+            <strong>{{otherDisplay}} DG</strong>
+            <pre>{{componentDG | json}}</pre>
+          </div>
+        </div>
+      </uib-tab>
+    </uib-tabset>
+
+  </div>
+
+</div>

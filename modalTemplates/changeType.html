@@ -1,0 +1,202 @@
+
+<div>
+  <!--<div ng-controller="newResourceCtrl">-->
+
+  <div class="modal-header">
+    <div class="row">
+      <div class="col-md-10 col-sm-10">
+        <h3 class="modal-title">
+          Select / Change type: {{ed.title}}
+        </h3>
+      </div>
+
+
+      <div class="col-md-2 col-sm-2">
+        <button class="btn btn-primary pull-right"
+                ng-show="(input.class=='dg' && selectedDG) || (input.class=='dt' && selectedDT)"
+                ng-click="select()">Select</button>
+        <button class="btn btn-link pull-right" ng-click="$dismiss()">Close</button>
+
+
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-body">
+
+    <div class="row">
+      <div class="col-md-8">
+
+        <div><em>{{ed.description}}</em></div>
+      </div>
+      <div class="col-md-4">
+        <div class="pull-right" ng-show="ed.type[0]">
+          Current type: <strong>{{ed.type[0]}}</strong>
+        </div>
+      </div>
+    </div>
+    <br/>
+
+
+    <div>
+      <div class="btn-group pull-right">
+        <label class="btn btn-default" ng-model="input.class" uib-btn-radio="'dg'">DataGroup</label>
+        <label class="btn btn-default" ng-model="input.class" uib-btn-radio="'dt'">FHIR dataType</label>
+      </div>
+
+    </div>
+
+    <div class="row" ng-show="input.class == 'dg'">
+
+      <div class="col-md-4">
+
+        <uib-tabset>
+
+
+          <uib-tab heading="All DG">
+
+            <div class="row">
+              <div class="col-md-6">
+                <input type="text" placeholder="Filter" class="form-control"
+                       ng-model="input.dgFilter"/>
+              </div>
+              <div class="col-md-6">
+
+              </div>
+            </div>
+
+            <div class="myScroll">
+              <div class="list-group">
+                <div ng-class="{'list-group-item':true,listItemSelected:selectedDG == v}" style="cursor: pointer"
+                     ng-click="selectDG(v)"
+                     ng-show="showDG(v,input.dgFilter)"
+                     ng-repeat="v in sortedDGList1">
+
+                  {{v.title}}
+                </div>
+              </div>
+            </div>
+          </uib-tab>
+
+
+
+          <uib-tab heading="Tree">
+            <div id="ctDGTree"></div>
+          </uib-tab>
+
+          <uib-tab ng-show="childCount > 0">
+            <uib-tab-heading>All children of {{ed.type[0]}} <span class="badge">{{childCount}} </span></uib-tab-heading>
+
+
+            <ul class="list-group">
+              <li class="list-group-item" ng-repeat = "(k,v) in hashChildren"
+                  style="cursor: pointer"
+                  ng-class="{listItemSelected:selectedDG == v}"
+                  ng-click="selectDG(v)">
+                <div >{{v.title}}</div>
+              </li>
+            </ul>
+          </uib-tab>
+
+
+        </uib-tabset>
+
+
+
+
+
+      </div>
+
+
+
+      <div class="col-md-8">
+        <uib-tabset>
+
+          <uib-tab heading="Tree">
+            <div id="cdtTree"></div>
+          </uib-tab>
+
+          <uib-tab heading="Table">
+            <div class="tableFixHead">
+              <table class="table-bordered table">
+                <thead>
+                <tr><th>Title</th><th>Description</th><th>Type</th><th>Mult.</th><th>Fixed value</th></tr>
+                </thead>
+                <tbody>
+                <!---     <tr ng-repeat="element in fullElementList">-->
+                <tr ng-repeat="element in cdFullElementList"
+                    ng-hide="$index==0 || (element.ed.mult.indexOf('..0') > -1)">
+
+                  <td>{{element.ed.title}}</td>
+                  <td>
+
+                    {{element.ed.description}}
+                  </td>
+                  <td>
+                    <div ng-repeat="type in element.ed.type">
+                      {{type}}
+                      <span ng-show="element.ed.valueSet"><em class="clickable" ng-click="viewVS(element.ed.valueSet)">View VS</em></span>
+                    </div>
+
+
+
+                    <div ng-show="element.ed.options">
+                      <em class="clickable"
+                          ng-click = "editDGOptionsList(element.ed)">View {{element.ed.options.length}} options
+                      </em> </div>
+
+                  </td>
+                  <td>{{element.ed.mult}}</td>
+
+                  <td>
+                    {{element.ed.fixedCoding.code}}
+                    <div>{{element.ed.fixedCoding.display}}</div>
+                    {{element.ed.fixedDecimal}}
+                    {{element.ed.fixedString}}
+                  </td>
+
+
+
+                </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </uib-tab>
+
+
+
+          <uib-tab heading="Json">
+            <pre>{{selectedDG | json}}</pre>
+          </uib-tab>
+        </uib-tabset>
+
+      </div>
+    </div>
+
+    <div class="row" ng-show="input.class == 'dt'">
+
+      <div class="col-md-3">
+        <div class="list-group">
+          <div ng-class="{'list-group-item':true,listItemSelected:dt==selectedDT}" ng-repeat="dt in fhirTypes"
+               style="cursor: pointer"
+            ng-click="selectDT(dt)">
+            {{dt}}
+          </div>
+        </div>
+
+      </div>
+      <div class="col-md-9">
+        <br/>
+        <iframe width="100%" height = "800px" ng-src="{{typeUrl | trustUrl}}"></iframe>
+
+      </div>
+
+    </div>
+
+
+  </div>
+  <div class="modal-header">
+    <em>Allows the type to be changed</em>
+  </div>
+</div>

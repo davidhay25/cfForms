@@ -1,0 +1,59 @@
+
+<div>
+  <!--<div ng-controller="newResourceCtrl">-->
+
+  <div class="modal-header">
+    <div class="row">
+      <div class="col-md-8 col-sm-8">
+        <h3 class="modal-title">
+          Publish questionnaire
+        </h3>
+      </div>
+
+
+      <div class="col-md-4 col-sm-4">
+        <button class="btn btn-primary pull-right" ng-click="publish()">Publish</button>
+        <button class="btn btn-link pull-right" ng-click="$dismiss()">Cancel</button>
+
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-body">
+    <uib-tabset>
+      <uib-tab heading="Perform update">
+        <br/>
+
+        Questionnaire Url: <strong>{{Q.url}}</strong>
+        <br/><br/>
+
+        <div><strong>Release notes</strong></div>
+
+        <textarea class="form-control"
+                  placeholder="Release notes here. TBD."
+                  ng-model="input.releaseNotes"></textarea>
+        <br/><br/>
+        <div>Click the 'Publish' button to Publish the Questionnaire built from this model. This will:</div>
+        <br/>
+        <ul>
+          <li>Increment the version to {{Q.version}}</li>
+          <li>Save the questionnaire to the 'published' store</li>
+        </ul>
+        <br/>
+        <div class="banner">Note that the containing Collection will be updated to the Repository after the Questionnaire has been published.</div>
+
+      </uib-tab>
+
+      <uib-tab heading="Q Json">
+        <pre>{{Q | json}}</pre>
+      </uib-tab>
+    </uib-tabset>
+
+
+  <br/><br/>
+
+  </div>
+  <div class="modal-header">
+
+  </div>
+</div>

@@ -1,0 +1,207 @@
+
+.pass {
+    color: green;
+}
+
+.fail {
+    colorX: lightcoral;
+    color: red;
+}
+
+.isEqual {
+    color: lightgreen;
+}
+
+.retiredVS {
+    background-color: lightsalmon;
+}
+
+.isContainer {
+    font-weight: bold;
+}
+
+.custom-popover {
+    max-width: 800px; /* Adjust this value as needed */
+    width: auto; /* Optional: Allow the content to determine the width */
+}
+
+.custom-popover-big {
+    max-width: 900px; /* Adjust this value as needed */
+    width: auto; /* Optional: Allow the content to determine the width */
+}
+
+
+.draftVS {
+    background-color: lightgoldenrodyellow;
+}
+
+.background {
+    background-color: #f7f7f7;
+    border: 1px solid gainsboro;
+    padding : 5px;
+    margin: 4px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+.detailName {
+    background-color: #dedede;
+}
+
+.modal-xlg {
+    width : 1200px
+}
+
+.modelInfo {
+    background-color: lightgoldenrodyellow;
+    border: 1px solid gainsboro;
+    padding : 3px;
+    margin: 3px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+.modelInfoTest {
+    background-color: lightcyan;
+    border: 1px solid gainsboro;
+    padding : 3px;
+    margin: 3px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+.modelInfoLocal {
+    background-color:#dff0d8;
+    border: 1px solid gainsboro;
+    padding : 3px;
+    margin: 3px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+.clickable {
+    color: rgb(79, 155, 214);
+    cursor: pointer;
+}
+
+.clickableDotted {
+    color: rgb(79, 155, 214);
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+    cursor: pointer;
+}
+
+.listItemSelected {
+    background-color: lightsteelblue;
+}
+
+.activeFhirDisplay {
+    background-color: lightsteelblue;
+}
+
+.myScroll {
+    height: 700px;
+    overflow-y: scroll;
+
+}
+
+.spacer {
+    padding-left: 20px;
+}
+.myScrollSmall {
+    height: 550px;
+    overflow-y: scroll;
+
+}
+
+.myScrollSmallest {
+    height: 400px;
+    overflow-y: scroll;
+
+}
+
+.custom-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    resize: vertical;
+}
+
+.tableFixHead {
+    overflow-y: auto;
+    height: 800px;
+}
+.tableFixHead thead th {
+    position: sticky;
+    top: 0;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+
+th,
+td {
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+}
+th {
+    background: #eee;
+}
+
+
+.banner {
+
+    border: 1px solid #b8b9b5;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+    text-align: center;
+    padding: 2px;
+    margin-bottom: 5px;
+    background-color: #F6F6F6;
+    font-weight: bold;
+}
+
+.rounded-box {
+    border: 1px solid gainsboro;
+    padding : 5px;
+    margin: 4px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+.rounded-box-shadow {
+    border: 1px solid gainsboro;
+    padding : 5px;
+
+    margin: 4px;
+    margin-bottom: 20px;
+
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    box-shadow: 5px 5px 5px lightgrey;
+}
+
+.rounded-box-filled {
+    border : 1px solid #eeeeee;
+    padding : 5px;
+    margin: 0px;
+    /*margin-left : 10px;*/
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    background-color:#F6F6F6;
+}

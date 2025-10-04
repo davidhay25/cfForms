@@ -1,0 +1,115 @@
+
+<div>
+
+    <div class="modal-header">
+
+        <div class="row">
+            <div class="col-md-8 col-sm-8">
+                <h3 class="modal-title">Collections</h3>
+            </div>
+
+            <div class="col-md-2">
+
+            </div>
+
+
+
+            <div class="col-md-2">
+                <button class="btn btn-link pull-right" ng-click="$dismiss()">Close</button>
+            </div>
+
+
+        </div>
+
+    </div>
+    <div class="modal-body">
+
+        <div style="text-align: center" class="alert alert-warning" ng-show="areDifferences()">
+            There are unsaved changes in the dataGroups
+            <span ng-repeat="(k,v) in differences">
+                <strong class="clickable" ng-click="showDiff(k)">{{k}}</strong>,
+            </span>.
+
+            If you load a Collection or create a new one those changes will be lost.
+
+        </div>
+
+
+        <uib-tabset>
+
+
+
+            <uib-tab heading="Collections Repository">
+                <em class="pull-right">To edit a collection, first lock it then load it.</em>
+                <table class="table table-bordered">
+                    <tr><th>Name</th><th>Description</th><th># DG / Comp</th><th>Updated</th><th>Version</th>
+
+                        <th style="width: 20%">Commands</th></tr>
+                    <tr ng-repeat="row in playgrounds">
+                        <td>{{row.name}}</td>
+                        <td>{{row.description}}
+
+                            <div style="color: red" ng-if="row.lockedTo">Locked by {{row.lockedTo}}</div>
+                        </td>
+
+                        <td>{{row.dgCount}} / {{row.compCount}}</td>
+                        <td>{{row.updated | date : 'MMM dd, h:mm a'}}</td>
+                        <td>{{row.version}}</td>
+
+                        <td><span class="clickable"  ng-click="load(row,'repo')">Load</span>
+                            <span style="padding-left: 20px" class="clickable"  ng-click="copy(row,'repo')">Copy</span>
+                            <span style="padding-left: 20px" class="clickable"
+                                  ng-if="user.email && ! row.lockedTo"
+                                  ng-click="lock(row)">Lock</span>
+
+                            <span style = 'padding-left: 20px; color: red; cursor: pointer'
+                                  ng-if="row.lockedTo && (row.lockedTo == user.email)"
+                                  ng-click="unlock(row)" >Unlock</span>
+                        </td>
+                    </tr>
+                </table>
+            </uib-tab>
+
+            <uib-tab ng-show="user.email" heading="New Collection">
+                <div><label>Name</label></div>
+                <input type="text" class="form-control" ng-model="input.name"/>
+                <br/>
+                <div><label>Description</label></div>
+                <textarea class="form-control" ng-model="input.description"></textarea>
+                <br/>
+                <div>
+                    <button ng-if="input.name" class="btn btn-primary" ng-click="createNew()">Create new Collection</button>
+                </div>
+
+            </uib-tab>
+
+            <uib-tab ng-if = "false" heading="Local Store">
+                <table class="table table-bordered">
+                    <tr><th>Name</th><th>Description</th><th># DG / Comp</th><th>Updated</th><th>Version</th></tr>
+                    <tr ng-repeat="row in localStore">
+                        <td>{{row.name}}</td>
+                        <td>{{row.description}}</td>
+
+                        <td>{{row.dgCount}} / {{row.compCount}}</td>
+                        <td>{{row.updated | date  : "MMM dd, h:mm a"}}</td>
+                        <td>{{row.version}}</td>
+                        <td><span class="clickable"  ng-click="load(row,'local')">Load</span>
+                        </td>
+                        <td><span style="padding-left: 20px" class="clickable"  ng-click="copy(row,'local')">Copy</span></td>
+                        <td><span style="padding-left: 20px" class="clickable"  ng-click="delete(row,'local')">Delete</span></td>
+                    </tr>
+                </table>
+            </uib-tab>
+
+        </uib-tabset>
+
+
+
+    </div>
+
+
+    <div class="modal-header">
+
+
+    </div>
+</div>

@@ -1,0 +1,156 @@
+
+<div>
+  <!--<div ng-controller="newResourceCtrl">-->
+
+  <div class="modal-header">
+    <div class="row">
+      <div class="col-md-10">
+        <h3 class="modal-title">
+          View Item: {{selectedItem.text}}
+        </h3>
+      </div>
+
+
+
+
+      <div class="col-md-2">
+        <button class="btn btn-link pull-right" ng-click="$close()">Close</button>
+
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-body">
+
+    <div class="row">
+      <div class="col-md-3">
+        <strong>Ancestors</strong>
+        <div class="list-group">
+          <div ng-repeat="item in chain"
+               ng-click="selectItem(item)"
+               style="cursor: pointer"
+               ng-class="{'list-group-item':true,listItemSelected:item == selectedItem}"}>
+
+            {{item.text || 'Q'}}
+              <!--
+              <span class="pull-right">
+              {{item.linkId}}
+          </span>
+              -->
+          </div><br/>
+
+          <br/>
+
+        </div>
+      </div>
+      <div class="col-md-9">
+        <uib-tabset>
+          <uib-tab heading="Json">
+            <pre>{{getDisplay(selectedItem) | json}}</pre>
+            <em>Note that the element 'children' was added by this routine - it isn't in the actual item</em>
+
+          </uib-tab>
+          <uib-tab heading="SDC view">
+            <br/>
+
+
+              <div ng-if="selectedSummary.lc.length > 0">
+                  <strong>Launch contexts</strong>
+                  <table class="table table-bordered">
+                      <tr><th>Name</th><th>Type</th></tr>
+                      <tr ng-repeat="entry in selectedSummary.lc">
+                          <td>{{entry.name.code}}</td>
+                          <td>{{entry.type}}
+
+                          </td>
+                      </tr>
+                  </table>
+
+              </div>
+
+             <div ng-repeat="ai in selectedSummary.allocateId track by $index">
+                 <strong>AllocateId:</strong> {{ai}}
+             </div>
+
+              <br/>
+
+              <div ng-repeat="ie in selectedSummary.ie track by $index">
+                  <strong>initialExpression :</strong>  {{ie}}
+              </div>
+
+              <br/>
+
+              <div ng-if="selectedItem.definition"><strong>Extraction expression</strong> {{selectedItem.definition}}</div>
+
+
+
+              <div ng-repeat="defExt in selectedSummary.defExt track by $index">
+                  <strong>definitionExtract:</strong>  type <span ng-bind="defExt.type"></span>
+              </div>
+
+
+              <br/>
+
+              <div ng-if="selectedSummary.defExtValue.length > 0">
+                  <strong>definitionExtractValue</strong>
+                  <table class="table table-bordered">
+                      <tr><th>Path</th><th>Value / expression</th></tr>
+                      <tr ng-repeat="entry in selectedSummary.defExtValue">
+                          <td>{{entry.path}}</td>
+                          <td>{{entry.value}}
+                            {{entry.expression.expression}}
+                          </td>
+                      </tr>
+                  </table>
+
+              </div>
+
+
+              <div ng-if="selectedSummary.unknownExt.length > 0">
+                  <strong>Unparsed extensions</strong>
+                  <pre>{{selectedSummary.unknownExt | json}}</pre>
+              </div>
+
+
+
+                     </uib-tab>
+
+            <uib-tab>
+                <uib-tab-heading>
+                    Children <span class="badge">{{selectedItem.item.length}}</span>
+                </uib-tab-heading>
+
+                <br/>
+                <i>These are immediate children only</i>
+
+                <table class="table-bordered table">
+                    <tr ng-repeat="child in selectedItem.item">
+                        <td>
+                            <!--
+                            <div class="clickable" ng-click="selectItem(child)">
+                                {{child.text}}
+                            </div>
+                            -->
+                            {{child.text}}
+                        </td>
+                        <td>{{child.type}}</td>
+                        <td>{{child.linkId}}</td>
+                    </tr>
+                </table>
+
+
+
+            </uib-tab>
+       </uib-tabset>
+
+     </div>
+   </div>
+
+
+
+
+ </div>
+ <div class="modal-header">
+
+ </div>
+</div>

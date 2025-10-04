@@ -1,0 +1,120 @@
+
+<div>
+
+    <div class="modal-header">
+
+        <div class="row">
+            <div class="col-md-8 col-sm-8">
+                <h3 class="modal-title">{{title}}</h3>
+            </div>
+            <div class="col-md-4 col-sm-4">
+                <button class="btn btn-link pull-right" ng-click="$dismiss()">Close</button>
+            </div>
+        </div>
+
+    </div>
+    <div class="modal-body">
+        <uib-tabset>
+
+            <uib-tab heading="Table">
+                <table class="table-bordered table table-condensed">
+                    <tr ng-repeat="param in parameters.parameter">
+                        <td>{{param.name}}</td>
+                        <td>
+                            {{param.valueString}} {{param.valueUri}} {{param.valueCode}} {{param.valueBoolean}}
+
+                            <div ng-show = "param.valueCoding">
+                                <div style="padding-left: 8px">S: {{param.valueCoding.system}}</div>
+                                <div style="padding-left: 8px">C: {{param.valueCoding.code}}</div>
+                                <div style="padding-left: 8px">D: {{param.valueCoding.display}}</div>
+                            </div>
+
+                            <div ng-repeat ="part in param.part">
+
+                                {{part.name}}:
+                                {{part.valueString}} {{part.valueUri}}
+                                <span ng-class="{clickable:part.valueCode=='parent'}" ng-click = "selectCode(param.part)">
+                                    {{part.valueCode}}</span> {{part.valueBoolean}}
+
+                                <div ng-show = "part.valueCoding">
+                                    <div style="padding-left: 8px">S: {{part.valueCoding.system}}</div>
+                                    <div style="padding-left: 8px">C: {{part.valueCoding.code}}</div>
+                                    <div style="padding-left: 8px">D: {{part.valueCoding.display}}</div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </uib-tab>
+            <uib-tab heading="Display">
+                <div class="row">
+                    <div class="col-sm-4 col-md-4">
+                        <div class="list-group">
+                            <div class="list-group-item"
+                                 ng-click="selectParameter(param)"
+                                 style="cursor: pointer" ng-repeat="param in parameters.parameter">
+                                {{param.name}}
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="col-sm-8 col-md-8">
+                        <pre ng-show="selectedParameter">{{selectedParameter | json}}</pre>
+                    </div>
+                </div>
+
+            </uib-tab>
+            <uib-tab heading="History">
+                <table class="table-bordered table">
+                    <tr ng-repeat="item in arHx">
+                        <td>{{item.code}}</td>
+                        <td>{{item.display}}</td>
+                    </tr>
+                </table>
+            </uib-tab>
+            <uib-tab ng-show = "false" heading="Graph">
+                A graph of the parents of this concept - walk up the parental tree to ultimate parents...
+            </uib-tab>
+            <uib-tab ng-show = "codeSystem" heading="CodeSystem">
+
+                <em>{{system}}</em>
+
+                <table class="table-condensed table table-bordered">
+                    <tr><th>Code</th><th>Display</th></tr>
+                    <tr ng-repeat="concept in codeSystem.concept">
+                        <td>{{concept.code}}</td>
+                        <td>{{concept.display}}</td>
+                    </tr>
+                </table>
+
+
+
+            </uib-tab>
+            <uib-tab heading="Json">
+                <pre>{{parameters | json}}</pre>
+            </uib-tab>
+        </uib-tabset>
+
+    </div>
+
+
+    <div class="modal-header">
+        {{item.notes}}
+
+        <div class="row">
+
+            <div class="col-md-2 col-sm-2">
+
+            </div>
+
+            <div class="col-md-8 col-sm-8">
+
+            </div>
+
+
+            <div class="col-md-2 col-sm-2">
+
+            </div>
+        </div>
+    </div>
+</div>

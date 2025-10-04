@@ -1,0 +1,146 @@
+<div>
+  <!--<div ng-controller="newResourceCtrl">-->
+
+  <div class="modal-header">
+    <div class="row">
+      <div class="col-md-8 col-sm-8">
+        <h3 class="modal-title">
+          Add Control element to {{targetED.title}}
+        </h3>
+      </div>
+
+
+      <div class="col-md-4 col-sm-4">
+        <button class="btn btn-link pull-right" ng-click="$dismiss()">Cancel</button>
+          <!--
+        <button ng-show = "input.name"
+                class="btn btn-primary pull-right" ng-click="save()">Close</button>
+          -->
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-body">
+
+      <uib-tabset>
+          <uib-tab heading="Set control element">
+              <div class="row">
+
+
+                  <div class="col-sm-6 col-md-6">
+
+                      <em>Select the Control element here...</em>
+                      <br/> <br/>
+
+                      <div id="dgEWTree"></div>
+
+                      <div><em>Legend:</em></div>
+                      <div><strong style="margin-left: 8px">Bold</strong> elements are required</div>
+                      <div><span style="color: blue; margin-left: 8px">Blue</span>  elements have a fixed value</div>
+                      <div style=" margin-left: 8px">A trailing <strong>*</strong> indicates element can repeat.</div>
+                      <div style=" margin-left: 8px"><span style="text-decoration: line-through">Strike-through</span> indicates the element does not appear in a Q</div>
+                      <div style=" margin-left: 8px">
+            <span style="text-decoration-line: underline;text-decoration-style: dotted">
+              Dotted underline</span> indicates the element is subject to conditional show in the Q</div>
+
+
+
+                  </div>
+                  <div class="col-sm-6 col-md-6">
+                      <em>...and the value of that control ({{selectedED.path | dropFirstInPath}}) to make this one visible.</em>
+                      <br/> <br/>
+                      <uib-tabset>
+                          <uib-tab heading="Options">
+
+                              <br/>
+
+                              <div ng-show="selectedED.type[0] !== 'CodeableConcept' && selectedED.type[0] !== 'boolean'">
+                                  Only elements with a type of CodeableConcept or Boolean can act as Control elements
+                              </div>
+
+                              <div ng-show="selectedED.type[0] == 'CodeableConcept'">
+
+
+                                  <div ng-show="errorMessage">
+                                      {{errorMessage}}
+                                  </div>
+
+                                  <div ng-show="options.length == 0 && ! errorMessage">
+                                      Currently this potential control element has no option either in the options or ValueSet
+                                  </div>
+
+                                  <div ng-show="options.length > 0">
+                                      <div class="row">
+                                          <div class="col-md-3">
+                                              <select class="form-control" ng-model="input.ewOp"
+                                                      ng-options="op for op in operations">
+                                              </select>
+                                          </div>
+
+                                          <div class="col-md-9">
+                                              <select
+                                                      ng-if = "input.ewOp !== 'exists'"
+                                                      class="form-control" ng-model="input.ewValue"
+                                                      ng-options="showConcept(concept) for concept in options">
+                                              </select>
+                                          </div>
+                                      </div>
+
+                                      <br/>
+                                      <div>
+                                          {{optionsMessage}}
+                                      </div>
+                                      <br/>
+                                      <div ng-show="valueSet">
+                                          ValueSet: {{valueSet}}
+                                      </div>
+
+                                  </div>
+
+                                  <button class="btn-primary btn pull-right"
+                                          ng-show="input.ewOp == 'exists' || (input.ewOp && input.ewValue)"
+                                          ng-click="addEnableWhen('cc')">Add</button>
+
+                              </div>
+
+                              <div ng-show="selectedED.type[0] == 'boolean'">
+
+                                  <div ng-show="errorMessage">
+                                      {{errorMessage}}
+                                  </div>
+                                  <div ng-hide="errorMessage">
+                                      Show the target ({{targetED.title}}) when this value is
+                                      <select  ng-model="input.ewBoolean">
+                                          <option  value="true">True</option>
+                                          <option value="false">False</option>
+                                      </select>
+
+                                      <button class="btn-primary btn pull-right"
+                                              ng-click="addEnableWhen('bool')">Add</button>
+                                  </div>
+
+
+
+
+                              </div>
+
+                          </uib-tab>
+                          <uib-tab heading="Json">
+                              <pre>{{selectedED | json}}</pre>
+                          </uib-tab>
+                      </uib-tabset>
+                  </div>
+              </div>
+
+          </uib-tab>
+          <uib-tab heading="View target element">
+              <pre>{{targetED | json}}</pre>
+          </uib-tab>
+      </uib-tabset>
+
+
+  </div>
+  <div class="modal-header">
+
+  </div>
+</div>

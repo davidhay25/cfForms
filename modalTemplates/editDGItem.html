@@ -1,0 +1,848 @@
+<div>
+<!--
+<style>
+  .custom-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    resize: vertical;
+  }
+
+</style>
+  -->
+
+  <div class="modal-header">
+    <div class="row">
+      <div class="col-md-8 col-sm-8">
+        <h3 class="modal-title">
+          Edit DG Item <span ng-if="item.ed">: {{item.ed.title}}</span>
+        </h3>
+      </div>
+
+
+      <div class="col-md-4 col-sm-4">
+
+        <button ng-if="input.path"
+                class="btn btn-primary pull-right" ng-click="save()">Close</button>
+
+        <button  class="btn btn-link pull-right" ng-click="$dismiss()">Cancel</button>
+
+
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-body">
+    <uib-tabset active="input.mainTabActive">
+      <uib-tab heading="Details">
+        <br/>
+        <table class="table-bordered table table-condensed">
+          <tr>
+            <td  width="20%">Path</td>
+
+            <td>
+              <input type="text" ng-blur="setTitle(input.path)"
+                       ng-disabled="! isNew" class="form-control" ng-model="input.path"/> </td>
+
+          </tr>
+          <tr>
+            <td>Type</td>
+            <td>
+              <div class="row">
+                <div class="col-md-10">
+                  <input type="text" ng-model="input.selectedType"
+                         typeahead-editable = "false"
+                         uib-typeahead="type for type in allTypes | filter:$viewValue"
+                         class="form-control" />
+
+
+
+                </div>
+                <div class="col-md-2">
+                  <button class="btn btn-link" ng-click="changeType()">Dialog</button>
+                </div>
+              </div>
+
+               </td>
+          </tr>
+
+          <tr>
+            <td>Title</td>
+            <td><input type="text" class="form-control" ng-model="input.title"/> </td>
+          </tr>
+          <tr>
+            <td>Description</td>
+            <td><textarea class="form-control"
+                          ng-style="textareaStyles"
+                          ng-model="input.description"></textarea> </td>
+          </tr>
+
+          <tr>
+            <td>Cardinality</td>
+            <td>
+
+              <div class="btn-group">
+                <label class="btn btn-default" ng-model="input.mult" uib-btn-radio="'0..0'">0..0</label>
+                <label class="btn btn-default" ng-model="input.mult" uib-btn-radio="'0..1'">0..1</label>
+                <label class="btn btn-default" ng-model="input.mult" uib-btn-radio="'0..*'">0..*</label>
+                <label class="btn btn-default" ng-model="input.mult" uib-btn-radio="'1..1'">1..1</label>
+                <label class="btn btn-default" ng-model="input.mult" uib-btn-radio="'1..*'">1..*</label>
+
+              </div>
+
+
+            </td>
+          </tr>
+
+          <tr>
+            <td>Code
+
+              <i class="glyphicon glyphicon-info-sign pull-right"
+                 uib-popover="Useful for Observation extraction or non-extracted items"
+                 popover-placement="right"
+                 popover-trigger="'mouseenter'"
+                 ></i>
+
+
+            </td>
+            <td>
+              <div class="row">
+                <div class="col-md-3">
+                  <input type="text" placeholder="Code" class="form-control" ng-model="input.itemCode.code"/>
+                </div>
+                <div class="col-md-4">
+                  <input type="text" placeholder="System" class="form-control" ng-model="input.itemCode.system"/>
+                </div>
+                <div class="col-md-5">
+                  <input type="text" placeholder="Display" class="form-control" ng-model="input.itemCode.display"/>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <tr ng-if="input.selectedType == 'CodeableConcept'">
+            <td>ValueSet</td>
+
+            <td>
+              <div class="row">
+                <div class="col-sm-10">
+                  <input type="text"
+                         class="form-control" ng-model="input.valueSet"/>
+                </div>
+                <div class="col-sm-2">
+                  <button ng-if="input.valueSet" class="btn-link btn" ng-click="viewVS(input.valueSet)">View VS</button>
+
+                </div>
+              </div>
+
+            </td>
+
+          </tr>
+
+          <tr>
+            <td>Notes</td>
+            <td>
+              <textarea ng-model="input.notes" class="form-control"></textarea>
+            </td>
+          </tr>
+
+          <tr>
+            <td>Rules</td>
+            <td>
+              <textarea ng-model="input.rules" class="form-control"></textarea>
+            </td>
+          </tr>
+
+
+
+          <tr>
+            <td>Control Hint</td>
+            <td>
+              <span ng-repeat = "opt in qControlOptions">
+                  <input type="radio"
+                         ng-change="setControlHintDEP(selectedNode.data.ed,opt)"
+                         ng-model="input.controlHint" value="{{opt}}"> {{opt}}
+                </span>
+
+            </td>
+          </tr>
+
+          <tr  ng-if="input.selectedType == 'CodeableConcept'">
+            <td>'Other' type</td>
+            <td>
+              <span ng-repeat = "opt in ['sometimes','textonly','never']">
+                  <input type="radio"
+                         ng-change="setControlHintDEP(selectedNode.data.ed,opt)"
+                         ng-model="input.otherType" value="{{opt}}"> {{opt}} &nbsp;
+                </span>
+
+              <span class="pull-right clickable" ng-click = "deleteOtherOption()">Clear </span>
+
+            </td>
+          </tr>
+
+
+          <tr ng-if="isFixedType(input.selectedType)">
+            <td>Fixed value</td>
+            <td>
+
+              <div class="clickable pull-right" ng-click="setFixedValue('fixed')">Edit</div>
+              <div style="margin-right: 8px" class="clickable pull-right" ng-click="clearFixedValue('fixed')">Clear</div>
+
+              {{fixedDisplay}}
+
+            </td>
+          </tr>
+          <tr ng-if="isFixedType(input.selectedType)">
+            <td>Default value</td>
+            <td>
+
+              <div class="clickable pull-right" ng-click="setFixedValue('default')">Edit</div>
+              <div style="margin-right: 8px" class="clickable pull-right" ng-click="clearFixedValue('default')">Clear</div>
+
+              {{defaultDisplay}}
+
+            </td>
+          </tr>
+
+          <tr>
+            <td>Source reference</td>
+            <td><input type="text" class="form-control" ng-model="input.sourceReference"/> </td>
+          </tr>
+
+        </table>
+
+      </uib-tab>
+
+      <uib-tab heading="Questionnaire">
+        <br/>
+
+        <a ng-if="linkToSpec"
+           class='pull-right' target="_blank" ng-href="{{linkToSpec}}">View {{fhirResourceType}} in spec</a>
+
+        <uib-tabset>
+          <uib-tab heading="Standard options">
+
+        <table class="table-bordered table table-condensed">
+          <tr>
+            <td  style="width: 20%;">Hide in Q</td>
+            <td><checkbox ng-model="input.hideInQ"></checkbox>
+              <em>The item is not copied into the Q at all</em>
+            </td>
+          </tr>
+
+          <tr>
+            <td  style="width: 20%;">Hidden in Q</td>
+            <td><checkbox ng-model="input.hiddenInQ"></checkbox>
+              <em>The item is in the Q, but not shown</em>
+            </td>
+          </tr>
+
+          <tr>
+            <td>AdHoc extensions</td>
+            <td>
+
+
+
+              <div class="pull-right">
+                <div class="btn btn-link" ng-click="editAdHocExtension()">Edit</div>
+              </div>
+
+              <div ng-repeat="ext in item.ed.adHocExtension">
+                {{ext.url | sdcExtensionName}}
+              </div>
+
+
+            </td>
+          </tr>
+<!--
+          <tr ng-if="false">
+            <td>Is item code</td>
+            <td><checkbox ng-model="input.itemCode"></checkbox>
+              Item.code will be set to this value in the Questionnaire
+            </td>
+          </tr>
+          -->
+
+          <tr>
+            <td>Help text</td>
+            <td><input type="text" class="form-control" ng-model="input.helpText"/>
+              <div><em>A note about the item. Will appear as a help icon in the form.</em>
+              <span ng-if="input.description" class="clickable" ng-click="input.helpText = input.description">
+                Paste description</span>
+              </div>
+            </td>
+          </tr>
+
+          <tr ng-if="false">
+            <td>Instructions</td>
+            <td><input type="text" class="form-control" ng-model="input.instructions"/>
+              <div><em>Instructions for the user. Appear below the control</em></div>
+            </td>
+          </tr>
+
+          <tr>
+            <td>PlaceHolder text</td>
+            <td><input type="text" class="form-control"  ng-model="input.placeHolder"/>
+              <em>Placeholder text. Really only makes sense for string or text</em>
+            </td>
+          </tr>
+
+          <tr ng-if="false">
+            <td>Set auto gTable flag</td>
+            <td><checkbox ng-model="input.gtable"/>
+              <div><em>If checked, the contents will be displayed in a table row</em></div>
+            </td>
+          </tr>
+
+          <tr ng-if="canShowCollapsible()">
+            <td>Set collapsible option</td>
+            <td>
+              <div class="row">
+                <div class="col-md-6">
+                  <!--
+                  <select class="form-control" ng-model="input.collapsible"
+                          ng-options = "opt for opt in input.collapsibleOptions"></select>
+-->
+                  <span ng-repeat = "opt in input.collapsibleOptions">
+                    <input type="radio"
+                           ng-model="input.collapsible" value="{{opt}}"> {{opt}}
+                  </span>
+
+
+                </div>
+                <div class="col-md-6">
+                  <div class="pull-right clickable" ng-click="deleteCollapsible()">clear</div>
+                </div>
+              </div>
+
+
+              <div><em>Allows a group or DataGroup to be expanded / collapsed. </em></div>
+            </td>
+          </tr>
+
+
+          <tr>
+            <td>Grid layout</td>
+            <td>
+              <checkbox ng-model="input.sdcGrid"></checkbox> Lay out children in columns
+              <div><em>Note if multi row, then each column in each row must have the same title</em></div>
+            </td>
+          </tr>
+
+          <tr>
+            <td>Table layout</td>
+            <td>
+              <checkbox ng-model="input.gTable"></checkbox> Lay out repetitions in a table
+            </td>
+          </tr>
+
+          <tr>
+            <td>Extract expression</td>
+            <td>
+              <div class="row">
+                <div class="col-md-10">
+
+
+                  <div>
+                    <input type="text"
+                           placeholder="FHIRPath extraction expression - eg Specimen.bodySite"
+                           class="form-control" ng-model="input.definition"/>
+
+                  </div>
+                  <!-- need to think about this...
+                                    <div ng-if="! linkToSpec">
+                                      <em>You must set the resource context on this or a referencing DG to enable resource extraction. This is
+                                        done from the main DG editor (the link at the top of the DG display page) for this DG or a parent. </em>
+                                    </div>
+                  -->
+
+                </div>
+                <!--
+                <div class="col-md-1">
+
+                  <span class="btn btn-link" ng-click="testPrePop(input.definition,'testExtract')">Test</span>
+
+                </div>
+                <div class="col-md-1">
+
+                  <a style="display:block ; margin-top: 8px" href="https://hl7.org/fhir/fhirpath.html" target="_blank">Spec</a>
+                </div>
+                -->
+
+              </div>
+
+              <div><pre ng-if="testExtract">{{testExtract | json}}</pre></div>
+            </td>
+          </tr>
+
+          <tr ng-show="input.definition.indexOf('extension') > -1">
+            <td>Extract Extension Url</td>
+            <td>
+              <input type="text"
+                     placeholder="Url for extension"
+                     class="form-control" ng-model="input.extractExtensionUrl"/>
+              <div><em>If extracting to an extension, need to set the extension url</em></div>
+            </td>
+          </tr>
+
+          <tr ng-show="input.selectedType == 'Identifier'">
+            <td>System</td>
+            <td>
+              <input type="text"
+                     placeholder="System for this identifier"
+                     class="form-control" ng-model="input.identifierSystem"/>
+              <div><em>If extracting to an identifier, this is the system to use</em></div>
+            </td>
+          </tr>
+
+
+          <tr ng-if="canHavePopulationContext()">
+            <td>Population context</td>
+
+            <td>
+
+                  <div class="row">
+                    <div class="col-md-6">
+                      <select class="form-control" ng-model="input.selectedNQ"
+                              ng-options="nq.name for nq in allNamedQueries">
+                      </select>
+                      <em>The named query that will be the source of the data</em>
+                    </div>
+                    <div class="col-md-4">
+                      <div ng-show="input.selectedNQ">
+                        <strong style="background-color: aliceblue">%{{input.selectedNQ.itemName}}</strong>
+                        <div><em>The name used for pre-pop by children</em></div>
+                      </div>
+
+
+                    </div>
+                    <div class="col-md-2">
+                      <div class="clickable pull-right" ng-click="testxquery(input.selectedNQ.name)">Test query</div>
+                    </div>
+
+              </div>
+
+
+
+
+
+          </td>
+
+
+
+
+          </tr>
+
+
+          <tr>
+            <td>PrePop expression</td>
+            <td>
+
+              <div >
+                <div class="row">
+                  <div class="col-md-8">
+                  <textarea
+                          placeholder="FHIRPath pre-pop expression - eg %patient.family"
+                          class="form-control" ng-model="input.prePop"></textarea>
+
+                  </div>
+
+                  <div class="col-md-4">
+                    <strong>Contexts in scope</strong>
+                    <div ng-repeat="ctx in contextAtPath"
+                        class="clickable"
+                         ng-click="testxquery(ctx.name)">
+                       {{ctx.itemName}} ({{ctx.source}})
+                    </div>
+                    <!--
+                    <a style="display:block ; margin-top: 8px" href="https://hl7.org/fhir/fhirpath.html" target="_blank">Spec</a>
+                    -->
+                  </div>
+                </div>
+
+
+
+
+                <div ng-if="testPPResult" ng-class="testPPResultOutcome">
+                  {{testPPResult}}
+                </div>
+              </div>
+
+              <div ng-if = "! dg.namedQueries || dg.namedQueries.length < 1">
+                <em>If not pre-popping from standard variable (%patient %user) or a user defined variable, you need to select a named query for this DG. This is
+                  done from the main DG editor (the link at the top of the DG display page).</em>
+              </div>
+
+            </td>
+          </tr>
+
+
+
+          <!--
+          <tr>
+            <td>Hide label text</td>
+            <td><checkbox ng-model="input.hideLabel"/>
+              <div><em>If checked, there will be no label displayed for this item. NOT CURRENTLY SUPPORTED</em></div>
+            </td>
+          </tr>
+
+
+          <tr ng-hide = "true || input.hideLabel">
+            <td>Questionnaire label</td>
+            <td>
+              <input type="text"
+                     placeholder="Element label if not the text. XHTML supported."
+                     class="form-control" ng-model="input.labelText"/> </td>
+          </tr>
+          -->
+
+
+
+
+
+        </table>
+
+          </uib-tab>
+
+          <uib-tab ng-if="false">
+
+            <uib-tab-heading>Fixed values <span class="badge" ng-if="input.qFixedValues.length > 0"> {{input.qFixedValues.length}}</span></uib-tab-heading>
+
+            <em>Fixed values defined by this item </em>
+            <table class="table table-bordered">
+              <tr><th>Path</th><th>Type</th><th>Value</th></tr>
+              <tr ng-repeat="fv in input.qFixedValues">
+                <td>{{fv.path}}</td>
+                <td>{{fv.type}}</td>
+                <td>{{fv.value}}</td>
+                <td><div class="clickable" ng-click="removeFixedValue($index)">Remove</div></td>
+              </tr>
+              <tr>
+                <td><input type="text" class="form-control" placeholder="The path being fixed" ng-model="input.fvPath"/></td>
+                <td><input type="text" class="form-control" placeholder="The FHIR type being fixed - eg String, Coding" ng-model="input.fvType"/></td>
+                <td><input type="text" class="form-control" placeholder="The value being fixed" ng-model="input.fvValue"/></td>
+                <td><div class="clickable" ng-click="addQFixedValue(input.fvPath,input.fvType,input.fvValue)">Add</div> </td>
+
+              </tr>
+
+            </table>
+            <div><em><strong>If the value is an object, use a json string with double quotes around key & value</strong></em></div>
+
+            <em>Fixed values are directly rendered at the root of the Q using the itemExtractionValue extension TODO: distinguish from fixed value in element - ie these are for resource</em>
+
+          </uib-tab>
+
+          <uib-tab heading="Display text">
+            <h5>Text to display before the item</h5>
+
+            <textarea class="form-control" ng-model="input.displayBefore"></textarea>
+            <br/><br/>
+
+            <h5>Text to display after the item</h5>
+
+            <textarea class="form-control" ng-model="input.displayAfter"></textarea>
+          </uib-tab>
+
+
+          <uib-tab ng-if="false" heading="Ad hoc Q extensions">
+
+
+            <div style="margin: 8px" class="pull-right clickable"><div ng-click="validateJson(input.adHocExt,true)">Validate</div></div>
+            <div  style="margin: 8px" class="pull-right clickable"><div ng-click="extBuilder()">Builder</div></div>
+
+            <div  style="margin: 8px" class="pull-right clickable"><div ng-click="editAdHocExtension()">edit</div></div>
+
+
+
+            <div class="clearfix"></div>
+            <textarea ng-model="input.adHocExt" class="custom-textarea" rows="15">
+
+            </textarea>
+            <br/>
+            <em>Add any adhoc extensions to add to a derived questionnaire item. Must be an array with valid Json that
+            will be copied into the Q Item. Use double quotes - not single quotes.</em>
+
+
+
+          </uib-tab>
+
+        </uib-tabset>
+
+      </uib-tab>
+
+
+      <uib-tab ng-if="input.selectedType == 'CodeableConcept'">
+        <uib-tab-heading>Conditional valueSets <span class="badge">{{conditionalVS.length}}</span> </uib-tab-heading>
+
+        <table class="table table-bordered">
+          <tr><th>Path</th><th>Value</th><th>ValueSet</th><th></th></tr>
+          <tr ng-repeat="row in conditionalVS">
+            <td>{{row.path}}</td>
+            <td>{{row.value.display}}</td>
+            <td>{{row.valueSet}}</td>
+            <td><i class="glyphicon glyphicon-remove pull-right clickable"
+                   ng-click="conditionalVS.splice($index,1)"></i></td>
+          </tr>
+
+          <tr>
+            <td>
+
+                  <select class="form-control" ng-model="input.conditionalVSPath"
+                          ng-change="setConditionalVSValues(input.conditionalVSPath.path)"
+                          ng-options = "item.title for item in codedElements"></select>
+
+
+            </td>
+            <td>
+
+              <select class="form-control" ng-model="input.conditionalVSValue"
+
+                      ng-options = "concept.display for concept in conditionalVSOptions"></select>
+
+
+
+
+
+
+            </td>
+            <td style="width: 45%"><input type="text" class="form-control" ng-model="input.conditionalVSValueSet"/> </td>
+
+            <td><i class="glyphicon glyphicon-plus-sign pull-right clickable"
+                   ng-click="addConditionalVS(input.conditionalVSPath.path,input.conditionalVSValue,input.conditionalVSValueSet)"></i></td>
+
+          </tr>
+        </table>
+
+
+      </uib-tab>
+
+      <uib-tab ng-if="input.selectedType == 'CodeableConcept'">
+        <uib-tab-heading>Options <span class="badge">{{options.length}}</span> </uib-tab-heading>
+
+        <uib-tabset>
+          <br/>
+          <uib-tab heading="Current List">
+
+            <div class="row">
+              <div class="col-md-6">
+
+              </div>
+              <div class="col-md-6">
+                <input class="form-control" placeholder = "System (if not SNOMED)" ng-model="input.newOptionSystem"/>
+              </div>
+            </div>
+
+            <table class="table table-bordered">
+              <tr><th>Code</th><th>Display</th><th>FSN</th><th></th></tr>
+              <tr ng-repeat="row in options">
+                <td>{{row.code}}</td>
+                <td>{{row.display}}</td>
+                <td>{{row.fsn}}</td>
+                <td><i class="glyphicon glyphicon-remove pull-right clickable"
+                       ng-click="deleteOption($index)"></i></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="row">
+                    <div class="col-md-8">
+                      <input type="text" class="form-control" ng-model="input.newOptionCode"/>
+                    </div>
+                    <div class="col-md-4">
+                      <button ng-if="input.newOptionCode" class="btn btn-info" ng-click="lookupFSN(input.newOptionCode)">Lookup</button>
+
+                    </div>
+                  </div>
+
+                </td>
+                <td><input type="text" class="form-control" ng-model="input.newOptionDisplay"/> </td>
+                <td><input type="text" class="form-control" ng-model="input.newOptionFSN"/> </td>
+                <td><i class="glyphicon glyphicon-plus-sign pull-right clickable"
+                       ng-click="addOption()"></i></td>
+              </tr>
+            </table>
+
+          </uib-tab>
+
+          <uib-tab heading="Update list (SNOMED)" >
+            <div class="row">
+              <div class="col-sm-1 col-md-1">
+
+              </div>
+              <div class="col-sm-10 col-md-10">
+                <em>Paste in selection from spreadsheet. 3 cols: code, display, FSN.</em>
+                <br/>
+                <textarea class="form-control" rows = "8" ng-model="input.optionsSnomed"></textarea>
+
+                <button class="btn-link btn pull-right" ng-click="parseSnomed(input.optionsSnomed)">Parse SNOMED</button>
+
+              </div>
+            </div>
+          </uib-tab>
+
+          <uib-tab heading="Update list (text)">
+            <div class="row">
+              <div class="col-sm-1 col-md-1">
+
+              </div>
+              <div class="col-sm-10 col-md-10">
+                <em>A simple list of terms</em>
+                <textarea class="form-control"
+                          rows = "8" ng-model="input.optionsText"></textarea>
+
+                <button class="btn-link btn pull-right" ng-click="parseList(input.optionsText)">Parse Text</button>
+              </div>
+            </div>
+          </uib-tab>
+
+        </uib-tabset>
+
+
+      </uib-tab>
+
+      <uib-tab ng-if="input.selectedType == 'Quantity'">
+        <uib-tab-heading>Units <span class="badge">{{units.length}}</span> </uib-tab-heading>
+        <br/>
+
+          <table class="table-bordered">
+            <tr ng-repeat = "unit in units track by $index">
+              <td>{{unit}}</td>
+              <td><i class="glyphicon glyphicon-remove pull-right clickable"
+                     ng-click="deleteUnit($index)"></i></td>
+            </tr>
+            <tr>
+              <td><input type="text" class="form-control" ng-model="input.unit"/> </td>
+              <td><i class="glyphicon glyphicon-plus pull-right clickable"
+                     ng-click="addUnit(input.unit)"></i></td>
+            </tr>
+          </table>
+      </uib-tab>
+
+      <uib-tab ng-if="false" heading="Profiling">
+        <br/>
+        <div class="alert alert-warning" ng-hide="fhirResourceType">
+          There is no base FHIR resource type defined.
+        </div>
+        <div ng-if="fhirResourceType">
+          <strong>Base FHIR Resource type: {{fhirResourceType}}</strong>
+        </div>
+
+
+        <div class="row">
+          <div class="col-md-2">
+            FSH rule
+          </div>
+          <div class="col-md-6">
+            <textarea class="form-control" ng-model="input.fsh"></textarea>
+          </div>
+          <div class="col-md-4">
+            FSH text to insert into the profile. If present, the other profiling entries will be ignored.
+          </div>
+        </div>
+        <br/>
+        <div class="row">
+          <div class="col-md-2">
+            FHIRPath
+          </div>
+          <div class="col-md-6">
+            <div class="row">
+              <div class="col-md-10">
+                <input type="text" class="form-control" ng-model="input.fhirPath"/>
+              </div>
+              <div class="col-md-2">
+                <div class="clickable" ng-click="selectElementPath()">Dialog</div>
+
+              </div>
+            </div>
+
+          </div>
+          <div class="col-md-4">
+            The FHIRPath that this element corresponds to. Really only needed if the element is being modified in the profile (like a fixed value or extension).
+          </div>
+        </div>
+
+        <br/>
+        <div class="row">
+          <div class="col-md-2">
+            Extension url
+          </div>
+          <div class="col-md-6">
+            <input type="text" class="form-control" ng-model="input.extUrl"/>
+          </div>
+          <div class="col-md-4">
+            This element is an extension with this Url. If the url does not start with 'http' it will be generated in a canshare domain. Set the fhirPath if the extension is not on the root.
+          </div>
+        </div>
+
+        <br/>
+        <div class="row">
+          <div class="col-md-2">
+            Is a reference
+          </div>
+          <div class="col-md-6">
+            <checkbox ng-model="input.isReference"></checkbox>
+
+          </div>
+          <div class="col-md-4">
+            This element is a reference to another DataGroup.
+          </div>
+        </div>
+
+      </uib-tab>
+
+      <uib-tab ng-if="false" heading="Layout">
+        <br/>
+        <table class="table-bordered table table-condensed">
+          <tr>
+            <td>Insert after</td>
+
+            <td>
+
+              <div class="row">
+                <div class="col-md-11">
+                  <select class="form-control" ng-model="input.insertAfter"
+                          ng-options="path for path in allPaths"></select>
+                </div>
+                <div class="col-md-1">
+                  <i class="btn btn-link glyphicon glyphicon-remove clickable"
+                     ng-click="input.insertAfter = ''"></i>
+                </div>
+              </div>
+
+              </td>
+
+
+
+          </tr>
+        </table>
+
+      </uib-tab>
+
+      <uib-tab heading="Json">
+        <br/>
+        <pre>{{item | json}}</pre>
+      </uib-tab>
+
+      <uib-tab heading="All elements in DG">
+        <br/>
+        <table class="table-condensed table table-bordered">
+          <tr ng-repeat="item in fullElementList">
+            <td>{{item.ed.path | dropFirstInPath}}</td>
+            <td>{{item.ed.title}}</td>
+            <td>{{item.ed.description}}</td>
+          </tr>
+        </table>
+      </uib-tab>
+    </uib-tabset>
+
+
+  </div>
+  <div class="modal-header">
+
+    </div>
+</div>

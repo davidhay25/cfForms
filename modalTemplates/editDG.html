@@ -1,0 +1,651 @@
+
+<div>
+
+    <div class="modal-header">
+        <div class="row">
+            <div class="col-md-9">
+                <h3 class="modal-title">
+                    <div ng-hide="model.name">New DataGroup</div>
+                    DataGroup: {{model.name}}
+                </h3>
+            </div>
+
+
+            <div class="col-md-3">
+
+                <button ng-show = "model.name && model.title"
+                        class="btn btn-primary pull-right" ng-click="save()">Save</button>
+
+                <button  class="btn btn-link pull-right" ng-click="cancel()">Cancel</button>
+            </div>
+        </div>
+
+    </div>
+    <div class="modal-body">
+
+        <uib-tabset>
+            <uib-tab heading="Model details">
+                <br/>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="row">
+                            <div class="col-md-2">
+                                Name
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text"
+                                       ng-disabled = "! isNew"
+                                       ng-change="checkName(input.newModelName)"
+                                       ng-blur = "checkExpand()"
+                                       class = "form-control" ng-model="input.newModelName"/>
+
+                                <div style="color: green" ng-show="isNew && isUnique">Name is unique</div>
+                                <div style="color: red "ng-show="isNew && input.newModelName && ! isUnique">Name already in use</div>
+
+                            </div>
+                            <div class="col-md-6">
+                                The model name will serve as the 'type' of the model should others
+                                reference it, so must be a single word (no spaces) and unique. This will be validated.
+
+                            </div>
+                        </div>
+                        <br/>
+                        <div class="row">
+                            <div class="col-md-2">
+                                Title
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text"
+                                       ng-change="setModelAttribute('title',input.newModelTitle)"
+                                       class = "form-control" ng-model="input.newModelTitle"/>
+                            </div>
+                            <div class="col-md-6">
+                                The model title describes what the model is about. Keep it short 2-4 words.
+                            </div>
+                        </div>
+                        <br/>
+
+                        <div class="row" ng-if = "userMode == 'library'">
+                            <div class="col-md-2">
+                                Parent
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-control" ng-model="input.newModelParent"
+                                        ng-change="setModelAttribute('parent',input.newModelParent)"
+                                        ng-options = "parent for parent in input.possibleParents"></select>
+                            </div>
+                            <div class="col-md-1">
+                                <button ng-show="input.newModelParent" class="btn btn-link"
+                                        ng-click="deleteParent()">Delete</button>
+                            </div>
+                            <div class="col-md-6">
+                                If a parent is assigned to the model, then it will inherit all the elements
+                                in that parent - and the parent's parent's as well. Individual elements can be
+                                removed or altered if needed.
+                            </div>
+                        </div>
+                        <br/>
+
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                Extraction type
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" placeholder="eg Observation" class="form-control" ng-model="input.type">
+                            </div>
+                            <div class="col-md-6">
+                                If set to a FHIR resource type,
+                                <a target="_blank" href="https://build.fhir.org/ig/HL7/sdc/extraction.html#definition-extract">Definition based data extraction</a> will be enabled
+
+                            </div>
+                        </div>
+                        <br/>
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                Linked Component
+                            </div>
+                            <div class="col-md-4">
+
+
+                                <input type="text" ng-model="input.linkedDG"
+                                       uib-typeahead="dg as dg.title for dg in allFrozen | filter:{title: $viewValue} | limitTo:10 "
+
+                                       class="form-control">
+
+
+                                <!--
+                                <select ng-model="input.linkedDG" class="form-control"
+                                        ng-options = "fDG.title + ' (' + hashTranslate[fDG.source] + ')' for fDG in allFrozen"></select>
+-->
+                            </div>
+                            <div class="col-md-6">
+                                Component with elements that can be imported into this DG
+                                <div style="padding-left: 8px">
+                                    <em>{{input.linkedDG.description}}</em></div>
+
+                            </div>
+                            <br/> <br/>
+                        </div>
+
+                        <div ng-if="false" class="row">
+                            <div class="col-md-2">
+                                Id variable
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" placeholder="eg id-obs" class="form-control" ng-model="input.idVariable">
+                            </div>
+                            <div class="col-md-6">
+                                When the DG is extracted as a resource, this value (if set) will be set to a unique fhirpath variable
+                                that will set the resource id. <strong>If this variable is set, then there must be an SDC allocateId extension that
+                                defines it at the same level or higher in the Questionnaire.</strong>
+                            </div>
+                        </div>
+                        <br/>
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                Is container resource
+                            </div>
+                            <div class="col-md-1">
+                                <checkbox ng-model="input.isContainer"></checkbox>
+
+                            </div>
+
+                            <div class="col-md-3">
+                                <div ng-show="input.isContainer">
+                                    Is a Tabbed container
+                                    <checkbox   ng-model="input.isTabbedContainer"></checkbox>
+                                </div>
+
+
+                            </div>
+
+                            <div class="col-md-6">
+                                If this is the container (top) level for the form. This is the one that will render
+                                the full Q in a playground. If the tabbed checkbox is set, the immediate children will be rendered as tabs.
+                                They should either be Groups or contained DTs.
+                            </div>
+                            <br/> <br/>
+                        </div>
+                        <br/>
+
+                        <!-- not yet enabled
+                                        <div ng-if="input.type == 'Observation'" class="row">
+                                            <div class="col-md-2">
+                                                Observation based extraction?
+                                            </div>
+                                            <div class="col-md-4">
+                                                <checkbox ng-model="input.obsExtract"></checkbox>
+
+                                            </div>
+                                            <div class="col-md-6">
+                                                Use Observation based extraction for simple Observations.
+
+                                            </div>
+                                            <br/> <br/>
+                                        </div>
+                        -->
+
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                Source reference
+                            </div>
+                            <div class="col-md-4">
+                        <textarea ng-change="setModelAttribute('sourceReference',input.sourceReference)"
+                                  class = "form-control" ng-model="input.sourceReference">
+
+                        </textarea>
+
+                            </div>
+                            <div class="col-md-6">
+                                The source of the information that defined the contents of this Data Group.
+                            </div>
+                        </div>
+                        <br/>
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                Questionnaire version
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" disabled = disabled  class="form-control" ng-model="input.qVersion">
+                            </div>
+                            <div class="col-md-6">
+                                The current Questionnaire version (if this DG has been published as a Questionnaire).
+                                Incremented when the Q is published.
+                            </div>
+                        </div>
+                        <br/>
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                Questionnaire URL
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text"  class="form-control" ng-model="input.qUrl">
+                            </div>
+                            <div class="col-md-6">
+                                The url - which is the primary identifier. If not specified it default to {collection name}-{dg name}.
+                                Once set it should not be changed - unless you are sure!
+
+                            </div>
+                        </div>
+                        <br/>
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                Terminology server
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" placeholder="Full url to sever fhir root" class="form-control" ng-model="input.termSvr">
+                            </div>
+                            <div class="col-md-6">
+                                The Terminology server to use for ValueSet expansion in this DG.
+                                <!-- changed ts from backup - doesn't work with poc.canshare..  - why?-->
+                                <span class="clickable" ng-click="input.termSvr = 'https://test.canshare.co.nz/proxy'">
+                            Set to the National New Zealand Terminology Server.</span>
+                            </div>
+                        </div>
+                        <br/>
+
+
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                Description
+                            </div>
+                            <div class="col-md-10">
+                        <textarea class="form-control" ng-model="input.newModelDescription"
+                                  ng-change="setModelAttribute('description',input.newModelDescription)" ></textarea>
+                            </div>
+
+                        </div>
+
+
+
+
+                    </div>
+                    <!--
+                    <div class="col-md-4">
+                        <strong>DGs that reference this one</strong> <span class="badge">{{dgContainingThis.length}}</span>
+                        <br/>
+                        <div class="myScroll">
+                            <ul>
+                                <li ng-repeat="dg in dgContainingThis">
+                                    {{dg}}
+                                </li>
+                            </ul>
+
+
+                        </div>
+
+
+                    </div>
+                    -->
+                </div>
+
+
+
+            </uib-tab>
+
+            <uib-tab heading="Base model content">
+                <em >Content directly defined by this model</em>
+
+
+                <div class="btn-link btn pull-right" ng-click="sort()">Sort</div>
+                <div class="clearfix"></div>
+
+                <div class="myScroll">
+                    <table class="table table-bordered">
+                        <tr><th>Inx</th><th>Path</th><th>Level</th><th>Title</th><th>Type</th><th>Description</th><th>Card.</th><th>Move</th><th>Delete</th></tr>
+                        <tr ng-repeat="element in model.diff">
+                            <td>{{$index+1}}</td>
+
+                            <td>
+                                <div class="clickableDotted"
+                                     uib-popover="{{element.path}}"
+                                     popover-placement="top"
+                                     popover-trigger="'mouseenter'"
+                                     ng-style="{ 'padding-left': (element.path | pathindent) }"
+                                     ng-click="editPath(element)">
+
+                                    {{element.path | lastInPath}}
+                                </div>
+                            </td>
+                            <td>{{element.path.split('.').length - 1}}</td>
+                            <td>{{element.title}}</td>
+                            <td>
+                                <div ng-repeat="type in element.type">
+                                    {{type}}
+
+                                </div>
+
+                                <div ng-show="element.valueSet">
+                                    <div class="clickable" ng-click="viewVS(element.valueSet)">{{element.valueSet}}</div>
+
+                                </div>
+
+                            </td>
+                            <td>
+                                {{element.description}}
+
+                            </td>
+                            <td>{{element.mult}}</td>
+                            <td style="width: 7%">
+                             <span ng-show="$index < model.diff.length -1">
+                                <i class="glyphicon glyphicon-arrow-down pull-right  clickable "
+                                   ng-click="moveDn($index)"></i>
+                            </span>
+
+
+                                <span ng-show="$index > 0">
+                                <i class="glyphicon glyphicon-move  pull-right  clickable"
+                                   ng-click="moveAfter($index,element)"></i>
+                            </span>
+
+                                <span ng-show="$index > 0">
+                                <i class="glyphicon glyphicon-arrow-up pull-right clickable"
+                                   ng-click="moveUp($index)"></i>
+                            </span>
+
+                            </td>
+                            <td>
+                                <i style="color: red" class="glyphicon glyphicon-remove clickable"
+                                   ng-click="remove($index)"></i>
+
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td></td>
+
+                            <td><input class="form-control" type="text"
+                                       ng-change="checkDuplicatePath(input.path)"
+                                       ng-model="input.path" ng-blur="setTitle(input.path)"/>
+
+                                <div ng-show="isDuplicatePath" style="color: red;text-decoration-style: dotted"
+                                     uib-popover="This name has already been used in this DG, or inherited from a parent."
+                                     popover-placement="top"
+                                     popover-trigger="'mouseenter'">Duplicate path name</div>
+
+
+                            </td>
+                            <td></td>
+                            <td><input class="form-control" type="text" ng-model="input.title"/></td>
+                            <td>
+                                <div class="row">
+                                    <div class="col-md-10">
+                                        <select class="form-control" ng-model="input.type"
+                                                ng-options = "type for type in input.types">
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <i style="color: green" class="glyphicon glyphicon-edit clickable"
+                                           ng-click="setType()"></i>
+
+                                    </div>
+                                </div>
+
+
+                                <!--
+                                <div ng-show ="input.type == 'CodeableConcept'">
+                                    <select class="form-control" ng-model="input.valueSet"
+                                            ng-options = "type for type in input.valueSets">
+                                    </select>
+                                </div>
+                                -->
+
+                            </td>
+                            <td><textarea class="form-control" type="text" ng-model="input.description"></textarea></td>
+                            <!--  <td><input class="form-control" type="text" ng-model="input.code"/></td> -->
+                            <td><select class="form-control" ng-model="input.card"
+                                        ng-options = "card for card in input.cards"></select></td>
+                            <td></td>
+                            <td>
+                                <i style="color: green" class="glyphicon glyphicon-ok clickable"
+                                   ng-show="input.path && input.title && input.type"
+                                   ng-click="add()"></i>
+                            </td>
+
+                        </tr>
+
+
+                    </table>
+                </div>
+
+
+            </uib-tab>
+
+            <uib-tab heading="Expanded model" >
+                <em>Full expansion - parents and DataGroups</em>
+                <table class="table table-bordered">
+                    <tr><th>Path</th><th>Title</th><th>Type</th><th>Card.</th></tr>
+                    <tr ng-repeat="element in allElements"
+                        ng-class = "{required:isRequired(element)}">
+                        <td>
+                            <div  ng-style="{ 'padding-left': (element.ed.path | pathindent) }">
+                                {{element.ed.path | lastInPath}}
+                            </div>
+                        </td>
+                        <td>{{element.ed.title}}</td>
+                        <td>
+                            <div ng-repeat="type in element.ed.type">
+                                {{type}}
+                            </div>
+
+                            <div ng-show="element.ed.valueSet">
+                                {{element.ed.valueSet}}
+                            </div>
+
+                        </td>
+
+                        <td>{{element.ed.mult}}</td>
+
+
+                    </tr>
+                </table>
+
+
+
+            </uib-tab>
+
+            <uib-tab heading="Named queries">
+                <br/>
+
+                <em>Named queries used by this DG. Will appear as variables in the Questionnaire</em>
+                <table class="table table-bordered">
+                    <tr><th>Query name</th><th>Variable Name</th><th>Description</th><th>Query</th></tr>
+                    <tr ng-repeat="nq in namedQueries">
+                        <td>{{nq.name}}</td>
+                        <td>{{nq.itemName}}</td>
+                        <td>{{nq.description}}</td>
+                        <td>{{nq.contents}}</td>
+                        <td> <checkbox ng-model="input.nq[nq.name]" </td>
+
+                    </tr>
+                </table>
+
+                <em>Named queries will be rendered as Variable extensions in the Q.
+                This means they are available for pre-population expressions in this DG.</em>
+                <div><em>Other expressions should use the Variable Name to retrieve specific values </em></div>
+
+
+            </uib-tab>
+
+            <uib-tab ng-if="false" heading="Fixed values">
+                <br/>
+
+                <em>Fixed values defined by this DG </em>
+                <table class="table table-bordered">
+                    <tr><th>Path</th><th>Type</th><th>Value</th></tr>
+                    <tr ng-repeat="fv in input.fixedValues">
+                        <td>{{fv.path}}</td>
+                        <td>{{fv.type}}</td>
+                        <td>{{fv.value}}</td>
+                        <td><div class="clickable" ng-click="removeFixedValue($index)">Remove</div></td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" class="form-control" placeholder="The path being fixed" ng-model="input.fvPath"/></td>
+                        <td><input type="text" class="form-control" placeholder="The FHIR type being fixed - eg String, Coding" ng-model="input.fvType"/></td>
+                        <td><input type="text" class="form-control" placeholder="The value being fixed" ng-model="input.fvValue"/></td>
+                        <td><div class="clickable" ng-click="addFixedValue(input.fvPath,input.fvType,input.fvValue)">Add</div> </td>
+
+                    </tr>
+
+                </table>
+                <div><em><strong>If the value is an object, use a jsom string with double quotes around key & value</strong></em></div>
+
+                <em>Fixed values are directly rendered at the root of the Q using the itemExtractionValue extension TODO: distinguish from fixed value in element - ie these are for resource</em>
+
+
+            </uib-tab>
+
+            <uib-tab ng-if = "false" heading="Resource references">
+
+                <h4>Current References</h4>
+                <table class="table-bordered table">
+                    <tr><th>Source in DG</th><th>Resource path</th><th>Target in DG</th><th></th></tr>
+                    <tr ng-repeat="ref in input.resourceReferences">
+                        <td>{{ref.source}}</td>
+                        <td>{{ref.definition}}</td>
+                        <td>{{ref.target}}</td>
+
+                        <td>
+                            <i class="glyphicon glyphicon-remove-sign pull-right clickable"
+                            ng-click="removeRR($index)"></i>
+                        </td>
+                    </tr>
+                </table>
+
+
+                <h4>New Reference</h4>
+                    <table class="table-bordered table">
+                        <tr>
+                            <td>Source (from)</td>
+                            <td>
+                                <select class="form-control" ng-model="input.rrSource"
+                                        ng-change="getPathsForSource()"
+                                        ng-options = "v.path for v in extractedResources" />
+
+                                </td>
+                            <td>{{input.rrSource.fhirType}}</td>
+                            <td>The root ED for this source of the reference in the DG</td>
+                        </tr>
+
+                        <tr>
+                            <td>Target (to)</td>
+                            <td>
+                                <select class="form-control" ng-model="input.rrTarget"
+                                        ng-change="getPathsForSource()"
+                                        ng-options = "v.path for v in extractedResources" />
+
+                            </td>
+                            <td>{{input.rrTarget.fhirType}}</td>
+                            <td>The root ED for target resource in the DG</td>
+                        </tr>
+
+                        <tr>
+                            <td>Source resource path</td>
+                            <td>
+                                <select class="form-control" ng-model="input.rrDefinition"
+                                        ng-options = "v.path for v in definitions" />
+
+                                <input type="text" class="form-control" ng-model="input.adHocRrDefinition"/>
+
+
+                            </td>
+                            <td></td>
+                            <td>The actual path in the extracted source resource</td>
+                        </tr>
+
+
+                    </table>
+
+                <div>
+                    <div class="btn btn-primary pull-right"
+                            ng-show = "input.rrSource && (input.rrDefinition || input.adHocRrDefinition) && input.rrTarget"
+                            ng-click = "addRR(input.rrSource,input.rrDefinition,input.rrTarget,input.adHocRrDefinition)">
+                    Add Reference</div>
+                </div>
+                <br/>
+
+                <em>When a DG has references to other DGs that are extracted as separate
+                resources, this tab defines any references between them. References to Patient
+                    resources are automatically created and don't need to be defined here.
+                    </em>
+
+                <div><em>Extensions created here are placed with the parent DG. This may be an issue for repeating elements.</em></div>
+
+
+            </uib-tab>
+
+
+            <uib-tab ng-if="false" heading="Ad hoc Q extensions">
+
+                <div style="margin: 8px" class="pull-right clickable"><div ng-click="validateJson(input.adHocExt,true)">Validate</div></div>
+
+                <div  style="margin: 8px" class="pull-right clickable"><div ng-click="extBuilder()">Builder</div></div>
+
+                <div class="clearfix"></div>
+
+                <pre>{{model.adHocExtension | json}}</pre>
+                <!--
+                              <textarea id="adHocExtension" ng-model="model." class="custom-textarea" rows="15"></textarea>
+                          <br/>
+                              <em>Add any adhoc extensions to add to a derived questionnaire item. Must be an array with valid Json that
+                                  will be copied into the Q Item. Use double quotes - not single quotes.</em>
+
+              -->
+            </uib-tab>
+
+
+            <uib-tab heading="Import from Q">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Paste in a new Questionnaire</h5>
+                    </div>
+                    <div class="col-md-3">
+                        <div style="padding: 8px">
+                            <div class="btn-link btn" ng-click="fillQ()">Paste most recent</div>
+                        </div>
+
+                    </div>
+                    <div class="col-md-3">
+
+
+                        <button class="btn btn-link pull-right"
+                                ng-click="pasteQ(input.pastedQ)"
+                                ng-if="input.pastedQ">Parse Questionnaire</button>
+                    </div>
+                </div>
+
+                <textarea class="form-control" ng-model="input.pastedQ" rows="20"></textarea>
+            </uib-tab>
+
+            <uib-tab heading="Json">
+                <pre>{{model | json}}</pre>
+            </uib-tab>
+        </uib-tabset>
+
+
+    </div>
+
+
+    <div class="modal-header">
+
+        <div ng-show="model.parent">
+            DataGroup parent: <em>{{model.parent}}</em>
+
+        </div>
+        <div ng-hide="model.parent">
+            <em>This model does not have a parent</em>
+
+        </div>
+
+        {{selectedTab}}
+    </div>
+</div>

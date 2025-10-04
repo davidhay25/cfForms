@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="/">
+    <meta charset="UTF-8">
+    <title>Questionnaire viewer</title>
+
+    <script src="js/libs/jquery-1.9.0.min.js"></script>
+    <script src="js/libs/angular.min1-5.js"></script>
+    <script src="js/libs/ui-bootstrap-tpls-2.0.1.min.js"></script>
+    <script src="js/libs/moment.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/common.css"/>
+    <link rel="stylesheet" type="text/css" href="css/vis.min.css"/>
+
+    <link rel="stylesheet" type="text/css" href="css/jsTreeStyle.css"/>
+
+    <link rel="stylesheet" type="text/css" href="css/jsTreeThemes/proton/style.css"/>
+    <script src="js/libs/jstree.min.js"></script>
+
+
+
+    <style>
+
+        .isHidden {
+            text-decoration: line-through
+        }
+        .form-background  {
+            background-color: #f7f7f7;
+            border: 1px solid gainsboro;
+            padding : 5px;
+            margin: 4px;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+            border-radius: 5px;
+        }
+
+        #itemGraph {
+            width: 100%;
+            height: 800px;
+            border: 1px solid lightgray;
+        }
+
+
+    </style>
+
+<!--
+    <link rel="stylesheet" type="text/css" href="https://lhcforms-static.nlm.nih.gov/lforms-versions/36.3.2/webcomponent/styles.css"/>
+
+    <script src="https://lhcforms-static.nlm.nih.gov/lforms-versions/36.3.2/webcomponent/assets/lib/zone.min.js"></script>
+    <script src="https://lhcforms-static.nlm.nih.gov/lforms-versions/36.3.2/webcomponent/lhc-forms.js"></script>
+    <script src="https://lhcforms-static.nlm.nih.gov/lforms-versions/36.3.2/fhir/R4/lformsFHIR.min.js"></script>
+
+-->
+
+    <script>
+        let app = angular.module("pocApp",['ui.bootstrap','ui.checkbox','ngSanitize','ngStorage']).config(function($locationProvider) {
+
+            // enable html5Mode for pushstate ('#'-less URLs)
+            $locationProvider.html5Mode(true);
+            $locationProvider.hashPrefix('!');
+        });
+        angular.module("pocApp").constant("moment", moment);
+
+        angular.module("pocApp").config(['$compileProvider', function ($compileProvider) {
+            $compileProvider.aHrefSanitizationWhitelist(/^\s*(http|https?|ftp|mailto|blob):/);
+        }]);
+
+
+        //this allows the directives (which are in the formsApp) to be used. see https://stackoverflow.com/questions/15641730/angular-js-directives-in-different-modules
+        angular.module("formsApp",[])
+        angular.module('topApp', ['pocApp', 'formsApp'])
+
+    </script>
+
+    <script>
+        //add a function to determine if a given path is a child of another. Used when excluding paths
+        //eg seg1.seg2 is a child of seg1.  seg1{path} is not.
+        //Add here to ensure it is available before any functions that use it are loaded...
+        String.prototype.isChildPath = function (parent) {
+            let test = parent + "."
+            if (this.startsWith(test)) {
+              //  if (this.indexOf(test) > -1) {
+                return true
+            } else { return false}
+
+        };
+
+    </script>
+
+    <script src="js/modelReviewCtrl.js"></script>
+    <script src="js/modelsSvc.js"></script>
+
+
+    <script src="js/libs/ngStorage.min.js"></script>
+    <script src="js/libs/angular-bootstrap-checkbox.js"></script>
+
+    <script src="js/viewVSCtrl.js"></script>
+
+    <script src="js/modelCompSvc.js"></script>
+    <script src="js/filters.js"></script>
+    <script src="js/makeQSvc.js"></script>
+    <script src="js/codedOptionsSvc.js"></script>
+    <script src="js/utilsSvc.js"></script>
+    <script src="js/libs/vis.min.js"></script>
+    <script src="js/showParameters.js"></script>
+
+
+    <script src="js/vsSvc.js"></script>
+    <script src="js/orderingSvc.js"></script>
+    <script src="js/cmTesterSvc.js"></script>
+    <script src="js/snapShotSvc.js"></script>
+    <script src="js/QutilitiesSvc.js"></script>
+    <script src="js/xquery.js"></script>
+    <script src="js/libs/fhirpath.min.js"></script>
+    <script src="js/libs/fhirpath.r4.min.js"></script>
+
+    <script src="js/qHelperSvc.js"></script>
+    <script src="js/makeQHelperSvc.js"></script>
+
+    <script src="js/libs/angular-sanitize.js"></script>
+
+    <!-- While developing new directive -->
+    <script src="directive/renderForm2/renderFormSvc2.js"></script>
+    <script src="directive/renderForm2/renderFormDir2.js"></script>
+    <script src="js/questionnaireSvc.js"></script>
+
+    <script src="js/viewItemCtrl.js"></script>
+    <script src="js/modelReviewSvc.js"></script>
+
+
+
+
+</head>
+
+<body style="padding: 8px;padding-top: 80px">
+    <div ng-app="topApp" ng-controller="modelReviewCtrl" class="container-fluid">
+
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+
+        <div class="container-fluid">
+            <div class="col-md-3">
+                    <span>
+                        <a class="navbar-brand" href="#">
+                            Questionnaire viewer
+                        </a>
+                    </span>
+
+            </div>
+
+            <div class="col-md-3">
+                <div class="navbar-text">
+<!--
+                    <select class="form-control" ng-model="selectedComp" ng-hide="selectedFromUrl"
+                        ng-change="selectComposition(selectedComp)"
+                            ng-options = "v.title for (k,v) in hashAllCompositions"></select>
+-->
+                    <div ng-if="selectedFromUrl">{{selectedComp.title}}
+                        <span ng-if="compVersion">Version: {{compVersion}}</span>
+
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-md-1 col-sm-1">
+                <form class="navbar-form navbar-left">
+                    <img ng-if="showWaiting" src="css/ajax_loader_blue_32.gif"/>
+                </form>
+            </div>
+            <div class="col-md-1">
+                <div class="navbar-text">
+                    {{version}}
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <div class="navbar-text">
+                    <checkbox ng-model="input.technical"></checkbox> Technical view
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <a href="https://teaho.govt.nz/" target="_blank">
+                    <img width="150" height="auto" class="pull-right"
+                         style="padding: 3px"
+                         src="images/canshareLogo.png"/>
+                </a>
+            </div>
+
+        </div>
+    </nav>
+
+
+    <uib-tabset active="input.mainTabActive">
+
+        <uib-tab heading="Select Q">
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Saved Questionnaires (from Forms designer)</h5>
+                    <table class="table table-bordered">
+                        <tr ng-repeat="vo in lstQ">
+                            <td>
+                                <div class="clickable" ng-click="selectQ(vo.Q.name)">{{vo.Q.name}}</div>
+                            </td>
+                            <td>{{vo.Q.description}}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Paste in a new Questionnaire</h5>
+                        </div>
+                        <div class="col-md-3">
+                            <div style="padding: 8px">
+                                <checkbox ng-model = 'input.parseMakeGroup'></checkbox> Make groups
+                            </div>
+
+                        </div>
+                        <div class="col-md-3">
+
+
+                            <button class="btn btn-link pull-right"
+                                    ng-click="pasteQ(input.pastedQ)"
+                                    ng-if="input.pastedQ">Parse Questionnaire</button>
+                        </div>
+                    </div>
+
+
+                    <textarea class="form-control" ng-model="input.pastedQ" rows="20"></textarea>
+                </div>
+            </div>
+
+
+
+
+
+
+
+
+        </uib-tab>
+
+        <uib-tab  heading="Form">
+            <renderform2 q="fullQ" hash-ed="hashEd" technicalview="input.technical" errors="errorLog"></renderform2>
+        </uib-tab>
+
+
+
+        <uib-tab  heading="SDC view">
+            <br>
+            <uib-tabset>
+                <uib-tab heading="Elements">
+                    <div class="pull-right">
+                        <checkbox ng-model="input.SDCOnly"></checkbox> Show only with SDC instructions
+                    </div>
+
+
+                    <h4>Elements</h4>
+                    <div class="myScroll">
+                        <div class="tableFixHead">
+                        <table class="table table-condensed table-bordered">
+                            <thead>
+                                <tr><th>Text</th><th>Lvl</th><th>LinkId</th><th>Type</th><th>Card.</th><th>Hidden</th><th>SDC</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    ng-class="{background:entry.level % 2 == 0}"
+                                    ng-repeat="entry in qReport.entries track by $index"
+                                    ng-if="showReportLine(input.SDCOnly,entry)" >
+                                <td>
+                                    <div ng-style="{ 'padding-left': (entry.level * 6) }">
+
+                                        {{entry.text}}
+                                    </div>
+                                </td>
+                                <td>{{entry.level}} </td>
+                                <td class="clickable"
+                                    ng-click="viewItem(entry.item)">
+                                    {{entry.linkId}}
+                                </td>
+                                <td>{{entry.type}}</td>
+                                <td>{{entry.mult}}</td>
+                                <td>{{entry.isHidden}}</td>
+
+                                <td>
+                                    <div ng-if="entry.initialExpression">
+                                        <strong>Initial: </strong>{{entry.initialExpression}}
+                                    </div>
+                                    <div ng-if="entry.definition">
+                                        <strong>Extraction: </strong>{{entry.definition}}
+                                    </div>
+
+                                    <div ng-if="entry.allocateId">
+                                        <div ng-repeat="ai in entry.allocateId track by $index">
+                                            <strong>Allocate Id: </strong>{{ai}}
+                                        </div>
+                                    </div>
+
+
+                                    <div ng-if="entry.extractionContext">
+                                        <strong>Extraction context: </strong>{{entry.extractionContext.type}}
+                                        <div style="margin-left: 8px" ng-if="entry.extractionContext.fullUrl">
+                                            <strong>Id variable: (fullurl) </strong>{{entry.extractionContext.fullUrl}}
+                                        </div>
+                                    </div>
+
+                                    <div ng-if="entry.populationContext">
+                                        <strong>Population context:</strong>
+                                        name=<strong>{{entry.populationContext.name}}</strong>
+                                        expression={{entry.populationContext.expression}}
+                                    </div>
+
+                                    <span ng-if="entry.variable" class="pull-right clickable"
+                                          style="cursor: pointer"
+                                          ng-click="testxquery(entry)">Details</span>
+
+
+                                    <div ng-if="entry.variable">
+                                        <strong>Variable: </strong>
+
+                                        {{entry.itemName}}
+                                        <div><em>{{entry.contents}}</em></div>
+
+
+                                    </div>
+
+                                    <div ng-repeat="ext in entry.itemControl">
+                                        <strong>Item control: </strong> {{ext.coding[0].code}}
+
+                                    </div>
+
+
+                                    <div ng-repeat="sv in entry.setValue">
+                                        <strong>Set value: </strong> {{sv.path}}
+                                        <div>
+                                            <div style="margin-left: 8px" ng-if="sv.value"><strong>Fixed: </strong>{{sv.value}}</div>
+                                            <div style="margin-left: 8px" ng-if="sv.expression"><strong>Expression: </strong>{{sv.expression}}</div>
+                                        </div>
+
+                                    </div>
+
+                                    <div ng-if="entry.calculated">
+                                        <strong>Calculated expression: </strong>
+                                        <div><em>{{entry.calculated}}</em></div>
+                                    </div>
+
+                                    <div ng-show="false" ng-if="entry.originalPath">
+                                        <strong>Original path: </strong>
+                                        {{entry.originalPath}}
+                                    </div>
+
+
+                                    <div
+                                            style="background-color: #f2dede"
+                                            ng-repeat="ext in entry.unknownExtension">
+
+                                        <strong>Unknown: </strong> {{ext.url}}
+
+                                    </div>
+
+
+
+
+                                </td>
+
+                            </tr>
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+
+
+
+
+
+                </uib-tab>
+
+                <uib-tab heading="Set values">
+
+
+                    <em>Elements that use the definitionExtractValue extension. Used to fix values
+                    to a constant, variable or expression. Also used to define references.</em>
+
+                    <table class="table table-condensed table-bordered">
+                        <tr><th>Where defined</th><th>Path</th><th>Fixed value / Expression</th></tr>
+                        <tr ng-repeat="sv in qReport.setValue">
+                            <td>
+                                {{sv.item.text}}
+                                <span class="clickable pull-right"
+                                     ng-click="viewItem(sv.item)">{{sv.item.linkId}}</span>
+                            </td>
+                            <td>
+
+                                <div>{{sv.path}}</div>
+                            </td>
+                            <td>
+                                <div ng-if="sv.value"><strong>FV: </strong>{{sv.value}}</div>
+                                <div ng-if="sv.expression"><strong>Exp: </strong>{{sv.expression}}</div>
+                            </td>
+
+                        </tr>
+                    </table>
+                </uib-tab>
+
+                <uib-tab heading="Context variables">
+                    <br>
+                    <em>Launch Context variables that are passed in when the form is created.
+                    Also lists the items that use those variables</em>
+
+                    <table class="table table-condensed table-bordered">
+                        <tr><th>Name</th><th>Type</th><th>Description</th><th>Used by</th></tr>
+                        <tr ng-repeat="lc in qReport.launchContext">
+                            <td>{{lc.name}}</td>
+                            <td>{{lc.type}}</td>
+                            <td>{{lc.description}}</td>
+                            <td>
+                                <div ng-repeat="item in qReport.variableUsage[lc.name]"
+                                      ng-click="viewItem(item)">
+                                    {{item.text}}
+                                    <span class="clickable pull-right">{{item.linkId}}</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </uib-tab>
+
+                <uib-tab heading="Expression usage">
+
+                    <h4>Variable definition</h4>
+
+                    <table class="table-bordered table">
+                            <tr>
+                                <th style="width:15%">Name</th>
+                            <th>
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        Kind of variable
+                                    </div>
+                                    <div class="col-md-2">
+                                        Where defined
+                                    </div>
+                                    <div class="col-md-8">
+                                        Expression
+                                    </div>
+                                </div>
+                            </th></tr>
+
+                            <tr ng-repeat="(k,v) in qReport.expressionUsage.variables">
+                                <td>{{k}}</td>
+                                <td>
+                                    <div class="row" ng-repeat="v1 in v">
+                                        <div class="col-md-2">
+                                            {{v1.kind}}
+                                        </div>
+                                        <div class="col-md-2">
+                                            {{v1.item.text}}
+
+                                            <span class="clickable pull-right"
+                                                 ng-click="viewItem(v1.item)">
+
+                                                {{v1.item.linkId || "Q Root"}}
+                                            </span>
+
+                                        </div>
+
+
+                                        <div class="col-md-8">
+                                            {{v1.expression}}
+                                        </div>
+                                    </div>
+
+                                </td>
+                            </tr>
+                        </table>
+
+                    <h4>Variable usage</h4>
+
+
+
+                    <table class="table-bordered table">
+                        <tr><th style="width:15%">Name</th>
+                            <th>
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        Kind of expression
+                                    </div>
+                                    <div class="col-md-2">
+                                        Where used
+                                    </div>
+                                    <div class="col-md-8">
+                                        Full expression
+                                    </div>
+                                </div>
+                            </th></tr>
+                        <tr ng-repeat="(k,v) in qReport.expressionUsage.used">
+                            <td>{{k}}</td>
+                            <td>
+                                <div class="row" ng-repeat="v1 in v">
+                                    <div class="col-md-2">
+                                        {{v1.url | sdcExtensionName}}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{v1.item.text}}
+                                        <span class="clickable pull-right"
+                                             ng-click="viewItem(v1.item)">
+                                            {{v1.item.linkId || "Q Root"}}
+                                        </span>
+
+                                    </div>
+                                    <div class="col-md-8">
+                                        {{v1.expression}}
+                                    </div>
+
+                                </div>
+                            </td>
+                        </tr>
+
+                    </table>
+
+                    <h4>Other uses of expression</h4>
+
+                    <table class="table-bordered table">
+                        <tr><th style="width:15%">Where used</th><th style="width:15%">Kind of expression</th><th>Expression</th></tr>
+                        <tr ng-repeat="used in qReport.expressionUsage.lstUseExpression">
+                            <td>
+                                {{used.item.text}}
+                                <span class="clickable pull-right"
+                                     ng-click="viewItem(used.item)">
+                                    {{used.item.linkId || "Q Root"}}
+                                </span>
+
+                               </td>
+                            <td>{{used.url | sdcExtensionName}}</td>
+                            <td>{{used.expression}}</td>
+                        </tr>
+                    </table>
+
+
+
+
+
+
+
+
+                </uib-tab>
+
+                <uib-tab heading="Report Json">
+                    <pre>{{qReport | json}}</pre>
+                </uib-tab>
+
+            </uib-tabset>
+
+
+
+        </uib-tab>
+
+        <uib-tab ng-show="false" heading="QR Analysis">
+
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="btn-link btn pull-right" ng-click="parseQR(input.QR)">Parse QR</div>
+                    <textarea rows = "20" class="form-control" ng-model="input.QR">
+
+                    </textarea>
+
+                    <em>This can be any QR - the Q will be retrieved from the Lab server</em>
+                </div>
+                <div class="col-md-8">
+                    <uib-tabset>
+
+                        <uib-tab heading="Report">
+
+                            <table class="table table-bordered">
+                                <tr><th>LinkId</th><th>Text</th><th>Code</th><th>DataType</th><th>Value</th></tr>
+                                <tr ng-repeat="entry in lstQRItem"
+                                    ng-class="{background:entry.dt == 'Group'}">
+                                    <td>{{entry.item.linkId}}</td>
+
+                                    <td>
+                                        <div ng-style="{ 'padding-left': (entry.level * 6) }">
+                                        {{entry.item.text}}</div>
+                                    </td>
+                                    <td>
+                                        <div ng-repeat="code in entry.item.code">
+                                            {{code.code}}
+                                        </div>
+
+                                    </td>
+                                    <td>{{entry.dt}}</td>
+                                    <td>
+                                        <div ng-repeat="ans in entry.answerDisplay">
+                                            {{ans}}
+                                        </div>
+
+                                    </td>
+                                </tr>
+                            </table>
+
+                        </uib-tab>
+                    </uib-tabset>
+
+                </div>
+            </div>
+
+
+        </uib-tab>
+
+        <uib-tab  heading="All comments">
+            <table class="table-condensed table-bordered table">
+                <tr><th>Path</th><th>Author</th><th>Comment</th><th>Disposition</th></tr>
+                <tr ng-repeat="comment in allComments"
+                    ng-if="showCommentLine(comment)">
+                    <td>
+
+                        {{comment.path | compositionSummaryPath}}
+                    </td>
+                    <td>{{comment.author}}</td>
+                    <td>{{comment.comment}}</td>
+
+                    <td>
+                        <div ng-if="comment.disposition">
+                            {{comment.disposition.display}}
+                            <div><em>{{comment.dispositionNote}}</em></div>
+                        </div>
+                        <div ng-if="! comment.disposition">
+                            <div class="clickable" ng-click="addDisposition(comment)">Add disposition</div>
+                        </div>
+
+                    </td>
+                </tr>
+            </table>
+
+        </uib-tab>
+
+        <uib-tab ng-show="true" heading="Questionnaire Graph">
+            <br>
+            <div class="row">
+                <div class="col-md-7">
+                    <div id="itemGraph"></div>
+                </div>
+                <div class="col-md-5">
+
+                    <div class="rounded-box">
+                        <checkbox ng-model="input.graph.hideDisplay"></checkbox> Hide display items
+                    </div>
+
+                    <uib-tabset>
+                        <uib-tab heading="Details">
+                            <table class="table-bordered table">
+                                <tr>
+                                    <td>Text</td><td>{{selectedNodeFromItemGraph.item.text}}</td>
+                                </tr>
+                                <tr>
+                                    <td>Type</td><td>{{selectedNodeFromItemGraph.item.type}}</td>
+                                </tr>
+                                <tr ng-click="viewItem(selectedNodeFromItemGraph.item)">
+                                    <td>LinkId</td>
+                                    <td>
+                                        <div class="clickable" ng-click="viewItem(selectedNodeFromItemGraph.item)">
+                                            {{selectedNodeFromItemGraph.item.linkId}}
+                                        </div>
+
+                                    </td></tr>
+
+                                <tr ng-if="selectedNodeFromItemGraph.meta.extractType">
+                                    <td>Extract type</td><td>{{selectedNodeFromItemGraph.meta.extractType}}</td>
+                                </tr>
+
+                                <tr ng-if="selectedNodeFromItemGraph.item.definition">
+                                    <td>Definition</td><td>{{selectedNodeFromItemGraph.item.definition}}</td>
+                                </tr>
+
+
+                            </table>
+
+
+
+                        </uib-tab>
+                        <uib-tab heading="Json">
+                            <pre>{{selectedNodeFromItemGraph | json}}</pre>
+                        </uib-tab>
+                    </uib-tabset>
+
+                </div>
+            </div>
+        </uib-tab>
+
+        <uib-tab  heading="Questionnaire Json">
+
+
+
+
+            <div class="myScroll">
+                <pre>{{fullQ | json}}</pre>
+            </div>
+
+        </uib-tab>
+
+
+
+
+        </uib-tabset>
+
+
+</div>
+
+</body>
+</html>

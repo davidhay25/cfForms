@@ -1,0 +1,629 @@
+<div>
+  <!--<div ng-controller="newResourceCtrl">-->
+
+
+  <div class="modal-header">
+    <div class="row">
+      <div class="col-md-8 col-sm-8">
+        <h3 class="modal-title">
+          Make SDC extension
+        </h3>
+      </div>
+
+
+      <div class="col-md-4 col-sm-4">
+        <button class="btn btn-link pull-right" ng-click="$dismiss()">Cancel</button>
+
+          <!--
+        <button ng-show = "input.name"
+                class="btn btn-primary pull-right" ng-click="save()">Close</button>
+          -->
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-body">
+
+
+      <div class="row">
+          <div class="col-md-3">
+            <div class="list-group">
+                <div ng-class="{'list-group-item':true,listItemSelected:selectedType == type}"
+                     style="cursor: pointer"
+                     ng-click="selectType(type)"
+                     ng-repeat="type in extTypes">{{type.display}}</div>
+            </div>
+          </div>
+          <div class="col-md-9">
+
+              <div ng-if="selectedType.name == 'item-control'">
+                  <em>Sets the control code extension for the item.
+                      See <a href="https://hl7.org/fhir/extensions/CodeSystem-questionnaire-item-control.html" target="_blank">details</a>. Not all codes included here.</em>
+                  <br/><br/>
+
+                  <div class="row">
+
+                      <div class="col-md-3">
+                         <select ng-model="input.itemControl" class="form-control"
+                                 ng-options="concept.code for concept in itemControlCodes"></select>
+                      </div>
+                  </div>
+
+                  <button class="btn btn-primary pull-right"
+                          ng-if="input.itemControl"
+                          ng-click="save('item-control')">Save</button>
+
+              </div>
+
+              <div ng-if="selectedType.name == 'variable'">
+                  <em>A general purpose variable</em>
+                  <br/><br/>
+                  <div class="row">
+
+                      <div class="col-md-3">
+                          Type
+                      </div>
+                      <div class="col-md-9">
+                          <input type = 'radio' value="fhirpath" ng-model="input.vType"/> fhirPath &nbsp;&nbsp;&nbsp;
+                          <input type = 'radio' value="query" ng-model="input.vType"/> x-fhir-query
+                      </div>
+                  </div>
+                  <br/>
+                  <div class="row">
+
+                      <div class="col-md-3">
+                          Name
+                      </div>
+                      <div class="col-md-4">
+                          <input class="form-control" ng-model="input.vName" placeholder="Spaces will be removed"/>
+                      </div>
+                      <div class="col-md-5">
+                          <em>To insert a linkId, use the elements tab to copy it to the clipboard then paste in here</em>
+                      </div>
+                  </div>
+                  <br/>
+                  <div class="row">
+
+                      <div class="col-md-3">
+                          Expression
+                      </div>
+                      <div class="col-md-9">
+                          <textarea class="form-control" rows = 4  ng-model="input.vExpression"></textarea>
+                      </div>
+                  </div>
+
+                  <br/>
+
+
+                  <button class="btn btn-primary pull-right"
+                          ng-if="input.vName && input.vExpression"
+                          ng-click="save('variable')">Save</button>
+
+
+              </div>
+              <div ng-if="selectedType.name == 'allocateId'">
+                  <em>Allocate an Id for use later in a definitionExtract extension. Commonly used
+                  when setting up references.</em>
+                  <br/><br/>
+                  <div class="row">
+
+                      <div class="col-md-3">
+                          Name
+                      </div>
+                      <div class="col-md-9">
+                          <input class="form-control" ng-model="input.alName" placeholder="Spaces will be removed"/>
+                      </div>
+                  </div>
+                  <br/>
+
+                  <div class="pull-right">
+                      <a href="https://build.fhir.org/ig/HL7/sdc/StructureDefinition-sdc-questionnaire-extractAllocateId.html" target="_blank">Spec</a>
+                  </div>
+
+
+                  <button class="btn btn-primary pull-right"
+                          ng-if="input.alName"
+                          ng-click="save('allocateId')">Save</button>
+              </div>
+              <div ng-if="selectedType.name == 'initialexp'">
+                  <em>Sets the initial value for an item.</em>
+                  <br/> <br/>
+
+                  <div class="row">
+                      <div class="col-md-2">
+                          Expression
+                      </div>
+                      <div class="col-md-10">
+                          <input class="form-control" ng-model="input.ieExpression" />
+                          <div><em>The expression to use to set the initial value for this element. If a json object then use double quotes.
+
+
+                          </em></div>
+                      </div>
+                  </div>
+                  <br/><br/>
+                  <strong>This extension is also used to set the pre-pop value, so don't use it
+                      if you have entered a prepop expression in the edit item dialog.</strong>
+
+
+                  <button class="btn btn-primary pull-right"
+                          ng-if="input.ieExpression"
+                          ng-click="save('initialexp')">Save</button>
+
+              </div>
+              <div ng-if="selectedType.name == 'defextract'">
+                  <em>Marks where a resource is extracted from the Q. Child items are elements in the extracted resource.</em>
+                  <br/><br/>
+                  <em>In many cases, you don't need this extension - it is added automatically when you set
+                      the extract type on the DG. It is useful when dealing with repeating resources and references.</em>
+                  <br/> <br/>
+
+                  <div class="row">
+
+                      <div class="col-md-2">
+                          Canonical Url
+                      </div>
+                      <div class="col-md-10">
+                          <input class="form-control" ng-model="input.deCanonical" placeholder="Spaces will be removed"/>
+                          <div><em>
+                              The full url of the profile that the extract will conform to. eg http://hl7.org/fhir/StructureDefinition/Patient
+                          </em></div>
+                      </div>
+                      <div class="col-md-2">
+
+                      </div>
+                  </div>
+
+                  <div class="row">
+
+                      <div class="col-md-2">
+                          Id variable
+                      </div>
+                      <div class="col-md-10">
+                          <input class="form-control" ng-model="input.deVariable" placeholder="Spaces will be removed"/>
+                          <div><em>
+                              The variable created by the allocateId extension that will be the fullUrl value of the extracted resource in the output bundle.
+
+                          </em></div>
+
+                      </div>
+                      <div class="col-md-2">
+
+                      </div>
+                  </div>
+
+                  <br/>
+
+
+
+                  <button class="btn btn-primary pull-right"
+                          ng-if="input.deCanonical && input.deVariable"
+                          ng-click="save('defextract')">Save</button>
+
+              </div>
+              <div ng-if="selectedType.name == 'defextractvalue'">
+                  <em>Sets the value in the extracted resource. Can be a fixed value or an expression - but not both.</em>
+                  <br/> <br/>
+                  <div class="row">
+
+                      <div class="col-md-2">
+                          Path in resource
+                      </div>
+                      <div class="col-md-10">
+                          <input class="form-control" ng-model="input.devCanonical" placeholder="Spaces will be removed"/>
+                          <div><em>
+                              The full url of the path that will be populated by the value. eg Patient.birthDate
+                          </em></div>
+                      </div>
+
+                  </div>
+
+                  <h4>If an Expression...</h4>
+
+                  <div class="row">
+                      <div class="col-md-2">
+                          Expression
+                      </div>
+                      <div class="col-md-10">
+                          <input class="form-control" ng-model="input.devExpression" />
+                          <div><em>If an expression is used to calculate the value to insert</em></div>
+                      </div>
+                  </div>
+
+                  <h4>If a Fixed value..</h4>
+
+                  <div class="row">
+                      <div class="col-md-2">
+                          DataType
+                      </div>
+                      <div class="col-md-4">
+                          <select class="form-control" ng-model="input.devFhirDT"
+                                  ng-options="dt for dt in fhirDataTypes"></select>
+                          <div><em>The element dataType</em></div>
+                      </div>
+                  </div>
+
+                  <div class="row">
+                      <div class="col-md-2">
+                          Fixed value
+                      </div>
+                      <div class="col-md-10">
+                          <input class="form-control" ng-model="input.devFixed" />
+                          <div><em>If the value to insert is fixed. If a json object then use double quotes</em></div>
+                      </div>
+                  </div>
+
+                  <div><em>The value can either be a fixed value or an expression - but not both</em></div>
+
+
+                  <button class="btn btn-primary pull-right"
+                          ng-if="input.devCanonical && (input.devFixed || input.devExpression)"
+                          ng-click="save('defextractvalue')">Save</button>
+
+              </div>
+              <div ng-if="selectedType.name == 'calc'">
+                  <em>An expression that returns a value based on the value of other elements in the form</em>
+                  <br/><br/>
+                  todo: Docs on referring to other items
+                  <em>An expression that is dynamically calculated from the answers to other questions.
+                      <a href="https://build.fhir.org/ig/HL7/sdc/StructureDefinition-sdc-questionnaire-calculatedExpression.html" target="_blank">Spec</a> </em>
+
+                       <br>
+                  <div class="row">
+
+                      <div class="col-md-3">
+                          Type
+                      </div>
+                      <div class="col-md-9">
+                          <input type = 'radio' value="fhirpath" ng-model="input.calcType"/> fhirPath &nbsp;&nbsp;&nbsp;
+                          <input type = 'radio' value="query" ng-model="input.calcType"/> x-query
+                      </div>
+                  </div>
+                  <br/>
+
+                  <div class="row">
+
+                      <div class="col-md-3">
+                          Expression
+                      </div>
+                      <div class="col-md-9">
+                          <textarea class="form-control" rows = 4  ng-model="input.calcExpression"></textarea>
+                      </div>
+                  </div>
+
+
+
+
+                  <button class="btn btn-primary pull-right"
+                          ng-if="input.calcExpression"
+                          ng-click="save('calc')">Save</button>
+
+
+
+              </div>
+
+
+
+          </div>
+      </div>
+
+
+      <uib-tabset ng-if="false">
+
+          <uib-tab heading="Variable">
+                <br/>
+              <div class="row">
+
+                  <div class="col-md-3">
+                      Type
+                  </div>
+                  <div class="col-md-9">
+                      <input type = 'radio' value="fhirpath" ng-model="input.vType"/> fhirPath &nbsp;&nbsp;&nbsp;
+                      <input type = 'radio' value="query" ng-model="input.vType"/> x-query
+                  </div>
+              </div>
+                <br/>
+              <div class="row">
+
+                  <div class="col-md-3">
+                      Name
+                  </div>
+                  <div class="col-md-4">
+                      <input class="form-control" ng-model="input.vName" placeholder="Spaces will be removed"/>
+                  </div>
+                  <div class="col-md-5">
+                    <em>To insert a linkId, use the elements tab to copy it to the clipboard then paste in here</em>
+                  </div>
+              </div>
+              <br/>
+              <div class="row">
+
+                  <div class="col-md-3">
+                      Expression
+                  </div>
+                  <div class="col-md-9">
+                      <textarea class="form-control" rows = 4  ng-model="input.vExpression"></textarea>
+                  </div>
+              </div>
+
+              <br/>
+              <em>A general purpose variable</em>
+
+              <button class="btn btn-primary pull-right"
+                      ng-if="input.vName && input.vExpression"
+                      ng-click="save('variable')">Save</button>
+
+
+
+          </uib-tab>
+
+          <uib-tab heading="AllocateId">
+              <br/>
+              <div class="row">
+
+                  <div class="col-md-3">
+                      Name
+                  </div>
+                  <div class="col-md-9">
+                      <input class="form-control" ng-model="input.alName" placeholder="Spaces will be removed"/>
+                  </div>
+              </div>
+              <br/>
+
+              <div class="pull-right">
+                  <a href="https://build.fhir.org/ig/HL7/sdc/StructureDefinition-sdc-questionnaire-extractAllocateId.html" target="_blank">Spec</a>
+              </div>
+              <em>Allocate an Id for use later in a definitionExtract extension</em>
+
+              <button class="btn btn-primary pull-right"
+                      ng-if="input.alName"
+                      ng-click="save('allocateId')">Save</button>
+          </uib-tab>
+
+          <uib-tab heading="Definition extract">
+              <br/>
+              <div class="row">
+
+                  <div class="col-md-2">
+                      Canonical Url
+                  </div>
+                  <div class="col-md-10">
+                      <input class="form-control" ng-model="input.deCanonical" placeholder="Spaces will be removed"/>
+                      <div><em>
+                          The full url of the profile that the extract will conform to. eg http://hl7.org/fhir/StructureDefinition/Patient
+                      </em></div>
+                  </div>
+                  <div class="col-md-2">
+
+                  </div>
+              </div>
+
+              <div class="row">
+
+                  <div class="col-md-2">
+                      Id variable
+                  </div>
+                  <div class="col-md-10">
+                      <input class="form-control" ng-model="input.deVariable" placeholder="Spaces will be removed"/>
+                      <div><em>
+                          The variable created by the allocateId extension that will be the fullUrl value of the extracted resource in the output bundle.
+
+                      </em></div>
+
+                  </div>
+                  <div class="col-md-2">
+
+                  </div>
+              </div>
+
+              <br/>
+
+              <em>Marks where a resource is extracted. Child items are elements in the extracted resource.</em>
+
+              <button class="btn btn-primary pull-right"
+                      ng-if="input.deCanonical && input.deVariable"
+                      ng-click="save('defextract')">Save</button>
+
+          </uib-tab>
+
+          <uib-tab heading="Initial expression">
+              <br/>
+
+              <div class="row">
+                  <div class="col-md-2">
+                      Expression
+                  </div>
+                  <div class="col-md-10">
+                      <input class="form-control" ng-model="input.ieExpression" />
+                      <div><em>The expression to use to set the initial value for this element. If a json object then use double quotes.
+                      <br/><strong>This extension is also use to set the pre-pop value, so don't use it
+                      if you have entered a prepop expression in the dialog.</strong>
+
+                      </em></div>
+                  </div>
+              </div>
+
+
+              <button class="btn btn-primary pull-right"
+                      ng-if="input.ieExpression"
+                      ng-click="save('initialexp')">Save</button>
+
+
+          </uib-tab>
+
+
+          <uib-tab heading="Definition extract value">
+              <br/>
+              <div class="row">
+
+                  <div class="col-md-2">
+                      Path in resource
+                  </div>
+                  <div class="col-md-10">
+                      <input class="form-control" ng-model="input.devCanonical" placeholder="Spaces will be removed"/>
+                      <div><em>
+                          The full url of the path that will be populated by the value. eg Patient.birthDate
+                      </em></div>
+                  </div>
+
+              </div>
+
+              <h4>If an Expression...</h4>
+
+              <div class="row">
+                  <div class="col-md-2">
+                      Expression
+                  </div>
+                  <div class="col-md-10">
+                      <input class="form-control" ng-model="input.devExpression" />
+                      <div><em>If an expression is used to calculate the value to insert</em></div>
+                  </div>
+              </div>
+
+              <h4>If a Fixed value..</h4>
+
+              <div class="row">
+                  <div class="col-md-2">
+                      DataType
+                  </div>
+                  <div class="col-md-4">
+                      <select class="form-control" ng-model="input.devFhirDT"
+                              ng-options="dt for dt in fhirDataTypes"></select>
+                      <div><em>The element dataType</em></div>
+                  </div>
+              </div>
+
+              <div class="row">
+                  <div class="col-md-2">
+                      Fixed value
+                  </div>
+                  <div class="col-md-10">
+                      <input class="form-control" ng-model="input.devFixed" />
+                      <div><em>If the value to insert is fixed. If a json object then use double quotes</em></div>
+                  </div>
+              </div>
+
+              <div><em>The value can either be a fixed value or an expression - but not both</em></div>
+
+
+              <button class="btn btn-primary pull-right"
+                      ng-if="input.devCanonical && (input.devFixed || input.devExpression)"
+                      ng-click="save('defextractvalue')">Save</button>
+
+
+          </uib-tab>
+
+
+          <uib-tab heading="Calculated Expression">
+
+              <br/>
+              <em>An expression that is dynamically calculated from the answers to other questions.
+              <a href="https://build.fhir.org/ig/HL7/sdc/StructureDefinition-sdc-questionnaire-calculatedExpression.html" target="_blank">Spec</a> </em>
+              <br>
+              <div class="row">
+
+                  <div class="col-md-3">
+                      Type
+                  </div>
+                  <div class="col-md-9">
+                      <input type = 'radio' value="fhirpath" ng-model="input.calcType"/> fhirPath &nbsp;&nbsp;&nbsp;
+                      <input type = 'radio' value="query" ng-model="input.calcType"/> x-query
+                  </div>
+              </div>
+              <br/>
+
+              <div class="row">
+
+                  <div class="col-md-3">
+                      Expression
+                  </div>
+                  <div class="col-md-9">
+                      <textarea class="form-control" rows = 4  ng-model="input.calcExpression"></textarea>
+                  </div>
+              </div>
+
+              <br/>
+              <em>An expression that returns a value based on the value of other elements in the form</em>
+
+              <button class="btn btn-primary pull-right"
+                      ng-if="input.calcExpression"
+                      ng-click="save('calc')">Save</button>
+
+
+
+
+          </uib-tab>
+
+          <uib-tab heading="Context">
+              <br/>
+              <uib-tabset>
+                  <uib-tab heading="Context variables">
+                      <br><em>Variables that are in scope at this element</em>
+                      <table class="table table-bordered">
+                          <tr><th>Variable name</th><th>Kind</th><th>Path where defined</th><th>Expression</th></tr>
+                          <tr ng-repeat="v in variables">
+                              <td>{{v.name}}</td>
+                              <td>{{v.kind}}</td>
+                              <td>{{v.path}}</td>
+                              <td>{{v.expression}}</td>
+                          </tr>
+                      </table>
+                  </uib-tab>
+
+                  <uib-tab heading="Elements">
+                      <br>
+                      <em>All the elements in the DG. Use to paste a linkID into an expression</em>
+                      <table class="table-bordered table">
+                          <tr ng-repeat = "element in elements">
+                              <td>
+
+                                  <div ng-repeat = "segment in element.ed.path.split('.') track by $index">
+                                      {{segment}}
+                                  </div>
+
+
+
+                              </td>
+                              <td>{{element.ed.title}}</td>
+                              <td>{{element.ed.description}}</td>
+                              <td>{{element.ed.type[0]}}
+                                  <!-- <em>expand if cc or options</em>-->
+                              </td>
+                              <td><span class="clickable" ng-click="copyPath(element.ed.path)">Copy</span> </td>
+                          </tr>
+                      </table>
+
+
+                  </uib-tab>
+
+              </uib-tabset>
+
+          </uib-tab>
+
+
+
+
+      </uib-tabset>
+
+
+  </div>
+  <div class="modal-header">
+      <div class="row">
+
+          <div class="col-md-4">
+              Current path: {{currentPath}}
+          </div>
+          <div class="col-md-4">
+              <div><a href="https://dev.fhirpath-lab.com/FhirPath" target="_blank">FHIRPath tester</a> </div>
+          </div>
+          <div class="col-md-4">
+              <div><a href="https://docs.google.com/document/d/1dBY8U8mWaiTH6wxu_vrQqrLWv_qZfq_PnTXmcRtxH7Y/edit?tab=t.0" target="_blank">Documentation</a> </div>
+
+
+          </div>
+      </div>
+
+
+
+  </div>
+</div>

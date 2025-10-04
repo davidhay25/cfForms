@@ -1,0 +1,177 @@
+
+<div>
+    <!--<div ng-controller="newResourceCtrl">-->
+    <style>
+        .model-vlg {
+
+        }
+    </style>
+    <div class="modal-header">
+
+        <div class="row">
+            <div class="col-md-8 col-sm-8">
+                <h3 class="modal-title">Execute library item</h3>
+            </div>
+
+
+            <div class="col-md-4 col-sm-4">
+
+                <button class="btn btn-primary pull-right" ng-click="execute()">Execute</button>
+                <button class="btn btn-link pull-right" ng-click="$dismiss()">Cancel</button>
+
+
+
+
+            </div>
+
+
+        </div>
+
+    </div>
+    <div class="modal-body">
+        <div class="row">
+
+            <div class="col-md-2 col-sm-2">
+                Template
+            </div>
+            <div class="col-md-10 col-sm-10">
+                {{item.url}}
+                <div>{{query}}</div>
+            </div>
+        </div>
+
+        <br/>
+
+        <div ng-show="showPatientSelector">
+            <label>Select patient</label>
+            <div class="row">
+                <div class="col-md-2 col-sm-2">
+                    System
+                </div>
+
+                <div class="col-md-8 col-sm-8">
+                    <input
+                           ng-change="fillTemplate()"
+                           placeholder = "Identifier system"
+                           class="form-control" ng-model="identifierSystem"/>
+                </div>
+                <div class="col-md-2 col-sm-2">
+                    <span ng-repeat="system in library.systems"
+                          class="clickable"
+                          ng-click = "setSystem(system)">
+                        {{system.display}}
+                    </span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-2 col-sm-2">
+                    Value
+                </div>
+                <div class="col-md-5 col-sm-5">
+                    <input
+                           placeholder = "Identifier value"
+                           ng-change="fillTemplate()"
+                           class="form-control" ng-model="identifierValue"/>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2 col-sm-2">
+                    Name
+                </div>
+                <div class="col-md-5 col-sm-5">
+                    <input placeholder="Patients name"
+                           ng-change="fillTemplate()"
+                           class="form-control" ng-model="patientName"/>
+                </div>
+                <div class="col-md-5 col-sm-5">
+                    <button class="btn btn-link " ng-click="findPatient(identifierSystem,identifierValue,patientName)">
+                        Find patients
+                    </button>
+                </div>
+            </div>
+
+            <table class="table table-condensed table-bordered">
+                <tr ng-repeat="entry in patientsBundle.entry">
+                    <td>
+                        {{getName(entry.resource)}}
+                    </td>
+                    <td>{{entry.resource.gender}}</td>
+                    <td>{{entry.resource.birthDate | date}}</td>
+                    <td><div class="clickable" ng-click="selectPatient(entry.resource)">Select</div> </td>
+                </tr>
+            </table>
+
+            <div class="row">
+                <div class="col-md-2 col-sm-2">
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div ng-show="showIdentifier">
+            <label>Identifier placeholders</label>
+
+            <div class="row">
+                <div class="col-md-2 col-sm-2">
+                    System
+                </div>
+
+                <div class="col-md-8 col-sm-8">
+                    <input placeholder="System"
+                           ng-change="fillTemplate()"
+                           class="form-control" ng-model="identifierSystem"/>
+                </div>
+                <div class="col-md-2 col-sm-2">
+                    <span ng-repeat="system in library.systems"
+                          class="clickable"
+                        ng-click = "setSystem(system)">
+                        {{system.display}}
+                    </span>
+<!--
+                    <span class="clickable"
+                          ng-click="identifierSystem = 'https://standards.digital.health.nz/ns/nhi-id';fillTemplate()">NHI</span>
+                    -->
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-2 col-sm-2">
+                    Value
+                </div>
+                <div class="col-md-5 col-sm-5">
+                    <input placeholder="Value"
+                           ng-change="fillTemplate()"
+                           class="form-control" ng-model="identifierValue"/>
+                </div>
+            </div>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <div class="modal-header">
+        {{item.notes}}
+        <div class="row">
+
+            <div class="col-md-2 col-sm-2">
+
+            </div>
+
+            <div class="col-md-8 col-sm-8">
+
+            </div>
+
+
+            <div class="col-md-2 col-sm-2">
+
+            </div>
+        </div>
+    </div>
+</div>

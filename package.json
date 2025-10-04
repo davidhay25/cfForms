@@ -1,0 +1,18 @@
+{
+  "name": "cfforms",
+  "version": "1.0.0",
+  "description": "Forms module for canshare and clinfhir",
+  "main": "pocServer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.12.2",
+    "express": "^5.1.0",
+    "fsh-sushi": "^3.16.5",
+    "jwt-decode": "^4.0.0",
+    "mongodb": "^6.20.0"
+  }
+}

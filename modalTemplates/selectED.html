@@ -1,0 +1,121 @@
+<div>
+
+  <style>
+    .isDup  {
+      background-color: #ef8fbe;
+
+    }
+  </style>
+
+  <div class="modal-header">
+    <div class="row">
+      <div class="col-md-8 col-sm-8">
+        <h3 class="modal-title">
+          Import Component elements
+        </h3>
+      </div>
+
+
+      <div class="col-md-4 col-sm-4">
+        <button class="btn btn-link pull-right" ng-click="$dismiss()">Cancel</button>
+
+        <button class="btn btn-primary pull-right" ng-click="save()">Import</button>
+
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-body">
+
+    <uib-tabset>
+
+      <uib-tab heading="Tree">
+
+        <div class="row">
+          <div class="col-md-4">
+            <div class="myScroll">
+              <div id="selectTree"></div>
+            </div>
+
+
+          </div>
+          <div class="col-md-8">
+            <em>Selected elements will be inserted at the same level in the DG. If you want different levels,
+            then create the group element in the DG and insert separately. Group elements or items without dataTypes
+              will not be inserted.
+            </em>
+            <br/><br/>
+            <uib-tabset>
+
+              <uib-tab heading="Selected List">
+
+                <table class="table-bordered table">
+                  <tr><th>Path</th><th>Title</th><th>Datatype</th><th>Card.</th></tr>
+                  <tr ng-class="{isDup: ed.isDupPath}" ng-repeat="ed in selectedED">
+                    <td>
+                      <input class="form-control"
+                             ng-change="changePathHandler(ed)"
+                             ng-model="input.newPath[ed.path]"/>
+                    </td>
+                    <td>{{ed.title}}</td>
+                    <td>{{ed.type[0]}}
+
+                      <div ng-show="ed.valueSet">
+                        <div class="clickable" ng-click="viewVS(ed.valueSet)">{{ed.valueSet}}</div>
+
+                      </div>
+                    </td>
+                    <td>{{ed.mult}}</td>
+
+                  </tr>
+                </table>
+
+              </uib-tab>
+              <uib-tab heading="Single ED">
+                <pre>{{edForJsonDisplay | json}}</pre>
+              </uib-tab>
+
+              <uib-tab ng-show="issues.length > 0">
+                <uib-tab-heading>Issues <span class="badge">{{issues.length}}</span> </uib-tab-heading>
+                <br/>
+
+                <div class="list-group" ng-repeat="iss in issues track by $index">
+                  <div class="list-group-item" >{{iss}}</div>
+
+                </div>
+              </uib-tab>
+              <uib-tab heading="Selected Json">
+                <pre>{{selectedED | json}}</pre>
+              </uib-tab>
+
+
+            </uib-tabset>
+
+          </div>
+        </div>
+
+
+
+
+
+      </uib-tab>
+
+      <uib-tab heading="Json">
+
+
+
+        <pre>{{linkedDG | json}}</pre>
+      </uib-tab>
+    </uib-tabset>
+
+
+
+
+  </div>
+  <div class="modal-header">
+
+    Name:{{linkedDG.name}}
+
+
+  </div>
+</div>
