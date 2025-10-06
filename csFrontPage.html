@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="/">
+    <meta charset="UTF-8">
+    <title>CanShare front page</title>
+
+    <script src="js/libs/jquery-1.9.0.min.js"></script>
+    <script src="js/libs/angular.min1-5.js"></script>
+    <script src="js/libs/ui-bootstrap-tpls-2.0.1.min.js"></script>
+    <script src="js/libs/moment.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/common.css"/>
+
+    <style>
+        .inset  {
+            padding-left: 8px;
+        }
+    </style>
+
+
+    <!--suppress HtmlUnknownAttribute, HtmlUnknownTag, HtmlUnknownTarget -->
+    <script src="https://cdn.counter.dev/script.js" data-id="437589a2-a80a-4e16-bf57-5440607b1050" data-utcoffset="12"></script>
+
+
+
+    <script>
+        angular.module("pocApp",['ui.bootstrap',"firebase"]).config(function($locationProvider) {
+            $locationProvider.html5Mode(true);
+            $locationProvider.hashPrefix('!');
+        });
+
+        angular.module("pocApp").config(['$compileProvider', function ($compileProvider) {
+            $compileProvider.aHrefSanitizationWhitelist(/^\s*(http|https?|ftp|mailto|blob):/);
+        }]);
+
+
+        angular.module("pocApp").constant("moment", moment);
+
+        angular.module("formsApp",[])
+        angular.module('topApp', ['pocApp', 'formsApp'])
+
+    </script>
+    <script src="js/libs/firebase.js"></script>
+    <script src="js/libs/angularfire.min.js"></script>
+
+    <script src="js/csFrontPageCtrl.js"></script>
+    <script src="js/playgroundsSvc.js"></script>
+    <script src="js/utilsSvc.js"></script>
+    <script src="js/loginCtrl.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDG1ToLHycsMUX0CfX0OZVSRUUpFQeKE9o",
+            authDomain: "canshare-730e6.firebaseapp.com",
+            projectId: "canshare-730e6",
+            storageBucket: "canshare-730e6.appspot.com",
+            messagingSenderId: "12147821347",
+            appId: "1:12147821347:web:5963d577cb050259475a96"
+        };
+        if (firebase) {
+            console.log('init firebase')
+            firebase.initializeApp(firebaseConfig);
+
+        }
+    </script>
+
+</head>
+<body style="padding: 8px;padding-top: 80px">
+<div ng-app="topApp" ng-controller="csFrontPageCtrl" class="container-fluid">
+
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+
+        <div class="container-fluid">
+            <div class="col-md-3">
+                    <span>
+                        <a class="navbar-brand" href="#">
+                            CanShare front page
+                        </a>
+                    </span>
+
+            </div>
+
+            <div class="col-md-1">
+                <div class="navbar-text">
+
+                </div>
+            </div>
+
+
+
+
+
+            <div class="col-md-2">
+                <div class="navbar-text">
+
+
+                </div>
+
+            </div>
+
+            <div class="col-md-3">
+                <div class="navbar-text">
+
+
+                </div>
+            </div>
+
+            <div class="col-md-1">
+                <div class="navbar-text " ng-hide="user">
+                    <div style="padding: 8px">
+                        <span style="font-size:1.2em; cursor: pointer" uib-popover="Click to log in"
+                              popover-placement="left"
+                              popover-trigger="'mouseenter'">
+                            <div ng-click="login()">
+                                <i class="glyphicon glyphicon-log-in"></i>
+                            </div>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="navbar-text"  ng-show="user">
+                    <div style="padding: 8px">
+                        <span style="font-size:1.2em;  cursor: pointer" uib-popover="{{user.email}}"
+                              popover-placement="left"
+                              popover-trigger="'mouseenter'">
+                            <div ng-click="logout()">
+                                <i class="glyphicon glyphicon-log-out"></i>
+                            </div>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <a href="https://teaho.govt.nz/" target="_blank">
+                    <img width="150" height="auto" class="pull-right"
+                         style="padding: 3px"
+                         src="images/TAK-logo-midgreen.png"/>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-7">
+
+            <!-- List filters published, name/description filter-->
+
+            <h3>Questionnaires available for download</h3>
+
+            <table  class="table table-bordered">
+                <tr><th>Name</th><th>Description</th><th>Latest Version</th><th>Date</th></tr>
+                <tr ng-repeat = "Q in allQ "
+                    style="cursor: pointer"
+                    ng-class="{listItemSelected:selectedQ == Q}"
+                    ng-click="selectQ(Q)">
+                    <td>{{Q.name}}</td>
+                    <td>{{Q.description}}
+
+
+                    <td>{{Q.version}}</td>
+                    <td width="15%">{{Q.date | date}}</td>
+                </tr>
+            </table>
+
+
+            <table ng-show="false" class="table table-bordered">
+                <tr><th>Name</th><th>Description</th><th>Latest Version</th><th>Date</th></tr>
+                <tr ng-repeat = "pg in playgrounds"
+                    style="cursor: pointer"
+                    ng-class="{listItemSelected:selectedPG==pg}"
+                    ng-click="selectPG(pg)">
+                    <td>{{pg.name}}</td>
+                    <td>{{pg.description}}
+
+
+                    <td>{{pg.publishedVersion}}</td>
+                    <td width="15%">{{pg.publishedDate | date}}</td>
+                </tr>
+            </table>
+
+
+
+        </div>
+        <div class="col-md-5">
+
+
+            <div ng-show="selectedQ">
+                <!--
+                <button class="btn btn-primary pull-right" ng-click="viewQ()">Details</button>
+                -->
+                <h4>Metadata</h4>
+
+                <div><strong>Name</strong></div>
+                <div class="inset">{{selectedQ.name}}</div>
+                <div><strong>Description</strong></div>
+                <div class="inset">{{selectedQ.description}}</div>
+
+                <div><strong>Last updated</strong></div>
+                <div class="inset">{{selectedQ.date | date}}</div>
+
+                <div><strong>Url</strong></div>
+                <div class="inset">{{selectedQ.url}}</div>
+
+                <div><strong>Release notes</strong></div>
+                <div class="rounded-box inset">Notes for the most recent release. ? have history </div>
+                <br/>
+                <div class="row">
+
+                    <div class="col-md-5">
+                        <div style="padding-bottom: 8px"><strong>Version</strong></div>
+                        <select class="form-control" ng-model="input.ddSelectedVersion"
+                                ng-options="v.display for v in ddVersions"
+                                ng-change="makeQDownload(input.ddSelectedVersion.Q)">
+                        </select>
+                    </div>
+                    <div class="col-md-7">
+                        <div><button class="btn btn-link" ng-click="viewQ()">View in Questionnaire viewer</button></div>
+                        <a class="btn btn-link" download="{{downloadLinkJsonName}}"
+                           href="{{downloadLinkJson}}" title="{{downloadLinkJsonName}}" >
+                            Download Questionnaire
+                        </a>
+                    </div>
+                </div>
+                <br/>
+                <div class="banner">
+                    To refer to this Questionnaire in a QuestionnaireResponse, QR.questionnaire value:
+
+                    <div><strong>{{selectedQVersion.url}}|{{selectedQVersion.version}}</strong></div>
+
+                </div>
+
+               <br/>
+
+
+
+
+                <!--
+                <h4>Downloads & Links</h4>
+                <div><button class="btn btn-link ">Show in Fhirpath Lab</button></div>
+                -->
+
+
+<!--
+                <a class="btn btn-link" download="{{downloadLinkJsonName}}"
+                   href="{{downloadLinkJson}}" title="{{downloadLinkJsonName}}" >
+                    Download Questionnaire Json ({{downloadLinkJsonName}})
+                </a>
+-->
+
+
+
+                <br/>
+                <!--
+                <div class="clickable">Download MSWord spec</div>
+                <div class="clickable">Download Questionnaire</div>
+                <div class="clickable">Download Questionnaire Response (for AI)</div>
+                <div class="clickable">Download TSV</div>
+                -->
+
+
+            </div>
+
+
+            <!-- Adjust list based on logged in status-->
+            <h3>Links to CanShare modules</h3>
+
+            <h4>ValueSets</h4>
+            <div><a target="_blank" href="vsLookup.html">ValueSet viewer</a></div>
+            <div ng-show="user"><a target="_blank" href="updateVS.html">ValueSet editor</a></div>
+            <h4>Forms (Questionnaires)</h4>
+            <div ng-show="user"><a target="_blank" href="models.html">Forms editor</a></div>
+            <div><a target="_blank" href="modelReview.html">Questionnaire viewer</a></div>
+            <div><a target="_blank" href="qrVisualizer.html">QuestionnaireResponse viewer for AI path</a></div>
+            <div><a target="_blank" href="qrVisualizerAdHoc.html">QuestionnaireResponse viewer</a></div>
+            <h4>ConceptMaps</h4>
+
+            <div ng-show="user"><a target="_blank" href="updateCM.html">ConceptMap editor</a></div>
+            <div><a target="_blank" href="cmTester.html">ConceptMap dynamic UI</a></div>
+
+
+
+
+
+
+        </div>
+    </div>
+
+
+
+</div>
+</body>

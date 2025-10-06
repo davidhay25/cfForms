@@ -220,7 +220,7 @@
 
     </uib-tab>
 
-    <uib-tab heading = "Leaf DGs">
+    <uib-tab ng-show = "false" heading = "Leaf DGs">
       <em>DG's that are not parents to any other</em>
       <div class="myScroll">
         <table class="table-bordered table">
@@ -270,7 +270,7 @@
 
     </uib-tab>
 
-    <uib-tab heading="Diff analysis">
+    <uib-tab ng-show = "false" heading="Diff analysis">
       <table class="table table-bordered">
         <tr><td>DG Name</td><td>Diff count</td><td>Zero diff</td><td>% zero</td></tr>
         <tr ng-repeat="diff in diffAnalysis">
@@ -315,7 +315,7 @@
       </div>
     </uib-tab>
 
-    <uib-tab heading="Id Check">
+    <uib-tab ng-show = "false" heading="Id Check">
       <div class="clickable pull-right" ng-click="checkIds()">Analyse Ids</div>
 
       <br/>

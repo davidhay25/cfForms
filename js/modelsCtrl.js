@@ -1,5 +1,6 @@
 //https://imagemap.org/
 //https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i/
+//>>>>>>>>>>>>>>>>> can be removed
 angular.module("pocApp")
     .controller('modelsCtrl',
         function ($scope,$http,$localStorage,modelCompSvc,modelsSvc,$window,orderingSvc,
@@ -44,6 +45,16 @@ angular.module("pocApp")
             //always reset trace. an emergency fix - I'll remove trace later
             $localStorage.trace = {on:false,limit:500,contents:[]}
             $localStorage.trace.on = false
+
+            //get configuration - specifically the default terminology server
+            $scope.config = {}
+
+            $http.get('config').then(
+                function (data) {
+                    $scope.config = data.data
+
+                }
+            )
 
             $scope.toggleTraceDEP = function () {
                 $localStorage.trace.on = ! $localStorage.trace.on
@@ -223,7 +234,7 @@ angular.module("pocApp")
                         saveModel(frozen)
                     }
                 }
-
+/*
                 if (type == 'comp') {
 
                     //make the DG replica of a composition
@@ -232,7 +243,7 @@ angular.module("pocApp")
                     saveModel(frozen)
 
                 }
-
+*/
                 function saveModel(frozen) {
 
 
@@ -373,7 +384,7 @@ angular.module("pocApp")
                         }
 
 
-                        let qry = `/Questionnaire/${qName}`
+                        let qry = `Questionnaire/${qName}`
 
 
                         let t = {Q:voQ.Q,errorLog:voQ.errorLog, lidHash: voQ.lidHash}
@@ -523,7 +534,7 @@ angular.module("pocApp")
 
             }
 
-            $scope.savePGtoLocalDEP = function (hideAlert,noversionupdate,cb) {
+            $scope.savePGtoLocal = function (hideAlert,noversionupdate,cb) {
                 let key = `pg-${$scope.world.id}`
                 $scope.world.id = $scope.world.id || utilsSvc.getUUID()
                 $scope.world.updated = new Date()
@@ -834,6 +845,7 @@ angular.module("pocApp")
                         },1000)
 
                     }
+                    /*
                     if (ar[0] == 'comp') {
                         let initialComp = ar[1]
 
@@ -851,6 +863,7 @@ angular.module("pocApp")
                         },1000)
 
                     }
+                    */
                 }
             }
 
@@ -860,10 +873,11 @@ angular.module("pocApp")
                 if (type == 'dg') {
                     host += "?dg=" + $scope.selectedModel.name
                 }
+                /*
                 if (type == 'comp') {
                     host += "?comp=" + $scope.selectedComposition.name
                 }
-
+*/
                 $scope.localCopyToClipboard (host)
                 alert(`Link: ${host} \ncopied to clipBoard`);
 
@@ -2122,7 +2136,7 @@ angular.module("pocApp")
                 return show
             }
 
-            $scope.newComposition = function() {
+            $scope.newCompositionDEP = function() {
 
                 let title = prompt("What is the name (no spaces, & must be unique)")
                 if (title) {
@@ -2331,7 +2345,7 @@ angular.module("pocApp")
             }
 
 
-            $scope.selectComposition = function(comp){
+            $scope.selectCompositionDEP = function(comp){
                 clearB4Select()
                 $scope.selectedComposition = comp
 

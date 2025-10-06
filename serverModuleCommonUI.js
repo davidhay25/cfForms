@@ -6,12 +6,7 @@ const axios = require("axios");
 const showLog = true
 let db
 
-//the utils module is stored in the cs-customops folder. todo ?should we move it to a separate 'common' folder?
-//const utilModule = require("../cs-customOps/serverModuleUtil.js")
 
-console.log(`FHIR server root from env is ${process.env.SERVERBASE}`)
-console.log(`Log database from env is ${process.env.LOGDB}`)
-console.log(`Custom ops from env is ${process.env.CUSTOMOPS}`)
 
 
 

@@ -1,6 +1,6 @@
 angular.module("pocApp")
     .controller('modelReviewCtrl',
-        function ($scope,$http,modelsSvc,modelCompSvc,$timeout, $uibModal,makeQSvc,utilsSvc,$window,
+        function ($scope,$http,modelsSvc,modelCompSvc,$timeout, $uibModal,makeQSvc,utilsSvc,$window,$filter,
                   orderingSvc,snapshotSvc,vsSvc,qHelperSvc,$localStorage,makeQHelperSvc,modelReviewSvc) {
 
             $scope.input = {}
@@ -9,9 +9,14 @@ angular.module("pocApp")
 
             //dietrich-blake-louis
 
+            $scope.selectionOptions = []
+            $scope.selectionOptions.push({display:"Select Published Questionnaire",code:'published'})
+            $scope.selectionOptions.push({display:"Paste ad-hoc Questionnaire",code:'adhoc'})
+            $scope.input.selectedInputOption = $scope.selectionOptions[0]
+
             $scope.serverbase = "https://fhir.forms-lab.com/"
 
-            $scope.input.pastedQ = $localStorage.pastedQ
+            //$scope.input.pastedQ = $localStorage.pastedQ
 
             // ----------- consume events emitted by the v2 Q renderer ----
             $scope.$on('viewVS',function (event,vs) {
@@ -19,7 +24,7 @@ angular.module("pocApp")
             })
 
             $scope.input.QR =  $localStorage.QR //dev
-            $scope.parseQR = function (text) {
+            $scope.parseQRDEP = function (text) {
                 let QR
 
                 $scope.hashLinkId = {}
@@ -166,8 +171,6 @@ angular.module("pocApp")
             //in the table view, hide common DG like HCP as the details are not relevant to reviewers
             $scope.input.hideSomeDG = true
 
-            //let DGsToHideInCompTable = ['NZPersonName','HealthcarePractitionerSummary','NZAddress']
-
 
             let search = $window.location.search;
             let modelName = null
@@ -179,6 +182,8 @@ angular.module("pocApp")
                 if ($window.location.hash) {
                     $scope.compVersion = $window.location.hash.substr(1)
                 }
+
+
             }
 
             $scope.selectQ = function (qName) {
@@ -191,6 +196,59 @@ angular.module("pocApp")
 
                 makeQHelperSvc.showItemDetailsDlg(item,$scope.fullQ)
 
+
+            }
+
+            $scope.makeQDownload = function (Q) {
+                $scope.downloadLinkJson = window.URL.createObjectURL(new Blob([angular.toJson(Q,true) ],{type:"application/json"}))
+                $scope.downloadLinkJsonName = `${Q.name}-${Q.version}.json`
+
+                console.log($scope.downloadLinkJsonName)
+
+                $scope.selectedQVersion = Q
+            }
+
+
+            $scope.viewPublishedQ = function (Q) {
+                $scope.input.mainTabActive = 1
+                $scope.fullQ = Q
+
+                processQ($scope.fullQ)
+
+
+            }
+
+            //when a miniQ is selected from the published list (miniQ has no items)
+            $scope.selectPublishedQ = function (miniQ) {
+               // delete $scope.selectedQ //this will be the full Q
+                $scope.selectedMiniQ = miniQ
+                let qry = `q/${miniQ.name}/versions`
+                $http.get(qry).then(
+                    function (data) {
+                        //returns an array of fullQ versions
+                        console.log(data.data)
+
+
+                        $scope.ddVersions = []
+                        let first = true
+                        for (const v of data.data) {
+                            let date = $filter('date')(v.date)
+                            let display = `${v.version} ${date}`
+                            if (first) {
+                                display += ' (current)'
+                                first = false
+                            }
+                            $scope.ddVersions.push({Q:v,version:v.version,display:display})
+                        }
+
+                        $scope.input.ddSelectedVersion = $scope.ddVersions[0]
+                        $scope.makeQDownload($scope.ddVersions[0].Q)
+
+
+                    }, function (err) {
+
+                    }
+                )
 
             }
 
@@ -226,7 +284,7 @@ angular.module("pocApp")
 
             //Load the Q from the database created by the Q designer.. (not published Q)
             $scope.loadQ = function (qName) {
-                let qry = `/Questionnaire/${qName}`
+                let qry = `Questionnaire/${qName}`
                 $http.get(qry).then(
                     function (data) {
                         $scope.input.mainTabActive = 1
@@ -242,19 +300,19 @@ angular.module("pocApp")
 
 
             //Load the Q viewer with the selected Q
-            $scope.loadQViewerForPublishedQ = function () {
-
-
+            $scope.loadQViewerForPublishedQDEP = function () {
 
                 const url = `modelReview.html?q-${qName}`
                 const features = 'noopener,noreferrer'
                 window.open(url, '_blank', features)
             }
 
+            // process any request that was passed in the call.
+            //I *think* it's only from models
             if (modelName) {
                 if (modelName.startsWith('q-')) {
-                    //a Q reference was passed. The Q will be retrieved from the database
-                    //this is the da created by the Q designer
+                    //a Q reference was passed. The Q will be retrieved from the questionnaire database
+                    //this is the da created by the Q designer and is NOT the same as the published Q
                     let qName = modelName.slice(2)
                     $scope.loadQ(qName)
 
@@ -279,6 +337,7 @@ angular.module("pocApp")
                             }
                         })
                 } else if (modelName.startsWith('pub-'))  {
+                    /* Not used...
                     //This is from the csFrontPage - retrieve a published Q
                     let tmp = modelName.slice(4)
                     let ar = tmp.split('|')
@@ -296,7 +355,7 @@ angular.module("pocApp")
                             alert(err.data.msg)
                         }
                     )
-
+*/
                 }
 
             } else {
@@ -304,6 +363,32 @@ angular.module("pocApp")
             }
 
 
+
+            //get all published Q
+            $http.get('q/all').then(
+                function (data) {
+                    $scope.lstQ = data.data
+                    //$scope.allQ = data.data
+                    try {
+                        $scope.lstQ.sort(function (a,b) {
+                            if (a.name.toLowerCase() > b.name.toLowerCase()) {
+                                return 1
+                            } else {
+                                return -1
+                            }
+                        })
+
+                    } catch (ex) {
+
+                    }
+                    console.log($scope.lstQ)
+
+                }, function (err) {
+                    alert(angular.toJson(err.data))
+                }
+            )
+
+/*
             function loadAllQNames() {
                 $http.get('Questionnaire/getSummary').then(
                     function (data) {
@@ -315,9 +400,12 @@ angular.module("pocApp")
             }
             loadAllQNames()
 
+            */
+
+
+
             //paste in a Q
             $scope.pasteQ = function (Qstring) {
-
 
                 $localStorage.pastedQ = Qstring
 
@@ -360,22 +448,8 @@ angular.module("pocApp")
 
                 }
 
-
-
-
-
             }
 
-
-            $scope.rebuildQDEP = function () {
-                if ( $scope.modelType == 'dg') {
-                    //call the select function with the disable conditional flag set
-                    $scope.selectDG($scope.selectedModel,true)
-                } else {
-                    $scope.selectComposition($scope.selectedModel,$scope.compVersion,true)
-                }
-
-            }
 
             $scope.testxquery = function (xqry) {
                 $uibModal.open({
@@ -546,9 +620,7 @@ angular.module("pocApp")
 
             }
 
-            $scope.expandCompTree = function () {
-                $('#compositionTree').jstree('open_all');
-            }
+
 
             //passes in a single review to update
             $scope.addDisposition = function(comment) {
@@ -712,57 +784,6 @@ angular.module("pocApp")
 
             }
 
-            //todo - ? disable select capability
-            $scope.selectDGDEP = function (dg,disableConditional) {
-                console.log(dg)
-                //todo just for dev atm - not sure if
-                $scope.selectedComp = dg
-                $scope.setCommentsThisModel()   //retrieve comments for this model
-                $scope.fullElementList = snapshotSvc.getFullListOfElements(dg.name)
-
-
-                //adjust according to 'insertAfter' values
-                orderingSvc.sortFullListByInsertAfter($scope.fullElementList,dg,$scope.hashAllDG)
-
-
-                //retrieve all the ValueSets in this DG. They are cached in the service
-                $scope.showWaiting = true
-                vsSvc.getAllVS($scope.fullElementList, function () {
-                    //alert("all VS available")
-                    $scope.showWaiting = false
-
-                    //the second option expands the valuesets as options into the Q - todo make this an option
-                    let config = {expandVS:true,enableWhen:true}
-                    config.hashAllDG = $scope.hashAllDG
-
-                    //disable the generation of conditional operations
-                    if (disableConditional) {
-                        config.enableWhen = false
-                    }
-
-                    if (dg.type) {
-                        config.fhirType = dg.type // Used for definition based extraction
-                    }
-
-                    //need the named queries for Q variables
-                    makeQSvc.getNamedQueries(function (hash) {
-                        config.namedQueries = hash
-
-                        let voQ = makeQSvc.makeHierarchicalQFromDG(dg,$scope.fullElementList,config) //,$scope.hashAllDG)
-                        $scope.fullQ = voQ.Q
-                        $scope.hashEd = voQ.hashEd
-                        $scope.errorLog = voQ.errorLog
-                        console.log(voQ.errorLog)
-
-                        //A report focussed on pre-popupation & extraction
-                        let voReport =  makeQSvc.makeReport($scope.fullQ)
-                        $scope.qReport =voReport.report
-
-
-                    })
-
-                })
-            }
 
 
             $scope.getRowColour = function (ed) {
@@ -781,86 +802,6 @@ angular.module("pocApp")
                 return colour
             }
 
-            $scope.selectCompositionDEP = function (comp,version,hideConditional) {
-
-                if (! comp) {
-                    return
-                }
-
-                $scope.selectedComp = comp
-
-                if (version) {
-                    //if a version is specified then retrieve that version
-
-                    let qry = `/comp/version/${comp.name}/${version}`
-                    $http.get(qry).then(
-                        function (data) {
-                            let compVersion = data.data     //a compositon that has a snapshot
-
-                            if (compVersion.Q && compVersion.snapshot) {
-
-
-                                vsSvc.getAllVS(compVersion.snapshot, function () {
-                                    $scope.fullQ = compVersion.Q         //will invoke the Q renderer directive
-                                    $scope.hashEd = {} //EDs are needed for notes
-                                    compVersion.snapshot.forEach(function (ed) {
-                                        $scope.hashEd[ed.path] = ed
-                                    })
-                                    $scope.errorLog = compVersion.errorLog || [] //vo.errorLog
-
-                                    //A report focussed on pre-popupation & extraction
-                                    let voReport =  makeQSvc.makeReport(compVersion.Q)
-                                    $scope.qReport =voReport.report
-
-
-
-                                })
-
-                            } else {
-                                alert("The composition was retrieved, but it has no snapshot so cannot be viewed.")
-                            }
-
-                        },function (err) {
-                            alert(angular.toJson(err.data))
-                        }
-                    )
-
-                } else {
-                    let voComp = modelCompSvc.makeFullList(comp,$scope.input.types,$scope.hashAllDG)
-                    makeQ(voComp,comp,hideConditional)
-                }
-
-
-
-                function makeQ(voComp,comp,hideConditional) {
-                    vsSvc.getAllVS(voComp.allElements, function () {
-                        //alert("all VS available")
-                        $scope.showWaiting = false
-
-                        makeQSvc.getNamedQueries(function (hashNamedQueries) {
-
-                            //let compConfig = {hideConditional : hideConditional}
-                            let compConfig = {hideEnableWhen : true}
-
-                            let vo = makeQSvc.makeHierarchicalQFromComp(comp,$scope.hashAllDG,hashNamedQueries,compConfig)
-
-                            $scope.fullQ = vo.Q         //will invoke the Q renderer directive
-                            $scope.hashEd = vo.hashEd
-                            $scope.errorLog = vo.errorLog
-
-                            //A report focussed on pre-popupation & extraction
-                            let voReport =  makeQSvc.makeReport($scope.fullQ)
-                            $scope.qReport =voReport.report
-
-
-                            console.log(vo.errorLog)
-
-                        })
-
-
-                    })
-                }
-            }
 
             $scope.showReportLine = function (SDCOnly,entry) {
                 if (! SDCOnly) {return true}

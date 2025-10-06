@@ -4,4 +4,4 @@
 export POCSERVERBASE=9500
 
 
-node ./pocServer.js
+node ./server.js

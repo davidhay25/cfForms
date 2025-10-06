@@ -167,7 +167,7 @@ angular.module("pocApp")
                     }
                 }
 
-                let qry = `/model/namedquery/${name}`
+                let qry = `model/namedquery/${name}`
                 let nq = {name:name,itemName:itemName,description:description,contents:contents,active:active}
 
                 $http.put(qry,nq).then(
@@ -205,7 +205,7 @@ angular.module("pocApp")
 
                         xqry.contents = vo.expression
 
-                        let qry = `/model/namedquery/${name}`
+                        let qry = `model/namedquery/${name}`
                         //let nq = {name:name,itemName:itemName,description:description,contents:contents,active:active}
 
                         $http.put(qry,xqry).then(
@@ -304,7 +304,7 @@ angular.module("pocApp")
 
             //whether a composition is shown.
             //if there are filters set, then all must match for either library or local com
-            $scope.showComp = function (item) {
+            $scope.showCompDEP = function (item) {
                 //let show = true
 
                 //if there's no filter then return true
@@ -352,7 +352,7 @@ angular.module("pocApp")
 
             //get all the DG
             $scope.refreshDGSummary = function (includeDeleted) {
-                let qry = `/model/allDG`
+                let qry = `model/allDG`
                 if (includeDeleted){
                     qry += "?includeDeleted=true"
                 }
@@ -370,7 +370,7 @@ angular.module("pocApp")
             $scope.refreshDGSummary()
 
 
-            $scope.refreshCompSummary = function (includeDeleted) {
+            $scope.refreshCompSummaryDEP = function (includeDeleted) {
                 //get all the compositions
                 let qryComp = `/model/allCompositions`
                 if (includeDeleted){
@@ -383,12 +383,12 @@ angular.module("pocApp")
                         $scope.libraryCompCount = $scope.libraryComp.length
                         //console.log($scope.libraryComp)
                         //allComp are the compositions in the currents users browser cache
-                        makeCompSummary(allComp,$scope.libraryComp)
+                        //makeCompSummary(allComp,$scope.libraryComp)
                     }, function (err) {
                         alert(angular.toJson(err.data))
                     })
             }
-            $scope.refreshCompSummary()
+            //$scope.refreshCompSummary()
             
             $scope.updateRepo = function () {
                 if (confirm("This will update all DGs in the Library with the loacal ones. Are you sure you wish to do this?")) {
@@ -408,7 +408,7 @@ angular.module("pocApp")
 
 
             //local comp and library comp
-            function makeCompSummary(allComp,libraryComp) {
+            function makeCompSummaryDEP(allComp,libraryComp) {
                 let libraryHash = {}
 
                 $scope.hashMetaProperties = {}     //all metadata properties and their values
@@ -615,7 +615,7 @@ angular.module("pocApp")
 
                 if (confirm(`Are you sure you wish to remove the ${dg.title} DG from the library AND the local store. It will mark it as inactive in the library, and remove it from the local store. `)) {
 
-                    let url = `/model/DG/${dg.name}/delete`
+                    let url = `model/DG/${dg.name}/delete`
                     let config = {headers:{'x-user-email': user.email}}
 
                     $http.put(url,dg,config).then(
@@ -647,7 +647,7 @@ angular.module("pocApp")
 
                 if (confirm(`Are you sure you wish to remove the ${comp.title} Composition from the library AND the local store. It will mark it as inactive in the library, and remove it from the local store. `)) {
 
-                    let url = `/model/comp/${comp.name}/delete`
+                    let url = `model/comp/${comp.name}/delete`
                     let config = {headers:{'x-user-email': user.email}}
 
                     $http.put(url,comp,config).then(

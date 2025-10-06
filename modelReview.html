@@ -195,17 +195,130 @@
 
     <uib-tabset active="input.mainTabActive">
 
-        <uib-tab heading="Select Q">
+        <uib-tab heading="Select Questionnaire">
+
+            <br/>
 
             <div class="row">
+                <div class="col-md-3">
+                    <h4>Source of Questionnaire</h4>
+                    <div class="list-group">
+                        <div ng-repeat = "opt in selectionOptions"
+                             style="cursor: pointer"
+                             ng-click="input.selectedInputOption = opt"
+                            ng-class="{'list-group-item':true, listItemSelected:opt.code == input.selectedInputOption.code}">
+                            {{opt.display}}
+
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div ng-show="input.selectedInputOption.code == 'published'">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Published Questionnaires (from Forms designer)</h5>
+                                <table class="table table-bordered">
+                                    <tr><th>Name</th><th>Description</th><th>Version</th></tr>
+                                    <tr ng-repeat="Q in lstQ">
+                                        <td>
+                                            <div class="clickable" ng-click="selectPublishedQ(Q)">{{Q.name}}</div>
+                                        </td>
+                                        <td>{{Q.description}}</td>
+                                        <td>{{Q.version}}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <div ng-show="selectedMiniQ">
+                                    <!--
+                                    <button class="btn btn-primary pull-right" ng-click="viewQ()">Details</button>
+                                    -->
+                                    <h4>Metadata</h4>
+
+                                    <div><strong>Name</strong></div>
+                                    <div class="inset">{{selectedMiniQ.name}}</div>
+                                    <div><strong>Description</strong></div>
+                                    <div class="inset">{{selectedMiniQ.description}}</div>
+
+                                    <div><strong>Last updated</strong></div>
+                                    <div class="inset">{{selectedMiniQ.date | date}}</div>
+
+                                    <div><strong>Url</strong></div>
+                                    <div class="inset">{{selectedMiniQ.url}}</div>
+
+                                    <div><strong>Release notes</strong></div>
+                                    <div class="rounded-box inset">Notes for the most recent release. ? have history </div>
+                                    <br/>
+                                    <div class="row">
+
+                                        <div class="col-md-2">
+                                            <div style="padding-bottom: 8px"><strong>Version</strong></div>
+
+                                        </div>
+                                        <div class="col-md-7">
+                                            <select class="form-control" ng-model="input.ddSelectedVersion"
+                                                    ng-options="v.display for v in ddVersions"
+                                                    ng-change="makeQDownload(input.ddSelectedVersion.Q)">
+                                            </select>
+
+                                            <a class="btn btn-link" download="{{downloadLinkJsonName}}"
+                                               href="{{downloadLinkJson}}" title="{{downloadLinkJsonName}}" >
+                                                Download Questionnaire
+                                            </a>
+
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div><button class="btn btn-link"
+                                                         ng-click="viewPublishedQ(input.ddSelectedVersion.Q)">
+                                                View</button></div>
+                                        </div>
+                                    </div>
+
+
+
+
+
+                                    <br/>
+
+
+
+                                </div>
+
+
+                            </div>
+                        </div>
+
+                    </div>
+                    <div ng-show="input.selectedInputOption.code == 'adhoc'">
+
+                        <div class="row">
+                            <div class="col-md-9">
+                                <textarea class="form-control" ng-model="input.pastedQ" rows="20"></textarea>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-link pull-right"
+                                        ng-click="pasteQ(input.pastedQ)"
+                                        ng-if="input.pastedQ">Parse Questionnaire</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+
+
+            <div ng-show="false" class="row">
                 <div class="col-md-6">
-                    <h5>Saved Questionnaires (from Forms designer)</h5>
+                    <h5>Published Questionnaires (from Forms designer)</h5>
                     <table class="table table-bordered">
-                        <tr ng-repeat="vo in lstQ">
+                        <tr ng-repeat="Q in lstQ">
                             <td>
-                                <div class="clickable" ng-click="selectQ(vo.Q.name)">{{vo.Q.name}}</div>
+                                <div class="clickable" ng-click="selectQ(Q.name)">{{Q.name}}</div>
                             </td>
-                            <td>{{vo.Q.description}}</td>
+                            <td>{{Q.description}}</td>
+                            <td>{{Q.version}}</td>
                         </tr>
                     </table>
                 </div>
@@ -244,6 +357,10 @@
         </uib-tab>
 
         <uib-tab  heading="Form">
+            <div class="alert alert-info">
+                {{fullQ.name}} {{fullQ.version}}
+            </div>
+
             <renderform2 q="fullQ" hash-ed="hashEd" technicalview="input.technical" errors="errorLog"></renderform2>
         </uib-tab>
 

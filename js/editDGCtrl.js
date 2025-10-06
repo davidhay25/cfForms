@@ -22,6 +22,18 @@ angular.module("pocApp")
                 $scope.input.pastedQ = $localStorage.pastedQ
             }
 
+            //get configuration - specifically the default terminology server
+            $scope.config = {}
+            $http.get('config').then(
+                function (data) {
+                    $scope.config = data.data
+                    if (isNew) {
+                        //for a new DG, set the term server to the default
+                        $scope.input.termSvr = $scope.config.termServerUrl
+                    }
+                }
+            )
+
             //when a DG is to be created from a Q
             $scope.pasteQ = function (Qstring) {
 
@@ -215,7 +227,6 @@ angular.module("pocApp")
                     }
 
                 }
-
             }
 
 
