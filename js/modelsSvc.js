@@ -8,7 +8,64 @@ angular.module("pocApp")
 
         return {
 
-            makeCompTree : function (arElements) {
+
+            sortDiff: function (diff) {
+
+                let lst = []
+                let hash = {}
+                diff.forEach(function (ed) {
+                    lst.push(ed.path)
+                    hash[ed.path] = ed
+                })
+                //console.log(angular.toJson(lst))
+
+                let lst1 = sortHierarchicallyWithFirstAppearance(lst)
+
+                diff = []
+                lst1.forEach(function (path) {
+                    diff.push(hash[path])
+                })
+                //console.log(lst1)
+                //console.log(angular.toJson(lst1))
+
+
+            //this routine is from chatGPT...
+            function sortHierarchicallyWithFirstAppearance(list) {
+            // Step 1: Track first appearance of each path
+                const firstAppearance = {};
+                list.forEach((item, index) => {
+                    firstAppearance[item] = firstAppearance[item] ?? index;
+                });
+
+                // Step 2: Build a tree structure
+                const tree = {};
+                list.forEach(path => {
+                    const parts = path.split('.');
+                    let node = tree;
+                    for (let i = 0; i < parts.length; i++) {
+                        const subPath = parts.slice(0, i + 1).join('.');
+                        node[subPath] = node[subPath] || {children: {}, order: firstAppearance[subPath]};
+                        node = node[subPath].children;
+                    }
+                });
+
+            // Step 3: Recursively extract sorted elements
+            function extractSortedPaths(node) {
+                return Object.entries(node)
+                    .sort((a, b) => a[1].order - b[1].order) // Sort by first appearance
+                    .flatMap(([key, value]) => [key, ...extractSortedPaths(value.children)]);
+            }
+
+            return extractSortedPaths(tree);
+        }
+
+
+    },
+
+
+
+
+        makeCompTreeDEP : function (arElements) {
                 //generate a simplified tree view for the review...
                 let treeData = []
                 //let compElements = []
@@ -125,6 +182,13 @@ angular.module("pocApp")
                 */
 
             },
+
+
+
+
+
+
+
 
             setUser : function (user) {
                 this.user = user

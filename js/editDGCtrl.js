@@ -596,15 +596,15 @@ angular.module("pocApp")
                     lst.push(ed.path)
                     hash[ed.path] = ed
                 })
-                console.log(angular.toJson(lst))
+                //console.log(angular.toJson(lst))
 
                 let lst1 = sortHierarchicallyWithFirstAppearance(lst)
                 $scope.model.diff = []
                 lst1.forEach(function (path) {
                     $scope.model.diff.push(hash[path])
                 })
-                console.log(lst1)
-                console.log(angular.toJson(lst1))
+                //console.log(lst1)
+                //console.log(angular.toJson(lst1))
             }
 
             //this routine is from chatGPT...

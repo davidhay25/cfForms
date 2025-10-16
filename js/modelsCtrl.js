@@ -1011,9 +1011,14 @@ angular.module("pocApp")
 
             //can a new item be added here
             $scope.canAdd = function (model,node) {
+
+                return $scope.canEdit(model)
+                /* refactored to allow any element to have a child
+
                 if ($scope.canEdit(model)) {
                     //we're in edit mode - is the current node a suitable parent
                     if (node && node.data && node.data.ed && node.data.ed.type) {
+
                         let type = node.data.ed.type[0]
                         if (type == "Group") {
                             return true
@@ -1023,6 +1028,7 @@ angular.module("pocApp")
                         return true
                     }
                 }
+                */
 
             }
 
@@ -2745,12 +2751,15 @@ angular.module("pocApp")
                     plugins:['dnd','state'],
                     dnd: {
                         'is_draggable' : function(nodes,e) {
+
+                            return true
+                            /*
                             if ($scope.userMode == 'playground') {
                                 return false
                             } else {
                                 return $scope.canEdit($scope.selectedModel)
                             }
-
+*/
 
                         }
                     }
@@ -2793,26 +2802,96 @@ angular.module("pocApp")
             })
 
             $(document).on('dnd_stop.vakata', function (e, data) {
-                let sourceId = getId(data.element.id)
-                let targetId = getId(data.event.target.id)
-
-                if (sourceId && targetId) {
-                    let sourceTitle = getElement(sourceId).title || sourceId
-                    let targetTitle = getElement(targetId).title || targetId
-                    if (confirm(`Are you sure you wish to move ${sourceTitle} after ${targetTitle}`)) {
+                let sourcePath = getId(data.element.id)
+                let targetPath = getId(data.event.target.id)
 
 
-                        $scope.selectedModel.ordering = $scope.selectedModel.ordering || []
-                        $scope.selectedModel.ordering.push({toMove:sourceId,insertAfter:targetId})
+                let targetIsRoot = false
+                if (targetPath.indexOf('.') == -1) {
+                    targetIsRoot = true
+                } else {
+                    if (! $scope.presentInDiff(sourcePath) ) {
+                        alert("Can only move from an element in the model (not from a contained model")
+                        return
+                    }
 
-                        //re-order the full list & re-draw the tree
-                        orderingSvc.sortFullListByInsertAfter($scope.fullElementList,$scope.selectedModel,$scope.hashAllDG)
+                    if (! $scope.presentInDiff(targetPath) ) {
+                        alert("Can only move to an element in the model (not to a contained model")
+                        return
+                    }
+                }
 
-                        //$scope.dgReferencesOrdering = orderingSvc.getOrderingForReferences($scope.fullElementList,$scope.selectedModel,$scope.hashAllDG)
-                        $scope.orderingByToMove = orderingSvc.getOrderingByToMove($scope.selectedModel) // elements with multiple move instructions {dupsExist:dupsExist,hash:hash}
 
-                        let treeData = modelsSvc.makeTreeFromElementList($scope.fullElementList)
-                        drawDGTree(treeData)
+                //todo check the path. can only move within the same parent
+
+
+                if (sourcePath && targetPath) {
+                    //let from = $scope.fullElementHash[path]
+
+                    let sourceTitle = getElement(sourcePath).title || sourcePath
+                    let targetTitle = getElement(targetPath).title || targetPath
+
+                    if (confirm(`Are you sure you wish to move ${sourceTitle} (${sourcePath}) after ${targetTitle} (${targetPath})`)) {
+
+
+                        let diff = angular.copy($scope.selectedModel.diff)  //just for now
+
+                        //locate the source in the diff and remove it. Don't worry about children yet
+                        let sourceEd = null
+
+                        let trimmedSourcePath = sourcePath.split('.').slice(1).join('.');
+                        let trimmedTargetPath = targetPath.split('.').slice(1).join('.');
+
+                        const index = diff.findIndex(f => f.path === trimmedSourcePath);
+                        if (index !== -1) {
+                            [sourceEd] = diff.splice(index, 1); // remove and capture the object
+                        }
+                        console.log(sourceEd)
+
+
+                        //locate the index of the target in the diff
+                        let indexTarget = -1
+                        if (targetIsRoot) {
+                            indexTarget =0    //will be position 0
+                        } else {
+                            indexTarget = diff.findIndex(f => f.path === trimmedTargetPath);
+                            indexTarget++
+                        }
+
+
+
+
+                        if (indexTarget !== -1) {
+
+
+                            //slice the source into the diff at target+1
+                            diff.splice(indexTarget,0,sourceEd)
+
+                            $scope.selectedModel.diff = diff //todo may not be needed
+
+
+
+                            //call the sort() routine to move any children - of target or source
+                            modelsSvc.sortDiff($scope.selectedModel.diff)
+
+                            //forces the local cache to update
+                            $scope.hashAllDG[$scope.selectedModel.name] = $scope.selectedModel
+                            snapshotSvc.makeSnapshots($scope.hashAllDG)
+
+                            $scope.fullElementList = snapshotSvc.getFullListOfElements($scope.selectedModel.name)// vo.allElements
+
+
+                            let treeData = modelsSvc.makeTreeFromElementList($scope.fullElementList)
+                            drawDGTree(treeData)
+
+
+                        } else {
+                            //can't find the target - resplice the source back in
+
+                        }
+
+
+
 
                         $scope.$digest()
 
@@ -2821,6 +2900,7 @@ angular.module("pocApp")
 
 
 
+                //the tree adds '_anchor' to the path
                 function getId(s) {
                     if (s) {
                         let ar = s.split('_')
@@ -2829,9 +2909,10 @@ angular.module("pocApp")
                 }
 
                 //This is not efficient - I s
-                function getElement(path) {
+                function getElement(id) {
 
-                    let el = $scope.fullElementHash[path]
+
+                    let el = $scope.fullElementHash[id]
                     return el || {}
                 }
 
