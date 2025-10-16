@@ -8,6 +8,33 @@ angular.module("pocApp")
         let extensionUrls = makeQHelperSvc.getExtensionUrls()
 
         return {
+            makeTableData : function (Q) {
+                //create a list for a table view of the Q
+
+                let lst = []
+
+                function processItem(item,level) {
+                    item.level = level
+                    lst.push(item)
+                    if (item.item) {
+                        let childLevel = level +1
+                        for (const child of item.item) {
+                            processItem(child,childLevel)
+                        }
+                    }
+                }
+
+                if (Q.item) {
+                    for (const child of Q.item) {
+                        processItem(child,1)
+                    }
+                }
+
+                return lst
+
+
+
+            },
             makeDG: function(Q){
                 //create a DG from a Q
                 //currently only used when importing ICCR

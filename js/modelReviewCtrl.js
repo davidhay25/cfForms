@@ -7,6 +7,8 @@ angular.module("pocApp")
 
             $scope.input.SDCOnly = false
 
+            $scope.extensionUrls = makeQHelperSvc.getExtensionUrls()
+
             //dietrich-blake-louis
 
             $scope.selectionOptions = []
@@ -16,12 +18,78 @@ angular.module("pocApp")
 
             $scope.serverbase = "https://fhir.forms-lab.com/"
 
-            //$scope.input.pastedQ = $localStorage.pastedQ
-
             // ----------- consume events emitted by the v2 Q renderer ----
             $scope.$on('viewVS',function (event,vs) {
                 $scope.viewVS(vs)
             })
+
+
+            //--------- setup the form viewer
+            function formViewerSetup() {
+                $scope.messageCounter = 0
+                let url = "https://dev.fhirpath-lab.com/swm-csiro-smart-forms"
+
+                const iframe = document.getElementById('formPreview');
+                $scope.messagingHandle = 'cf-forms-' + Date.now(); // Unique handle for this session
+                $scope.messagingOrigin = window.location.origin; // Origin for message validation
+
+                //need to pass the messaging handle & origin when initializing the iFrame
+                let fullUrl = `${url}?messaging_handle=${encodeURIComponent($scope.messagingHandle)}&messaging_origin=${encodeURIComponent($scope.messagingOrigin)}`
+                iframe.src = fullUrl
+            }
+
+
+
+            //display the current form. //todo - this could be made cleaner to avoid the timeouts...
+            $scope.previewQ = function (Q) {
+                Q = Q || $scope.fullQ   //when called from the rendering page, not included
+                console.log('Sending Q to renderer',Q)
+                //this needs to be called once per session
+                if (! $scope.messagingHandle) {
+                    //we wait a couple of seconds to make sure the iframe has loaded
+                    $timeout(function () {
+                        formViewerSetup()
+                        //then another delay
+                        $timeout(function () {
+                            $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:Q});
+                        },1000)
+
+                    },2000)
+                } else {
+                    $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:Q});
+                }
+
+
+
+            }
+
+            $scope.sendMessage = function(messageType, payload) {
+                let messagingHandle = $scope.messagingHandle
+
+                const iframe = document.getElementById('formPreview');
+                if (!iframe || !iframe.contentWindow) {
+                    alert('Iframe not loaded yet!');
+                    return;
+                }
+
+                const messageId = `msg-${++$scope.messageCounter}`;
+                const message = {
+                    messagingHandle,
+                    messageId,
+                    messageType,
+                    payload
+                };
+
+                const targetWindow = iframe.contentWindow;
+                const targetOrigin = '*' //http://localhost:8081'; // must match iframe origin
+
+
+
+                console.log('Sending message:', message);
+                targetWindow.postMessage(message, targetOrigin);
+            };
+
+            //----------------------------------
 
             $scope.input.QR =  $localStorage.QR //dev
             $scope.parseQRDEP = function (text) {
@@ -156,13 +224,10 @@ angular.module("pocApp")
                 if (item) {
 
                     let text = angular.toJson(item,true)
-                    //text = text.replace(/ /g, '%nbsp;')
                     text = text.replace(/\n/g, '<br>')
                     return `<pre>${text}</pre>`
 
-                    //return text.replace(/\n/g, '<br>')
                 }
-
             }
 
             //display the technical items
@@ -171,20 +236,21 @@ angular.module("pocApp")
             //in the table view, hide common DG like HCP as the details are not relevant to reviewers
             $scope.input.hideSomeDG = true
 
-
             let search = $window.location.search;
-            let modelName = null
+            let modelName = null    //this is used when a q name is passed on the url - from the editor
             $scope.compVersion = null
 
             if (search) {
 
                 modelName = search.substr(1)
-                if ($window.location.hash) {
-                    $scope.compVersion = $window.location.hash.substr(1)
-                }
+
+               // if ($window.location.hash) {
+               //     $scope.compVersion = $window.location.hash.substr(1)
+            //    }
 
 
             }
+
 
             $scope.selectQ = function (qName) {
                 delete $scope.selectedModel
@@ -206,6 +272,16 @@ angular.module("pocApp")
                 console.log($scope.downloadLinkJsonName)
 
                 $scope.selectedQVersion = Q
+
+                //get any release notes for this version
+                delete $scope.versionReleaseNotes
+                let extReleaseNotesUrl = $scope.extensionUrls.releaseNotes
+                let arExt = utilsSvc.getExtension(Q,extReleaseNotesUrl)
+                if (arExt.length > 0) {
+                    $scope.versionReleaseNotes =  arExt[0].valueMarkdown
+                }
+
+
             }
 
 
@@ -222,6 +298,14 @@ angular.module("pocApp")
             $scope.selectPublishedQ = function (miniQ) {
                // delete $scope.selectedQ //this will be the full Q
                 $scope.selectedMiniQ = miniQ
+
+
+                let extReleaseNotesUrl = $scope.extensionUrls.releaseNotes
+                let arExt = utilsSvc.getExtension(miniQ,extReleaseNotesUrl)
+                if (arExt.length > 0) {
+                    $scope.selectedMiniQ.releaseNotes =  arExt[0].valueMarkdown
+                }
+
                 let qry = `q/${miniQ.name}/versions`
                 $http.get(qry).then(
                     function (data) {
@@ -235,9 +319,10 @@ angular.module("pocApp")
                             let date = $filter('date')(v.date)
                             let display = `${v.version} ${date}`
                             if (first) {
-                                display += ' (current)'
+                                display += ' (latest)'
                                 first = false
                             }
+                            delete v['_id']
                             $scope.ddVersions.push({Q:v,version:v.version,display:display})
                         }
 
@@ -265,19 +350,23 @@ angular.module("pocApp")
                     $scope.hashEd[thing.ed.path] = thing.ed
                 }
 
-                vsSvc.getAllVS(ar, function () {
+                $scope.lstItems = []  //modelReviewSvc.makeTableData(Q)   //items for a table view
 
+                vsSvc.getAllVS(ar, function () {
                     //A report focussed on pre-popupation & extraction
                     let voReport =  makeQSvc.makeReport($scope.fullQ)
                     $scope.qReport =voReport.report
 
                     console.log(voReport)
 
+
+
                     //a graph of items
                     //very slow with large graphs todo - ? only look for small Q
-                  //  let vo = makeQHelperSvc.getItemGraph($scope.fullQ)
-                        //makeItemsGraph(vo.graphData)
+                    let vo = makeQHelperSvc.getItemGraph($scope.fullQ)
+                        makeItemsGraph(vo.graphData)
 
+                    $scope.previewQ(Q)
 
                 })
             }
@@ -388,19 +477,7 @@ angular.module("pocApp")
                 }
             )
 
-/*
-            function loadAllQNames() {
-                $http.get('Questionnaire/getSummary').then(
-                    function (data) {
-                        $scope.lstQ = data.data.lstQ
-                    }, function (err) {
-                        alert(angular.toJson(err.data))
-                    }
-                )
-            }
-            loadAllQNames()
 
-            */
 
 
 

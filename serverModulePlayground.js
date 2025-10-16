@@ -187,11 +187,18 @@ async function setup(app,mongoDbName,uri) {
         }
     })
 
+
+
     //get a summary of playgrounds
     app.get('/playgroundSummary', async function(req,res) {
-        let publishedOnly = req.query.publishedOnly      //will only return pgs that have been published
+        let publishedOnly = req.query.publishedOnly      //will only return pgs that have been published todo ? still used
         try {
-            const cursor = await database.collection("playground").find().sort({name:1}).toArray()
+            const cursor = await database
+                .collection("playground")
+                .find({ $or: [ { deleted: { $exists: false } }, { deleted: false } ] })
+                .collation({ locale: "en", strength: 1 })
+                .sort({name:1})
+                .toArray()
             let ar = []
             for (const entry of cursor) {
 
@@ -218,7 +225,7 @@ async function setup(app,mongoDbName,uri) {
                 }
 
             }
-
+/*
             try {
                 ar.sort(function (a,b) {
                     if (a.name.toLowerCase() > b.name.toLowerCase()) {
@@ -232,7 +239,7 @@ async function setup(app,mongoDbName,uri) {
                 console.error(e)
                 res.json(ar)
             }
-
+*/
 
             res.json(ar)
 
@@ -262,6 +269,45 @@ async function setup(app,mongoDbName,uri) {
 
         }
     })
+
+    //report of ValueSet usage in playgrounds / collections
+    app.get('/playgroundAnalysis/valueSets', async function(req,res) {
+
+        let hashVS = {}     //hash of valuesets by url
+
+        try {
+            const cursor = await database.collection("playground").find().toArray()
+            let ar = []
+            for (const collection of cursor) {
+                let cName = collection.name
+                if (collection.dataGroups) {
+                    for (const key of Object.keys(collection.dataGroups)) {
+                        let dg = collection.dataGroups[key]
+                        if (dg.diff) {
+                            for (const ed of dg.diff) {
+                                if (ed.valueSet) {
+                                    hashVS[ed.valueSet] = hashVS[ed.valueSet] || []
+                                    hashVS[ed.valueSet].push({colName:cName,dgName:dg.name,path:ed.path})
+                                }
+
+                            }
+                        }
+                    }
+                }
+
+
+            }
+
+
+
+            res.json(hashVS)
+
+        } catch(ex) {
+            console.log(ex)
+            res.status(500).json(ex.message)
+        }
+    })
+
 
     // -----------  versions ----------
 

@@ -1094,12 +1094,8 @@ async function setup(app,mongoDbName,uri) {
         let name = req.params.name
         let q = req.body
 
-
-
         const query = {"Q.name":name}
-        //console.log(query)
         try {
-
             const cursor = await database.collection("questionnaire").replaceOne(query,q,{upsert:true})
             res.json(q)
         } catch(ex) {

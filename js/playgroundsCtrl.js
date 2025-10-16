@@ -15,15 +15,33 @@ angular.module("pocApp")
 
             $scope.differences = playgroundsSvc.currentPlaygroundDiff(playground,initialPlayground)
 
+            //get the summary of VS usage across playgrounds
+            $http.get("playgroundAnalysis/valueSets").then(
+                function (data) {
+                    $scope.vsSummary = data.data
+                }, function (err) {
+                    alert(angular.toJson(err.data))
+                }
+            )
+
+
+            $scope.canShow = function (filter,row) {
+                if (! filter) {
+                    return true
+                }
+                let f = filter.toLowerCase()
+                let n = row.name?.toLowerCase()
+                let d = row.description?.toLowerCase()
+                if (n.indexOf(f) > -1 || d.indexOf(f) > -1) {
+                    return true
+                }
+            }
 
             $scope.areDifferences = function () {
                 if (Object.keys($scope.differences).length > 0) {
                     return true
                 }
             }
-
-            console.log($scope.differences)
-
 
 
 
@@ -101,16 +119,21 @@ angular.module("pocApp")
             makeLocalStoreSummary()
 
 
-
-            //Models repository playgrounds
-            $http.get('playgroundSummary').then(
-                function (data) {
+            function loadPlaygrounds() {
+                //Models repository playgrounds
+                $http.get('playgroundSummary').then(
+                    function (data) {
                         $scope.playgrounds = data.data
 
-                }, function (err) {
+                    }, function (err) {
                         alert(angular.toJson(err.data))
-                }
-            )
+                    }
+                )
+
+            }
+            loadPlaygrounds()
+
+
 
 
             function convertAdHoc(world) {
@@ -227,6 +250,7 @@ angular.module("pocApp")
 
             $scope.delete = function (playground,source) {
                 if (confirm(`Are you sure you wish to delete the ${playground.name} form?`)) {
+                    //todo - not using local store anymore
                     if (source == 'local') {
                         let key = `pg-${playground.id}`
                         $localForage.removeItem(key).then(
@@ -235,14 +259,30 @@ angular.module("pocApp")
                                 makeLocalStoreSummary()
                             }
                         )
+                    } else {
+                        //delete by setting the deleted flag and update
+                        playground.deleted = true
+                        $http.put(`playground/${playground.id}`,playground).then(
+                            function () {
+                                loadPlaygrounds()
+                                alert("Collection has been marked as deleted and won't appear in the list.")
+
+                            }, function (err) {
+                                alert(angular.toJson(err))
+                            }
+                        )
+                        console.log(playground)
                     }
+
+
+
                 }
             }
 
             $scope.createNew = function () {
 
                 //create new just creates the playground locally (with a UUID)
-                //the name no longer needs to be unique
+                //the name no longer needs to be unique - 'cause we use the id as the unique identifier
                 let pg = {name:$scope.input.name,description:$scope.input.description}
                 pg.id = utilsSvc.getUUID()
                 pg.dataGroups = {}

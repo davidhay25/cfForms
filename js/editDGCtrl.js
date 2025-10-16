@@ -641,10 +641,12 @@ angular.module("pocApp")
 
             //when editing a path in the 'base model content' tab
             $scope.editPath = function (ed) {
+                /* - this seems very dangerous...
                 let newPath = prompt("Enter new path",ed.path)
                 if (newPath) {
                     ed.path = newPath
                 }
+                */
             }
 
             $scope.viewVS = function (url) {

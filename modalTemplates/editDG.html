@@ -66,6 +66,34 @@
                         </div>
                         <br/>
 
+                        <div class="row">
+                            <div class="col-md-2">
+                                Description
+                            </div>
+                            <div class="col-md-10">
+                        <textarea class="form-control" ng-model="input.newModelDescription"
+                                  ng-change="setModelAttribute('description',input.newModelDescription)" ></textarea>
+                            </div>
+
+                        </div>
+                        <br/>
+                        <div class="row">
+                            <div class="col-md-2">
+                                Latest version
+                            </div>
+
+                            <div class="col-md-4">
+                                <div ng-show = "model.pubVersion">
+                                    Version {{model.pubVersion}}, published on {{model.pubDate | date}}
+                                </div>
+                                <div ng-hide = "model.pubVersion">
+                                    Not yet published
+                                </div>
+
+                            </div>
+
+                        </div>
+
                         <div class="row" ng-if = "userMode == 'library'">
                             <div class="col-md-2">
                                 Parent
@@ -87,6 +115,32 @@
                         </div>
                         <br/>
 
+                        <div class="row">
+                            <div class="col-md-2">
+                                Questionnaire URL
+                            </div>
+                            <div class="col-md-4">
+
+                                <!--
+                                 <input type="text"  class="form-control" ng-model="input.qUrl">
+                                -->
+
+
+                                <input type="text"  class="form-control" ng-model="input.qUrl">
+
+
+                            </div>
+                            <div class="col-md-6">
+                                The url - which is the primary identifier of the Questionnaire.
+                                <!--
+                                If not specified it default to {collection name}-{dg name}.
+                                Once set it should not be changed - unless you are sure!
+-->
+                            </div>
+                        </div>
+                        <br/>
+
+
 
                         <div class="row">
                             <div class="col-md-2">
@@ -103,7 +157,7 @@
                         </div>
                         <br/>
 
-                        <div class="row">
+                        <div ng-if="false" class="row">
                             <div class="col-md-2">
                                 Linked Component
                             </div>
@@ -164,8 +218,8 @@
                             </div>
 
                             <div class="col-md-6">
-                                If this is the container (top) level for the form. This is the one that will render
-                                the full Q in a playground. If the tabbed checkbox is set, the immediate children will be rendered as tabs.
+                                If this is the container (top) level for the form. This is the one that is intended to render
+                                the full Q in a collection. If the tabbed checkbox is set, the immediate children will be rendered as tabs.
                                 They should either be Groups or contained DTs.
                             </div>
                             <br/> <br/>
@@ -206,7 +260,7 @@
                             </div>
                         </div>
                         <br/>
-
+<!--
                         <div class="row">
                             <div class="col-md-2">
                                 Questionnaire version
@@ -220,21 +274,8 @@
                             </div>
                         </div>
                         <br/>
+                        -->
 
-                        <div class="row">
-                            <div class="col-md-2">
-                                Questionnaire URL
-                            </div>
-                            <div class="col-md-4">
-                                <input type="text"  class="form-control" ng-model="input.qUrl">
-                            </div>
-                            <div class="col-md-6">
-                                The url - which is the primary identifier. If not specified it default to {collection name}-{dg name}.
-                                Once set it should not be changed - unless you are sure!
-
-                            </div>
-                        </div>
-                        <br/>
 
                         <div class="row">
                             <div class="col-md-2">
@@ -255,38 +296,13 @@
 
 
 
-                        <div class="row">
-                            <div class="col-md-2">
-                                Description
-                            </div>
-                            <div class="col-md-10">
-                        <textarea class="form-control" ng-model="input.newModelDescription"
-                                  ng-change="setModelAttribute('description',input.newModelDescription)" ></textarea>
-                            </div>
 
-                        </div>
 
 
 
 
                     </div>
-                    <!--
-                    <div class="col-md-4">
-                        <strong>DGs that reference this one</strong> <span class="badge">{{dgContainingThis.length}}</span>
-                        <br/>
-                        <div class="myScroll">
-                            <ul>
-                                <li ng-repeat="dg in dgContainingThis">
-                                    {{dg}}
-                                </li>
-                            </ul>
 
-
-                        </div>
-
-
-                    </div>
-                    -->
                 </div>
 
 

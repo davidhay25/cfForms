@@ -38,7 +38,7 @@ const playgroundModule = require("./serverModulePlayground")
 let express = require('express');
 let app = express();
 app.use(bodyParser.json({limit:'50mb',type:['application/json+fhir','application/fhir+json','application/json']}))
-app.use('/', express.static(__dirname,{index:'/csFrontPage.html'}));
+app.use('/', express.static(__dirname,{index:'/formsFrontPage.html'}));
 
 //from chatGPT to allow call from elsewhere
 app.use((req, res, next) => {

@@ -31,6 +31,8 @@
 
     <uib-tabset active="input.mainTabActive">
 
+      <!--
+
       <uib-tab ng-if="userMode == 'library'" heading="DataGroups list" >
         <br/>
         <div class="row">
@@ -324,10 +326,7 @@
           </div>
           <div class="col-md-6">
             <div><strong>Options</strong></div>
-            <!--
-                    <checkbox ng-model="input.freezeDG"></checkbox> Freeze all
-                    <br/><br/>
-                    -->
+
           </div>
         </div>
 
@@ -344,24 +343,27 @@
 
       </uib-tab>
 
+
+      -->
+
       <uib-tab heading="Components">
         <br/>
 
         <div class="row">
           <div class="col-md-8">
 
-            <span style="margin-right: 20px">Source:</span> <checkbox ng-model="input.showLibrary"></checkbox> LIM
-            <span style="margin-left: 20px">
-               <checkbox ng-model="input.showForm"></checkbox> Collection
-            </span>
 
-            <br/><br/>
+            <div class="row" style="margin-top: 8px; margin-bottom: 8px">
+              <div class="col-md-5">
+                <input type="text" class="form-control" placeholder="Filter on title or description" ng-model="input.filter"/>
+              </div>
+            </div>
 
             <table class="table table-bordered">
-              <tr><th>Title</th><th>Source</th><th>Type</th><th>Description</th><th>Cnt</th><th></th></tr>
+              <tr><th>Title</th><th>DG Name</th><th>Description</th><th>Type</th><th>Cnt</th><th></th></tr>
               <tr ng-repeat="dg in components"
                   ng-class="{listItemSelected:dg.name == clone.name}"
-                  ng-if="canShowComponent(dg)" >
+                  ng-if="canShow(input.filter,dg)" >
                 <td>
                   <div class="clickable" ng-click="selectFromComponent(dg)">
                     {{dg.title}}
@@ -370,14 +372,15 @@
                 </td>
 
                 <td>
-                  {{ { playground: "Form", library: "LIM" }[dg.source] || dg.source}}
+                  {{dg.name}}
                 </td>
-                <td>{{dg.type}}</td>
+
                 <td>{{dg.description}}
                   <div style="color: red" ng-if = "dg.lockedTo" >Locked to: {{dg.lockedTo}}</div>
 
 
                 </td>
+                <td>{{dg.type}}</td>
 
                 <td>{{dg.diff.length}}</td>
 
@@ -408,12 +411,9 @@
           </div>
         </div>
 
-
-
-
       </uib-tab>
 
-      <uib-tab heading="Questionnaires">
+      <uib-tab  ng-show="false" heading="Questionnaires">
         <table class="table table-bordered">
           <tr ng-repeat="vo in lstQ">
             <td>

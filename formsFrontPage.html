@@ -3,7 +3,7 @@
 <head>
     <base href="/">
     <meta charset="UTF-8">
-    <title>CanShare front page</title>
+    <title>Forms front page</title>
 
     <script src="js/libs/jquery-1.9.0.min.js"></script>
     <script src="js/libs/angular.min1-5.js"></script>
@@ -45,7 +45,7 @@
     <script src="js/libs/firebase.js"></script>
     <script src="js/libs/angularfire.min.js"></script>
 
-    <script src="js/csFrontPageCtrl.js"></script>
+    <script src="js/formsFrontPageCtrl.js"></script>
     <script src="js/playgroundsSvc.js"></script>
     <script src="js/utilsSvc.js"></script>
     <script src="js/loginCtrl.js"></script>
@@ -76,7 +76,7 @@
             <div class="col-md-3">
                     <span>
                         <a class="navbar-brand" href="#">
-                            CanShare front page
+                            Forms front page
                         </a>
                     </span>
 
@@ -108,37 +108,11 @@
             </div>
 
             <div class="col-md-1">
-                <div class="navbar-text " ng-hide="user">
-                    <div style="padding: 8px">
-                        <span style="font-size:1.2em; cursor: pointer" uib-popover="Click to log in"
-                              popover-placement="left"
-                              popover-trigger="'mouseenter'">
-                            <div ng-click="login()">
-                                <i class="glyphicon glyphicon-log-in"></i>
-                            </div>
-                        </span>
-                    </div>
-                </div>
 
-                <div class="navbar-text"  ng-show="user">
-                    <div style="padding: 8px">
-                        <span style="font-size:1.2em;  cursor: pointer" uib-popover="{{user.email}}"
-                              popover-placement="left"
-                              popover-trigger="'mouseenter'">
-                            <div ng-click="logout()">
-                                <i class="glyphicon glyphicon-log-out"></i>
-                            </div>
-                        </span>
-                    </div>
-                </div>
             </div>
 
             <div class="col-md-2">
-                <a href="https://teaho.govt.nz/" target="_blank">
-                    <img width="150" height="auto" class="pull-right"
-                         style="padding: 3px"
-                         src="images/TAK-logo-midgreen.png"/>
-                </a>
+
             </div>
         </div>
     </nav>
@@ -148,7 +122,7 @@
 
             <!-- List filters published, name/description filter-->
 
-            <h3>Questionnaires available for download</h3>
+            <h3>Published Questionnaires</h3>
 
             <table  class="table table-bordered">
                 <tr><th>Name</th><th>Description</th><th>Latest Version</th><th>Date</th></tr>
@@ -166,20 +140,6 @@
             </table>
 
 
-            <table ng-show="false" class="table table-bordered">
-                <tr><th>Name</th><th>Description</th><th>Latest Version</th><th>Date</th></tr>
-                <tr ng-repeat = "pg in playgrounds"
-                    style="cursor: pointer"
-                    ng-class="{listItemSelected:selectedPG==pg}"
-                    ng-click="selectPG(pg)">
-                    <td>{{pg.name}}</td>
-                    <td>{{pg.description}}
-
-
-                    <td>{{pg.publishedVersion}}</td>
-                    <td width="15%">{{pg.publishedDate | date}}</td>
-                </tr>
-            </table>
 
 
 
@@ -263,22 +223,6 @@
 
             </div>
 
-
-            <!-- Adjust list based on logged in status-->
-            <h3>Links to CanShare modules</h3>
-
-            <h4>ValueSets</h4>
-            <div><a target="_blank" href="vsLookup.html">ValueSet viewer</a></div>
-            <div ng-show="user"><a target="_blank" href="updateVS.html">ValueSet editor</a></div>
-            <h4>Forms (Questionnaires)</h4>
-            <div ng-show="user"><a target="_blank" href="models.html">Forms editor</a></div>
-            <div><a target="_blank" href="modelReview.html">Questionnaire viewer</a></div>
-            <div><a target="_blank" href="qrVisualizer.html">QuestionnaireResponse viewer for AI path</a></div>
-            <div><a target="_blank" href="qrVisualizerAdHoc.html">QuestionnaireResponse viewer</a></div>
-            <h4>ConceptMaps</h4>
-
-            <div ng-show="user"><a target="_blank" href="updateCM.html">ConceptMap editor</a></div>
-            <div><a target="_blank" href="cmTester.html">ConceptMap dynamic UI</a></div>
 
 
 

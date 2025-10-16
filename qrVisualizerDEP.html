@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="/">
+    <meta charset="UTF-8">
+    <title>QR Visualizer</title>
+
+    <script src="js/libs/jquery-1.9.0.min.js"></script>
+    <script src="js/libs/angular.min1-5.js"></script>
+    <script src="js/libs/ui-bootstrap-tpls-2.0.1.min.js"></script>
+    <script src="js/libs/moment.min.js"></script>
+
+    <script src="js/libs/ngStorage.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/common.css"/>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+
+    <script>
+        angular.module("pocApp",['ui.bootstrap','ngStorage','ngSanitize']).config(function($locationProvider) {
+            $locationProvider.html5Mode(true);
+            $locationProvider.hashPrefix('!');
+        });
+
+        angular.module("pocApp").config(['$compileProvider', function ($compileProvider) {
+            $compileProvider.aHrefSanitizationWhitelist(/^\s*(http|https?|ftp|mailto|blob):/);
+        }]);
+
+
+        angular.module("pocApp").constant("moment", moment);
+
+        angular.module("formsApp",[])
+        angular.module('topApp', ['pocApp', 'formsApp'])
+
+    </script>
+
+
+    <script src="js/qrVisualizerCtrl.js"></script>
+    <script src="js/libs/angular-sanitize.js"></script>
+    <script src="js/showParameters.js"></script>
+    <script src="js/filters.js"></script>
+    <script src="js/viewVSCtrl.js"></script>
+    <script src="js/qrVisualizerSvc.js"></script>
+    <script src="js/viewItemCtrl.js"></script>
+    <script src="js/makeQHelperSvc.js"></script>
+    <script src="js/utilsSvc.js"></script>
+
+    <style>
+        .fixed-span {
+            display: inline-block; /* or block */
+            width: 150px;          /* fixed width */
+            overflow: hidden;      /* optional, hides overflow */
+            white-space: nowrap;   /* optional, prevents wrapping */
+            text-overflow: ellipsis; /* optional, shows "..." if clipped */
+        }
+
+        .inVS {
+            background-color: lightgreen;
+        }
+
+        .missingAnswer {
+            background-color: mistyrose;
+        }
+    </style>
+
+
+</head>
+<body style="padding: 8px;padding-top: 80px">
+<div ng-app="topApp" ng-controller="qrVisualizerCtrl" class="container-fluid">
+
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+
+        <div class="container-fluid">
+            <div class="col-md-3">
+                    <span>
+                        <a class="navbar-brand" href="#">
+                            QR visualizer for AI Path
+                        </a>
+                    </span>
+
+            </div>
+
+            <div class="col-md-1">
+                <div class="navbar-text">
+
+                </div>
+            </div>
+
+
+
+
+
+            <div class="col-md-2">
+                <div class="navbar-text">
+
+
+                </div>
+
+            </div>
+
+            <div class="col-md-3">
+                <div class="navbar-text">
+
+
+                </div>
+            </div>
+
+            <div class="col-md-1">
+
+            </div>
+
+            <div class="col-md-2">
+                <a href="https://teaho.govt.nz/" target="_blank">
+                    <img width="150" height="auto" class="pull-right"
+                         style="padding: 3px"
+                         src="images/TAK-logo-midgreen.png"/>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-2">
+
+            <uib-tabset>
+
+                <uib-tab heading="QRs from Db">
+
+                    <div class="myScroll">
+                        <div class="list-group">
+                            <div ng-class={"list-group-item":true,listItemSelected:item==selectedItem}
+                                 style="cursor: pointer"
+                                 ng-repeat = "item in items"
+                                 ng-click="selectItem(item)">
+                                {{item.inputName}}
+                                <div><em class="pull-right">{{item.runDate | date}}</em></div>
+                                <div class="clearfix"></div>
+                            </div>
+
+                        </div>
+                    </div>
+
+
+
+                </uib-tab>
+
+                <uib-tab heading="Raw file">
+                    <button ng-show="input.qrCsv"
+                            class="btn-link btn" ng-click="parseQRFile(input.qrCsv)">Parse content</button>
+                    <button ng-show="items"
+                            class="btn-link btn" ng-click="upload(input.qrCsv)">Upload</button>
+
+
+                    <div class="myScroll">
+                    <textarea id="pastetextbox" rows="20" class="form-control"
+                              ng-paste="handlePaste($event)" ng-model="input.qrCsv"></textarea>
+                    </div>
+                </uib-tab>
+            </uib-tabset>
+
+        </div>
+
+        <div class="col-md-4">
+            <h4>Text report</h4>
+
+            <div class="myScroll">
+                <p style="margin-left: 10px" ng-bind-html="to_trusted(textReport)"></p>
+            </div>
+
+
+
+        </div>
+
+        <div class="col-md-6" ng-show="selectedItem">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>QuestionnaireResponse</h4>
+                </div>
+                <div class="col-md-6">
+                        <div class="clickable pull-right"
+                             style="padding-top: 8px"
+                             ng-click="openQReview()">Open Questionnaire in review app</div>
+                </div>
+            </div>
+
+            <uib-tabset>
+
+
+
+                <uib-tab heading="Report">
+                    <br/>
+                    <div class="myScroll">
+                        <table class="table table-bordered">
+                        <tr><th>LinkId</th><th>Text</th><th>Code</th><th>DataType</th><th>Value</th></tr>
+
+
+                            <!--  <tr ng-repeat="entry in lstQRItem"
+                            ng-class="{background:entry.dt == 'Group'}">-->
+
+                        <tr ng-repeat="entry in qBasedReport"
+                            ng-class="{background:entry.dt == 'Group',missingAnswer:entry.missingAnswer }">
+                            <td>
+
+                                <div class="clickable" ng-click="itemDetails(entry.item)">{{entry.item.linkId}}</div>
+                            </td>
+
+                            <td>
+                                <div ng-style="{ 'padding-left': (entry.level * 6) }">
+                                    {{entry.item.text}}</div>
+                            </td>
+                            <td>
+                                <div ng-repeat="code in entry.item.code">
+                                    {{code.code}}
+                                </div>
+
+                            </td>
+                            <td>
+                                {{entry.dt}}
+                            </td>
+                            <td>
+                                <div ng-repeat="ans in entry.answerDisplay">
+                                    {{ans}}
+                                </div>
+
+                            </td>
+                        </tr>
+                    </table>
+                    </div>
+                </uib-tab>
+
+                <uib-tab heading="Coded answers">
+
+                    <div class="clickable pull-right" ng-click="checkAllCodes(codedItems)">Check codes in ValueSet</div>
+                    <table>
+
+                        <tr><th>LinkId</th><th>Item text</th><th>Answer code</th><th>Answer text</th><th>ValueSet</th></tr>
+                        <tr ng-repeat="thing in codedItems"
+                            ng-class="{missingAnswer:thing.missingAnswer }">
+                            <td>
+                                <div class="clickable" ng-click="itemDetails(thing.item)">{{thing.item.linkId}}</div>
+                            </td>
+                            <td>
+                                <div ng-style="{ 'padding-left': (thing.level * 6) }">
+                                    {{thing.item.text}}</div>
+                            </td>
+                            <td ng-class="{inVS:thing.inVS}">
+
+                                <span class="clickable" ng-click="lookup(thing.answerCoding.code,thing.answerCoding.system)">
+                                    {{thing.answerCoding.code}}</span>
+
+                            </td>
+
+                            <td>
+                                {{thing.answerCoding.display}}
+                            </td>
+                            <td>
+                                <span class="clickable" ng-click="viewVS(thing.item.answerValueSet)">
+                                    {{thing.item.answerValueSet | lastInUrl}}</span>
+
+
+
+                            </td>
+
+                        </tr>
+                    </table>
+
+
+
+
+                </uib-tab>
+
+
+
+                <uib-tab ng-show="false" heading="Extract">
+                    Invoke $extract on the lab to get back the extracted resources.
+                    Various views - list, table, graph
+                    pass bundle to bundle visualizer
+                    I think the SDC stuff could be simplified (support Observation extraction) and have
+                    common patterns for reports and requests.
+
+
+
+                </uib-tab>
+
+                <uib-tab heading="Validation">
+
+                    <button class="btn btn-link pull-right" ng-click="validate(selectedItem.qr)">Validate</button>
+
+                    <div class="clearfix"></div>
+                    <div class="myScroll">
+                        <table class="table table-bordered">
+                            <tr ng-repeat="iss in oo.issue track by $index"
+                                ng-class="{missingAnswer:iss.severity=='error'}">
+                                <td>
+                                    <div >{{iss.severity}}</div>
+                                </td>
+                                <td>{{iss.diagnostics}}
+                                    <div>
+                                        {{iss.location[0]}}
+
+                                    </div>
+                                    <div>{{iss.details.text}}</div>
+                                    <div ng-repeat = "exp in iss.expression">
+                                        <em><span class="clickable" ng-click="getItemFromOO(exp,iss)">{{exp}}</span></em>
+                                    </div>
+                                </td>
+
+                            </tr>
+                        </table>
+
+                    </div>
+
+
+                </uib-tab>
+
+
+                <uib-tab heading="QR Json">
+
+                    Questionnaire URL: {{selectedItem.qr.questionnaire}}
+                    <br/>
+
+                    <div class="clickable pull-right" ng-click="copyQRToClipboard()">Save to clipboard</div>
+
+                    <div class="clearfix"></div>
+                    <div class="myScroll">
+                        <pre>{{selectedItem.qr | json}}</pre>
+                    </div>
+
+                </uib-tab>
+
+
+                <uib-tab heading="Q Json">
+                    URL: {{selectedQ.url}}
+
+
+                <div class="clearfix"></div>
+                <div class="myScroll">
+                    <pre>{{selectedQ | json}}</pre>
+                </div>
+
+                </uib-tab>
+
+                <uib-tab ng-show="selectedItem.invalidJson" heading="Invalid json">
+
+                    {{selectedItem.errorMsg}}
+                    <br/><br/>
+                    <pre>
+                        {{selectedItem.invalidJson}}
+
+                    </pre>
+
+
+
+                </uib-tab>
+
+            </uib-tabset>
+
+        </div>
+    </div>
+
+
+
+</div>
+</body>

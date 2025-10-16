@@ -98,7 +98,7 @@ angular.module("pocApp")
                 )
             }
 
-
+/*
             $scope.selectPGDEP = function (pg) {
 
                 $scope.selectedPG = pg
@@ -170,6 +170,6 @@ angular.module("pocApp")
                 });
 
             };
-
+*/
 
         })

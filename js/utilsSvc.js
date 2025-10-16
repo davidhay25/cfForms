@@ -1,5 +1,7 @@
 angular.module("pocApp")
 
+
+    //use for generally applicable utilities. Don't make this service dependant on any other...
     .service('utilsSvc', function($q,$http) {
 
 
@@ -38,14 +40,16 @@ angular.module("pocApp")
 
         let config = null;
 
-        this.loadConfig = function() {
-            return $http.get('config').then(res => {
-                config = res.data;
-                console.log(config)
-                return config;
-            });
-        };
-
+        /*
+       // this.loadConfig = function() {
+        //set the config
+         $http.get('config').then(res => {
+            config = res.data;
+            console.log(config)
+            return config;
+        });
+      //  };
+*/
         $http.get("model/namedquery").then(
             function (data) {
 
@@ -61,7 +65,8 @@ angular.module("pocApp")
             getVersion : function(){
                 return "2.0.1"
             },
-            loadConfig :function() {
+            loadConfigDEP :function() {
+                //load the config from the server. Save for later use.
                 return $http.get('config').then(res => {
                     config = res.data;
                     console.log(config)
@@ -69,9 +74,40 @@ angular.module("pocApp")
                 })},
 
             getConfig : function () {
-                console.log(config)
-                return config
+                //only make the call the first time
+                if (config) {
+                    return config
+                } else {
+                    $http.get('config').then(res => {
+                        config = res.data;
+                        console.log(config)
+                        return config
+                    }, function () {
+                        //fail silently
+                        return {}
+                    })
+                }
+
             },
+
+            getExtension: function(item,url,type) {
+                let result = []
+                if (item && item.extension) {
+                    for (const ext of item.extension) {
+                        if (ext.url == url) {
+                            if (type) {
+                                let vName = `value${type}`
+                                result.push(ext[vName])
+                            } else {
+                                result.push(ext)
+                            }
+
+                        }
+                    }
+                }
+                return result
+            },
+
             getUUID : function () {
                 return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
                     var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);

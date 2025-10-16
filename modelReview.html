@@ -45,14 +45,7 @@
 
     </style>
 
-<!--
-    <link rel="stylesheet" type="text/css" href="https://lhcforms-static.nlm.nih.gov/lforms-versions/36.3.2/webcomponent/styles.css"/>
 
-    <script src="https://lhcforms-static.nlm.nih.gov/lforms-versions/36.3.2/webcomponent/assets/lib/zone.min.js"></script>
-    <script src="https://lhcforms-static.nlm.nih.gov/lforms-versions/36.3.2/webcomponent/lhc-forms.js"></script>
-    <script src="https://lhcforms-static.nlm.nih.gov/lforms-versions/36.3.2/fhir/R4/lformsFHIR.min.js"></script>
-
--->
 
     <script>
         let app = angular.module("pocApp",['ui.bootstrap','ui.checkbox','ngSanitize','ngStorage']).config(function($locationProvider) {
@@ -140,28 +133,18 @@
     <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
 
         <div class="container-fluid">
-            <div class="col-md-3">
+            <div class="col-md-6">
                     <span>
                         <a class="navbar-brand" href="#">
                             Questionnaire viewer
+                            <div style="padding-top: 8px">{{fullQ.name}}</div>
                         </a>
                     </span>
 
+
             </div>
 
-            <div class="col-md-3">
-                <div class="navbar-text">
-<!--
-                    <select class="form-control" ng-model="selectedComp" ng-hide="selectedFromUrl"
-                        ng-change="selectComposition(selectedComp)"
-                            ng-options = "v.title for (k,v) in hashAllCompositions"></select>
--->
-                    <div ng-if="selectedFromUrl">{{selectedComp.title}}
-                        <span ng-if="compVersion">Version: {{compVersion}}</span>
 
-                    </div>
-                </div>
-            </div>
 
 
             <div class="col-md-1 col-sm-1">
@@ -218,8 +201,9 @@
                             <div class="col-md-6">
                                 <h5>Published Questionnaires (from Forms designer)</h5>
                                 <table class="table table-bordered">
-                                    <tr><th>Name</th><th>Description</th><th>Version</th></tr>
-                                    <tr ng-repeat="Q in lstQ">
+                                    <tr><th>Name</th><th>Description</th><th>Latest version</th></tr>
+                                    <tr ng-repeat="Q in lstQ"
+                                        ng-class="{listItemSelected:selectedMiniQ == Q}">
                                         <td>
                                             <div class="clickable" ng-click="selectPublishedQ(Q)">{{Q.name}}</div>
                                         </td>
@@ -246,8 +230,15 @@
                                     <div><strong>Url</strong></div>
                                     <div class="inset">{{selectedMiniQ.url}}</div>
 
+                                    <div><strong>Latest version</strong></div>
+                                    <div class="inset">{{selectedMiniQ.version}}</div>
+
+                                    <!--
                                     <div><strong>Release notes</strong></div>
-                                    <div class="rounded-box inset">Notes for the most recent release. ? have history </div>
+                                    <div ng-show="selectedMiniQ.releaseNotes" class="rounded-box inset">
+                                        {{selectedMiniQ.releaseNotes}}
+                                    </div>
+                                    -->
                                     <br/>
                                     <div class="row">
 
@@ -261,6 +252,12 @@
                                                     ng-change="makeQDownload(input.ddSelectedVersion.Q)">
                                             </select>
 
+                                            <div ng-show="versionReleaseNotes" class="rounded-box inset">
+
+                                                {{versionReleaseNotes}}
+
+                                            </div>
+
                                             <a class="btn btn-link" download="{{downloadLinkJsonName}}"
                                                href="{{downloadLinkJson}}" title="{{downloadLinkJsonName}}" >
                                                 Download Questionnaire
@@ -268,7 +265,7 @@
 
                                         </div>
                                         <div class="col-md-3">
-                                            <div><button class="btn btn-link"
+                                            <div><button class="btn btn-primary"
                                                          ng-click="viewPublishedQ(input.ddSelectedVersion.Q)">
                                                 View</button></div>
                                         </div>
@@ -347,16 +344,9 @@
                 </div>
             </div>
 
-
-
-
-
-
-
-
         </uib-tab>
 
-        <uib-tab  heading="Form">
+        <uib-tab ng-show="fullQ" heading="Tree view">
             <div class="alert alert-info">
                 {{fullQ.name}} {{fullQ.version}}
             </div>
@@ -365,8 +355,37 @@
         </uib-tab>
 
 
+        <uib-tab ng-show="fullQ"  heading="Rendered Form">
+            <ng-include src="'includes/qViewer.html'"></ng-include>
+        </uib-tab>
 
-        <uib-tab  heading="SDC view">
+        <uib-tab ng-show="false"  heading="Table view">
+            <br>
+            <div class="tableFixHead">
+                <table class="table-bordered table">
+                    <thead>
+                    <tr><th>Text</th><th>Type</th><th>ValueSet</th><th>answerOptions</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="item in lstItems">
+                            <td>
+                                <div ng-style="{ 'padding-left': item.level*10 }">
+                                    {{item.text}}
+                                </div>
+
+                            </td>
+                            <td>{{item.type}}</td>
+                            <td>{{item.answerValueSet}}</td>
+                            <td>{{item.answerOption.length}}</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+        </uib-tab>
+
+        <uib-tab ng-show="fullQ"  heading="SDC view">
             <br>
             <uib-tabset>
                 <uib-tab heading="Elements">
@@ -726,7 +745,7 @@
 
         </uib-tab>
 
-        <uib-tab  heading="All comments">
+        <uib-tab ng-show="false" heading="All comments">
             <table class="table-condensed table-bordered table">
                 <tr><th>Path</th><th>Author</th><th>Comment</th><th>Disposition</th></tr>
                 <tr ng-repeat="comment in allComments"
@@ -753,7 +772,7 @@
 
         </uib-tab>
 
-        <uib-tab ng-show="true" heading="Questionnaire Graph">
+        <uib-tab  ng-show="fullQ"heading="Questionnaire Graph">
             <br>
             <div class="row">
                 <div class="col-md-7">
@@ -806,7 +825,7 @@
             </div>
         </uib-tab>
 
-        <uib-tab  heading="Questionnaire Json">
+        <uib-tab  ng-show="fullQ" heading="Questionnaire Json">
 
 
 

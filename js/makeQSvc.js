@@ -1344,12 +1344,18 @@ angular.module("pocApp")
                 Q.title = dg.title //firstElement.title
                 Q.status = 'active'
                 Q.title = dg.title
+                Q.date = new Date().toISOString()
 
-                let qUrl = config.url || dg.name  //todo adjust for environment
-                Q.url = `http://canshare.co.nz/questionnaire/${qUrl}`
-                Q.version = config.version
 
+                //let qUrl = config.url || dg.name  //todo adjust for environment
+                //Q.url = `http://canshare.co.nz/questionnaire/${qUrl}`
+
+                Q.url = `http://canshare.co.nz/questionnaire/${Q.name}`
+
+                Q.version = config.version || 'draft'
                 Q.description = dg.description
+
+
 
 
                 addPrePopExtensions(Q)      //launchPatient & LaunchPractitioner

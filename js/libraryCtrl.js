@@ -35,7 +35,19 @@ angular.module("pocApp")
                 window.open(url, '_blank', features)
             }
 
-            $scope.canShowComponent = function (dg) {
+            $scope.canShow = function (filter,dg) {
+                if (! filter) {
+                    return true
+                }
+                let f = filter.toLowerCase()
+                let n = dg.name?.toLowerCase() || ""
+                let d = dg.description?.toLowerCase() || ""
+                if (n.indexOf(f) > -1 || d.indexOf(f) > -1) {
+                    return true
+                }
+            }
+
+            $scope.canShowComponentDEP = function (dg) {
                 if (! dg.source) {
                     return true
                 }
@@ -243,13 +255,11 @@ angular.module("pocApp")
                 )
             }
 
-            $scope.input.filter = {}
+            //$scope.input.filter = {}
 
             $scope.localDGCount = Object.keys(allDG).length
 
-            $scope.clearFilter = function () {
-                $scope.input.filter = {}
-            }
+
 
             //create a playground in the Models repository
             $scope.createPlayground = function (name,description) {

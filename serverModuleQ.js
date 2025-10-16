@@ -2,6 +2,7 @@
 
 let MongoClient = require('mongodb').MongoClient;
 let database        //this will be the database connection
+const path = require('path');
 
 async function setup(app,mongoDbName,uri) {
 
@@ -18,13 +19,14 @@ async function setup(app,mongoDbName,uri) {
         let Q = req.body
         try {
             await database.collection("publishedQ").insertOne(Q)
+            res.json(Q)
         } catch(ex) {
             console.log(ex)
             res.status(500).json(ex.message)
             return
         }
 
-        res.json(Q)
+
 
     })
 
@@ -57,7 +59,8 @@ async function setup(app,mongoDbName,uri) {
                         version:1,
                         description: 1,
                         status : 1,
-                        date:1
+                        date:1,
+                        extension:1
                     }
                 }
             ]).toArray();
@@ -113,6 +116,10 @@ async function setup(app,mongoDbName,uri) {
 
         try {
             const cursor = await database.collection("publishedQ").find(query).sort({version:-1}).toArray()
+
+
+
+
             res.json(cursor)
 
         } catch(ex) {
@@ -159,6 +166,29 @@ async function setup(app,mongoDbName,uri) {
 
 
     })
+
+    //--- testing
+
+    app.get('/fpLabTest', async function(req,res){
+        try {
+            // Construct the absolute path to your file
+            const filePath = path.join(__dirname, './labIntegration.html');
+
+            // Send the file
+            res.sendFile(filePath, err => {
+                if (err) {
+                    console.error('Error sending file:', err);
+                    res.status(err.status || 500).send('Error sending file');
+                }
+            });
+
+        } catch (err) {
+            console.error('Error in /fpLabTest route:', err);
+            res.status(500).send(`Server error: ${err.message}`);
+        }
+
+    })
+
 }
 
 module.exports = {

@@ -41,23 +41,33 @@
 
             <uib-tab heading="Collections Repository">
                 <em class="pull-right">To edit a collection, first lock it then load it.</em>
-                <table class="table table-bordered">
-                    <tr><th>Name</th><th>Description</th><th># DG / Comp</th><th>Updated</th><th>Version</th>
 
-                        <th style="width: 20%">Commands</th></tr>
-                    <tr ng-repeat="row in playgrounds">
+                <div class="row" style="margin-top: 8px; margin-bottom: 8px">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" placeholder="Filter on name or description" ng-model="input.filter"/>
+                    </div>
+                </div>
+
+                <table class="table table-bordered">
+                    <tr><th>Name</th><th>Description</th><th># DG </th><th>Updated</th><th>Version</th>
+
+                        <th style="width: 25%">Commands</th></tr>
+                    <tr ng-repeat="row in playgrounds"
+                        ng-show="canShow(input.filter,row)">
                         <td>{{row.name}}</td>
                         <td>{{row.description}}
 
                             <div style="color: red" ng-if="row.lockedTo">Locked by {{row.lockedTo}}</div>
                         </td>
 
-                        <td>{{row.dgCount}} / {{row.compCount}}</td>
+                        <td>{{row.dgCount}}</td>
                         <td>{{row.updated | date : 'MMM dd, h:mm a'}}</td>
                         <td>{{row.version}}</td>
 
                         <td><span class="clickable"  ng-click="load(row,'repo')">Load</span>
                             <span style="padding-left: 20px" class="clickable"  ng-click="copy(row,'repo')">Copy</span>
+                            <span style="padding-left: 20px" class="clickable"  ng-click="delete(row,'repo')">Delete</span>
+
                             <span style="padding-left: 20px" class="clickable"
                                   ng-if="user.email && ! row.lockedTo"
                                   ng-click="lock(row)">Lock</span>
@@ -80,6 +90,47 @@
                 <div>
                     <button ng-if="input.name" class="btn btn-primary" ng-click="createNew()">Create new Collection</button>
                 </div>
+
+            </uib-tab>
+
+            <uib-tab heading="ValueSet use">
+                <table class="table table-bordered">
+                    <tr>
+                        <th>ValueSet</th>
+                        <th>
+
+                                <div class="col-md-3">
+                                    Collection
+                                </div>
+                                <div class="col-md-3">
+                                    DataGroup
+                                </div>
+                                <div class="col-md-6">
+                                    Path
+                                </div>
+
+                        </th>
+                    </tr>
+                    <tr ng-repeat="(k,v) in vsSummary">
+                        <td>{{k}}</td>
+
+                        <td>
+                            <div class="row" ng-repeat = "item in v">
+                                <div class="col-md-3">
+                                    {{item.colName}}
+                                </div>
+                                <div class="col-md-3">
+                                    {{item.dgName}}
+                                </div>
+                                <div class="col-md-6">
+                                    {{item.path}}
+                                </div>
+                            </div>
+                        </td>
+
+                    </tr>
+                </table>
+
 
             </uib-tab>
 

@@ -18,8 +18,85 @@ angular.module("pocApp")
             }
 
 
+            //--------- setup the form viewer
+            function formViewerSetup() {
+                $scope.messageCounter = 0
+                let url = "https://dev.fhirpath-lab.com/swm-csiro-smart-forms"
 
-           // $scope.fhirBase = "http://hl7.org/fhir/R4B/"
+                const iframe = document.getElementById('formPreview');
+                if ( iframe) {
+                    $scope.messagingHandle = 'cf-forms-' + Date.now(); // Unique handle for this session
+                    $scope.messagingOrigin = window.location.origin; // Origin for message validation
+
+                    //need to pass the messaging handle & origin when initializing the iFrame
+                    let fullUrl = `${url}?messaging_handle=${encodeURIComponent($scope.messagingHandle)}&messaging_origin=${encodeURIComponent($scope.messagingOrigin)}`
+                    iframe.src = fullUrl
+                } else {
+                    alert("The forms iFrame was not loaded. Contact dev support. ")
+                }
+
+            }
+
+            $timeout(function () {
+                formViewerSetup()
+            },2000)
+
+            //display the current form
+            $scope.previewQ = function () {
+                let model = $scope.selectedModel
+                //let qName = model.name
+                let allElements = snapshotSvc.getFullListOfElements(model.name)
+
+                let config = {expandVS:true,enableWhen:true}
+                config.namedQueries = {} //hashNamedQueries
+                config.hashAllDG = $scope.hashAllDG
+                config.fhirType = model.type// Used for definition based extraction
+                config.expandVS = false     //use proxy to expand vs
+                config.name = model.name
+
+                //config.url = qName
+
+                let voQ = makeQSvc.makeHierarchicalQFromDG(model,allElements,config)
+                let Q = voQ.Q
+
+                $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:Q});
+
+                console.log(voQ)
+
+            }
+
+
+            $scope.sendMessage = function(messageType, payload) {
+                let messagingHandle = $scope.messagingHandle
+
+                const iframe = document.getElementById('formPreview');
+                if (!iframe || !iframe.contentWindow) {
+                    alert('Iframe not loaded yet!');
+                    return;
+                }
+
+                const messageId = `msg-${++$scope.messageCounter}`;
+                const message = {
+                    messagingHandle,
+                    messageId,
+                    messageType,
+                    payload
+                };
+
+                const targetWindow = iframe.contentWindow;
+                const targetOrigin = '*' //http://localhost:8081'; // must match iframe origin
+
+
+
+                console.log('Sending message:', message);
+                targetWindow.postMessage(message, targetOrigin);
+            };
+
+            //----------------------------------
+
+
+
+            // $scope.fhirBase = "http://hl7.org/fhir/R4B/"
 
             $scope.Math = Math;
 
@@ -245,10 +322,6 @@ angular.module("pocApp")
                 }
 */
                 function saveModel(frozen) {
-
-
-
-
                     $http.put(`frozen/${frozen.name}`,frozen).then(
                         function (data) {
                             alert("Component updated")
@@ -257,8 +330,6 @@ angular.module("pocApp")
                         }
                     )
                 }
-
-
             }
 
 
@@ -284,11 +355,18 @@ angular.module("pocApp")
 
 
                         //need to create a Q name that is unique - todo get this from dg so can update independantly of name
-                        let qName = dg.name
-                        qName = qName.replace(/\s+/g, "");
 
-                        //update the qversion.
-                        dg.qVersion = dg.qVersion || 0
+
+                        qName = `${$scope.world.name}-${model.name}`
+
+                        //qName = qName.replace(/\s+/g, "");
+
+
+                        //let qName = dg.name
+                        //qName = qName.replace(/\s+/g, "");
+
+                        //update the pubversion.
+                        dg.pubVersion = dg.pubVersion || 0
 
                         let config = {expandVS:true,enableWhen:true}
                         config.namedQueries = hashNamedQueries
@@ -296,7 +374,8 @@ angular.module("pocApp")
                         config.fhirType = dg.type// Used for definition based extraction
                         config.expandVS = false     //use proxy to expand vs
                         config.name = qName
-                        config.version = String(dg.qVersion +1)
+                        config.url = qName
+                        config.version = String(dg.pubVersion +1)
                         //we make the Q with the new version. If it is not published, then the dg won't be updated so all good
 
                         config.url = $scope.world.name + '-' + dg.name
@@ -319,7 +398,8 @@ angular.module("pocApp")
                         }).result.then(function (Q) {
 
                             //update the version in the DG
-                            $scope.hashAllDG[dg.name].qVersion = parseInt(Q.version)
+                            $scope.hashAllDG[dg.name].pubVersion = parseInt(Q.version)
+                            $scope.hashAllDG[dg.name].pubDate = Q.date //parseInt(Q.date)
                             $scope.updatePlayground(true)
 
                         })
@@ -337,12 +417,13 @@ angular.module("pocApp")
 
             }
 
-
             $scope.loadReview = function (kind,model) {
-                //allCompElements
 
-                let allElements
+                //let allElements
 
+                model = model || $scope.selectedModel //default to the current model
+                let allElements = snapshotSvc.getFullListOfElements(model.name) //$scope.fullElementList
+                /*
                 if (kind == 'comp') {
                     allElements = $scope.allCompElements
                     model = model || $scope.selectedComposition
@@ -350,7 +431,7 @@ angular.module("pocApp")
                     model = model || $scope.selectedModel //default to the current model
                     allElements = snapshotSvc.getFullListOfElements(model.name) //$scope.fullElementList
                 }
-
+*/
 
                 vsSvc.getAllVS(allElements, function () {
                     $scope.showWaiting = false
@@ -367,8 +448,8 @@ angular.module("pocApp")
                         }
                         qName = qName.replace(/\s+/g, "");
 
-                        let voQ
-                        if (kind == 'dg') {
+                      //  let voQ
+                    //    if (kind == 'dg') {
                             let config = {expandVS:true,enableWhen:true}
                             config.namedQueries = hashNamedQueries
                             config.hashAllDG = $scope.hashAllDG
@@ -376,17 +457,22 @@ angular.module("pocApp")
                             config.expandVS = false     //use proxy to expand vs
                             config.name = qName
 
+                            config.url = qName
 
-                            voQ = makeQSvc.makeHierarchicalQFromDG(model,allElements,config)
-                        } else {
-                            let compConfig = {hideEnableWhen : false}
-                            voQ = makeQSvc.makeHierarchicalQFromComp(model,$scope.hashAllDG,hashNamedQueries,compConfig)
-                        }
+                            //set the version to the next one that will be published
+                            let version = model.pubVersion || 0
+                            config.version = model.pubVersion +1 + '-draft'
 
 
+                            let voQ = makeQSvc.makeHierarchicalQFromDG(model,allElements,config)
+                     //   } else {
+                     //       let compConfig = {hideEnableWhen : false}
+                      //      voQ = makeQSvc.makeHierarchicalQFromComp(model,$scope.hashAllDG,hashNamedQueries,compConfig)
+                      //  }
+
+
+                        //save in the questionnaires collection. It will update any previous Q - based on the Q.name - an upsert
                         let qry = `Questionnaire/${qName}`
-
-
                         let t = {Q:voQ.Q,errorLog:voQ.errorLog, lidHash: voQ.lidHash}
                         $http.put(qry,t).then(
                             function () {
@@ -2553,12 +2639,7 @@ angular.module("pocApp")
                     clearB4Select()
                     $scope.selectedModel = dg
 
-                    //ensure that every ed has an id. If the DG does, then the EDs will as well...
-                  //  if (! $scope.selectedModel.id) {
 
-                      //  modelDGSvc.updateDGId($scope.selectedModel)    //add id's to DG & ED plus update conditionals
-                      //  $scope.hashAllDG[dg.name] = $scope.selectedModel //needed to update the local storage
-                  // }
 
 
                     $scope.fhirResourceType = igSvc.findResourceType(dg,$scope.hashAllDG)   //not sure if this is used wo fsh stuff
@@ -2583,6 +2664,9 @@ angular.module("pocApp")
                         )
                     }
 
+
+                    //re-create the forms preview
+                    $scope.previewQ()
 
                  //   $scope.refreshUpdates()     //update the xref
                     $scope.refreshFullList(dg)      //the complete list of elements for this DG + graph & Q

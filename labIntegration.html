@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Testing lab integration</title>
+
+    <script src="js/libs/jquery-1.9.0.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
+
+  <style>
+    .controls {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 4px;
+    }
+    .controls button {
+      display: block;   /* forces each button to take a full line */
+      width: 100%;      /* optional – makes it fill the container width */
+      margin-bottom: 6px;  /* optional spacing between buttons */
+    }
+
+    button {
+      padding: 8px 16px;
+      margin: 5px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+
+
+<body>
+
+  <div class="row">
+    <div class="col-md-2">
+      <div class="controls">
+        <h3>Controls</h3>
+        <button id="btnHandshake" onclick="sendHandshake()">1. Send Handshake</button>
+        <button id="btnConfigure" onclick="sendConfigure()" >2. Configure</button>
+        <button id="btnContext" onclick="sendContext()" >3. Set Context</button>
+        <button id="btnDisplayQ" onclick="sendQuestionnaire()" >4. Display Questionnaire</button>
+        <button id="btnGetResponse" onclick="getCurrentResponse()" >5. Get Response</button>
+        <button id="btnGetExtract" onclick="getCurrentExtract()" >5. Get Extract</button>
+        <button onclick="clearLog()">Clear Log</button>
+      </div>
+    </div>
+    <div class="col-md-8">
+      <iframe id="myFrame" width="100%" height="800"></iframe>
+    </div>
+    <div class="col-md-2">
+
+    </div>
+  </div>
+
+
+  <script>
+    //let url = "https://dev.fhirpath-lab.com/Questionnaire/tester?tab=csiro%20renderer&id=https%3A%2F%2Ffhir.forms-lab.com%2FQuestionnaire%2Fcanshare-testpatient&subject=Patient%2F45086382&author=Practitioner%2F10652933"
+
+    let url = "https://dev.fhirpath-lab.com/swm-csiro-smart-forms"
+    //let url = "https://dev.fhirpath-lab.com/Questionnaire/tester"
+    // Get iframe reference
+    const iframe = document.getElementById('myFrame');
+    const messagingHandle = 'cf-forms-' + Date.now(); // Unique handle for this session
+    const messagingOrigin = window.location.origin; // Origin for message validation
+    let messageCounter = 0;
+
+    //need to pass the messaging handle & origin when initializing the iFrame
+    let fullUrl = `${url}?messaging_handle=${encodeURIComponent(messagingHandle)}&messaging_origin=${encodeURIComponent(messagingOrigin)}`
+    iframe.src = fullUrl
+
+
+    //=====================   Button functions
+
+    function sendHandshake() {
+      sendMessage('status.handshake', {});
+    }
+
+    function sendConfigure() {
+      sendMessage('sdc.configure', {
+        terminologyServer: 'https://tx.fhir.org/r4',
+        dataServer: 'https://hapi.fhir.org/baseR4',
+        formsServer: 'https://hapi.fhir.org/baseR4'
+      });
+    }
+
+    function sendContext() {
+      sendMessage('sdc.configureContext', {
+        context: {
+          subject: { reference: 'Patient/45086382', display: 'Example Patient' },
+          author: { reference: 'Practitioner/example', display: 'Example Practitioner' },
+          encounter: { reference: 'Encounter/example', display: 'Example Encounter' },
+          launchContext: [
+            {
+              name: 'source',
+              contentReference: { reference: 'Practitioner/example', display: 'Example Practitioner' }
+            }
+          ]
+        }
+      });
+    }
+
+    async function sendQuestionnaire() {
+
+      let url = `/q/Patient/v/3`
+      try {
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+
+        const data = await response.json();
+
+        console.log('Fetched object:', data);
+
+        sendMessage('sdc.displayQuestionnaire', {questionnaire:data});
+
+      } catch (error) {
+        console.error('Fetch or send failed:', error);
+      }
+
+    }
+
+    function getCurrentResponse() {
+      sendMessage('sdc.requestCurrentQuestionnaireResponse', {});
+    }
+
+    function getCurrentExtract() {
+      sendMessage('sdc.requestExtract', {});
+    }
+
+
+
+
+    //----------- handle responses from the iFrame
+
+    // Listen for messages from renderer
+    window.addEventListener('message', (event) => {
+
+      //console.log(event)
+      // Validate event origin (in production, be more specific)
+      // For local testing, we allow localhost with any port
+      const isLocalhost = event.origin.startsWith('http://localhost:') || event.origin.startsWith('http://127.0.0.1:');
+      const isSameOrigin = event.origin === window.location.origin;
+
+      // if (!isLocalhost && !isSameOrigin) {
+      //   console.warn('Ignoring message from unauthorized origin:', event.origin);
+      //   return;
+      // }
+
+      // Validate that we have a valid message object
+      if (!event.data || typeof event.data !== 'object') {
+        return;
+      }
+
+      const message = event.data;
+
+      //console.log(event.data?.source)
+
+      // filter out some noisy messages from devtools
+      if (event.data?.source?.startsWith("react-devtools-")) {
+        return;
+      }
+
+      console.log(event)
+
+
+      if (message?.key === "__VUE_DEVTOOLS_VUE_DETECTED_EVENT__") {
+        return;
+      }
+
+      logMessage('INCOMING', message);
+    })
+
+
+    //==================== utility functions
+
+    function logMessage(type, message) {
+      console.log(type,message)
+    }
+
+    function sendMessage(messageType, payload) {
+      const messageId = `msg-${++messageCounter}`;
+      const message = {
+        messagingHandle,
+        messageId,
+        messageType,
+        payload
+      };
+
+      logMessage('OUTGOING', message);
+
+      // Determine target origin from iframe/popup URL
+      const targetOrigin = getTargetOrigin();
+
+      if (!iframe.contentWindow) {
+        logMessage('ERROR', 'Cannot send - iframe not ready');
+        return null;
+      }
+      iframe.contentWindow.postMessage(message, targetOrigin);
+
+
+      return messageId;
+    }
+
+
+
+    function getTargetOrigin() {
+      try {
+        const iframeUrl = new URL(iframe.src);
+        return iframeUrl.origin; // e.g., "https://dev.fhirpath-lab.com"
+      } catch (e) {
+        console.error("Failed to get target origin:", e);
+        return "*"; // fallback for debugging only
+      }
+    }
+
+
+
+  </script>
+
+
+
+</body>
+</html>
