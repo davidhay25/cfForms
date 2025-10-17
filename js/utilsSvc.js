@@ -75,18 +75,24 @@ angular.module("pocApp")
 
             getConfig : function () {
                 //only make the call the first time
+                let deferred = $q.defer()
+
                 if (config) {
-                    return config
+                    deferred.resolve(config)
                 } else {
                     $http.get('config').then(res => {
                         config = res.data;
-                        console.log(config)
-                        return config
+                        //console.log(config)
+                        deferred.resolve(config)
+                        //return config
                     }, function () {
                         //fail silently
-                        return {}
+                        deferred.resolve({})
+
                     })
                 }
+
+                return deferred.promise
 
             },
 

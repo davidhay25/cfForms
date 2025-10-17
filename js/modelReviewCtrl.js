@@ -58,9 +58,6 @@ angular.module("pocApp")
                 } else {
                     $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:Q});
                 }
-
-
-
             }
 
             $scope.sendMessage = function(messageType, payload) {
@@ -82,8 +79,6 @@ angular.module("pocApp")
 
                 const targetWindow = iframe.contentWindow;
                 const targetOrigin = '*' //http://localhost:8081'; // must match iframe origin
-
-
 
                 console.log('Sending message:', message);
                 targetWindow.postMessage(message, targetOrigin);

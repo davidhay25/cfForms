@@ -56,11 +56,6 @@ let mongoHostName = process.env.MONGOHOSTNAME || "127.0.0.1"
 const mongoUri = `mongodb://${mongoHostName}:27017`  //local machine
 console.log(`Mongo connection uri is ${mongoUri}`)
 
-
-
-
-
-
 console.log(`Default terminology server is ${termServerUrl}`)
 
 terminologyModule.setup(app,termServerUrl)

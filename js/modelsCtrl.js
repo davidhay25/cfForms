@@ -41,7 +41,7 @@ angular.module("pocApp")
                 formViewerSetup()
             },2000)
 
-            //display the current form
+            //display the current form in the rendered forms panel
             $scope.previewQ = function () {
                 let model = $scope.selectedModel
                 //let qName = model.name
@@ -103,12 +103,15 @@ angular.module("pocApp")
             let snomed = "http://snomed.info/sct"
 
             $scope.userMode = $localStorage.userMode || "playground"      //possible modes are 'library' or 'playground'
-            //$scope.userMode = "library"
 
 
             $timeout(function () {
-                $scope.systemConfig = utilsSvc.getConfig()
-                console.log($scope.systemConfig)
+                utilsSvc.getConfig().then(
+                    function (config) {
+                        $scope.systemConfig = config
+                        //console.log($scope.systemConfig)
+                    }
+                )
             },500)
 
 
@@ -116,12 +119,12 @@ angular.module("pocApp")
             $scope.input = {}
             $scope.input.showFullModel = true
 
-            $scope.input.metaProcedures = ['Small diagnostic sample','Resection','Radiation therapy','SACT therapy']
-            $scope.input.metaCategories = ['Histopathology request','Histopathology report','Treatment summary']
+            //$scope.input.metaProcedures = ['Small diagnostic sample','Resection','Radiation therapy','SACT therapy']
+            //$scope.input.metaCategories = ['Histopathology request','Histopathology report','Treatment summary']
 
             //always reset trace. an emergency fix - I'll remove trace later
-            $localStorage.trace = {on:false,limit:500,contents:[]}
-            $localStorage.trace.on = false
+           // $localStorage.trace = {on:false,limit:500,contents:[]}
+            //$localStorage.trace.on = false
 
             //get configuration - specifically the default terminology server
             $scope.config = {}
@@ -177,6 +180,7 @@ angular.module("pocApp")
             $scope.hashAllDG = $localStorage.world.dataGroups
 
 
+            //codesystem lookup functions
             $scope.lookup = function (code,system) {
                 system = system || snomed
                 let qry = `CodeSystem/$lookup?system=${system}&code=${code}`
@@ -214,6 +218,7 @@ angular.module("pocApp")
             }
 
 
+            /*
             //look for DG errors like repeating parents in the hierarchy tree
             if (Object.keys($scope.hashAllDG).length > 0 ) {         //There are DG's stored locally]
                 //this was introduced when there were lots of issues - I don't *think* it's needed any more
@@ -259,10 +264,10 @@ angular.module("pocApp")
                 }
             }
 
+*/
 
 
-
-            //create a diff between the current model and the copy in the componnet store (if any)
+            //create a diff between the current model and the copy in the component store (if any)
             $scope.createDiff = function () {
 
                 let localDG =  snapshotSvc.getFrozenDG($scope.selectedModel.name)    //get the frozen version - ie with a snapshot in the diff
@@ -417,6 +422,7 @@ angular.module("pocApp")
 
             }
 
+            //the review screen is now the Q viewer
             $scope.loadReview = function (kind,model) {
 
                 //let allElements
@@ -620,6 +626,7 @@ angular.module("pocApp")
 
             }
 
+            //todo - in 2 minds as to whether to keep this or not. It is a kind of backup...
             $scope.savePGtoLocal = function (hideAlert,noversionupdate,cb) {
                 let key = `pg-${$scope.world.id}`
                 $scope.world.id = $scope.world.id || utilsSvc.getUUID()
@@ -700,115 +707,12 @@ angular.module("pocApp")
                 $scope.hashAllCompositions = $localStorage.world.compositions
             }
 
-            $scope.changeUserModeDEP = function (evt,newMode) {
-                evt.preventDefault()
-
-                if (newMode == 'library') {
-                    //changing from playground. Can only do this if logged in.
-                    if ($scope.user && $scope.user.email) {
-
-                        let diffs = playgroundsSvc.currentPlaygroundDiff($scope.world,$localStorage.initialPlayground)  //hash of DG's that have changed
-                        if (Object.keys(diffs).length > 0) {
-                            let msg = "There are changes to DGs in this Collection. You can view them from the Collections button. Are you sure you wish to enter LIM mode and lose these changes?"
-                            if (! confirm(msg)) {
-                                return
-                            }
-                        } else {
-                            let msg = "Are you sure you wish to enter LIM mode? This will replace the current Form."
-                            if (! confirm(msg)) {
-                                return
-                            }
-                        }
-
-
-
-                       // let msg = "Are you sure you wish to enter LIM mode? This will replace the current Form."
-                       // if (confirm(msg)) {
-                            resetLocalEnvironment()
-                            delete $scope.initialPlayground  //initialPlayground doesn't apply in LIM mode
-                            delete $localStorage.initialPlayground
-
-                            let qry = '/model/allDG'
-                            $http.get(qry).then(
-                                function (data) {
-                                    $scope.hashAllDG = {}
-                                    let arDG = data.data
-                                    for (const dg of arDG) {
-                                        $localStorage.world.dataGroups[dg.name] = dg
-                                        $scope.hashAllDG[dg.name] = dg
-                                    }
-
-                                    //alert("Reset complete. You'll need to use the Library to download the DG's")
-                                    alert("Reset complete. It may take a few seconds for the UI to update. Updating the browser is a good idea too.")
-                                    //$scope.$emit('updateDGList',{})
-
-                                    $scope.init()
-                                    $scope.userMode = newMode
-                                    $localStorage.userMode = newMode
-
-                                }, function (err) {
-                                    alert(angular.toJson(err))
-                                }
-                            )
-
-
-
-                     //   }
-                    } else {
-                        alert("You need to be logged in to use Library mode")
-                    }
-
-
-                } else if (newMode == 'playground') {
-                    //changing from Library mode to playground
-
-                    let cntDG = countCheckedOut($scope.hashAllDG)
-                    let cntComp = countCheckedOut($scope.hashAllCompositions)
-                    if ((cntDG + cntComp) > 0) {
-                        let msg = `There are ${cntDG} DG's  and ${cntComp} Compositions still checked out. Are you sure you wish to enter Collections mode`
-                        if (! confirm(msg)) {
-                            return
-                        }
-
-                    } else {
-                        let msg = "Are you sure you wish to enter Collections mode? This will replace the current model."
-                        if (! confirm(msg)) {
-                            return
-                        }
-                    }
-
-
-                    resetLocalEnvironment()
-
-                    alert("Reset complete. You can create a new Collection - or download an existing one.")
-
-                   // $scope.$emit('updateDGList',{})
-                    $scope.userMode = newMode
-                    $localStorage.userMode = newMode
-                    $scope.init()
-
-
-                    function countCheckedOut(hash) {
-                        let cnt = 0
-                        Object.keys(hash).forEach(function (name) {
-                            if (hash[name].checkedOut) {
-                                cnt ++
-                            }
-                        })
-                        return cnt
-                    }
-
-                }
-
-
-
-            }
 
             // -------------------------------------
             //snapshot generator functions
             $scope.snapshotSvc = snapshotSvc    //so the web pages can call it directly
 
-            $scope.ssHx = []
+            //$scope.ssHx = []
 
             $scope.makeSnapshots = function() {
 
@@ -842,7 +746,6 @@ angular.module("pocApp")
 
             }
 
-            //$scope.makeSnapshots()  //<<<<<<<<<,
 
             //--------------------------
 
@@ -881,7 +784,7 @@ angular.module("pocApp")
                 }
             }
 
-
+/*
             //a handler that will re-draw the list and tree views of the DGs. nCalled when the set of DG's
             //has been updated
             //differs from init in that it just re-draws the DG list
@@ -898,8 +801,8 @@ angular.module("pocApp")
                 }
 
             })
-
-
+*/
+/*
             $localStorage.selectedTag = $localStorage.selectedTag || 'main'
             $scope.input.selectedTag = $localStorage.selectedTag       //default tag for tag filtered list
 
@@ -907,7 +810,7 @@ angular.module("pocApp")
             tagSystem.bespoke = {code:'bespoke'}
             tagSystem.dgcategory = {code:'dgcategory'}
 
-
+*/
             //was the page called with a DG name?
             let search = $window.location.search;
             if (search) {
@@ -1013,7 +916,7 @@ angular.module("pocApp")
             $scope.canAdd = function (model,node) {
 
                 return $scope.canEdit(model)
-                /* refactored to allow any element to have a child
+                /* refactored to allow any element to have a child - not just a group
 
                 if ($scope.canEdit(model)) {
                     //we're in edit mode - is the current node a suitable parent
@@ -1116,13 +1019,7 @@ angular.module("pocApp")
             $scope.clearLocal = function () {
                 if (confirm("This will remove all DGs and create an empty environment. Are you sure")) {
                     resetLocalEnvironment()
-
-                    //$localStorage.world = {compositions:{},dataGroups: {}}
-                    //$scope.hashAllDG = $localStorage.world.dataGroups
-                    //$scope.hashAllCompositions = $localStorage.world.compositions
-
                     alert("Reset complete.")
-                    //$scope.$emit('updateDGList',{})
                     $scope.init()
                 }
             }
@@ -1279,7 +1176,8 @@ angular.module("pocApp")
 
             //return a string list of the tags for this DG
             //todo this could be optimized...
-            $scope.getTagListForDG = function (DG) {
+
+            $scope.getTagListForDGDEP = function (DG) {
                 let arTags = []
                 if (DG) {
                     Object.keys($scope.tags).forEach(function (tagName) {
@@ -1295,7 +1193,7 @@ angular.module("pocApp")
             }
 
 
-            $scope.addTagToDT = function (tagName) {
+            $scope.addTagToDTDEP = function (tagName) {
                // traceSvc.addAction({action:'add-tag',model:$scope.selectedModel})
                 $scope.selectedModel.tags = $scope.selectedModel.tags || []
                 $scope.selectedModel.tags.push({system:tagSystem.bespoke.code,code:tagName})
@@ -1319,7 +1217,7 @@ angular.module("pocApp")
             }
 
             //clear the tag from the DG (if it exists) and the $scope.tags
-            $scope.removeTagFromDT = function (tagName) {
+            $scope.removeTagFromDTDEP = function (tagName) {
                // traceSvc.addAction({action:'remove-tag',model:$scope.selectedModel})
                 //remove from the DG (if present)
                 let ctr = -1
@@ -1472,7 +1370,7 @@ angular.module("pocApp")
 
 
             //when a tag is update in the UI - save a copy in the browser cache
-            $scope.updateTag = function (tags) {
+            $scope.updateTagDEP = function (tags) {
 
                 $localStorage.userTags1 = $localStorage.userTags1  || {}
                 $localStorage.userTags1[$scope.selectedModel.name] = tags
@@ -1480,7 +1378,7 @@ angular.module("pocApp")
                 $scope.makeAllDTList()
             }
 
-            $scope.rememberSelectedTag = function (tag) {
+            $scope.rememberSelectedTagDEP = function (tag) {
                 $localStorage.selectedTag = tag
             }
 
@@ -1602,11 +1500,13 @@ angular.module("pocApp")
                 //if this DG is a parent of another, or references by another it cannot be removed
                 let arRejectMessage = []
                 Object.keys($scope.hashAllDG).forEach(function (key) {
+
                     let dg = $scope.hashAllDG[key]
+                    /*
                     if (dg.parent == dgName) {
                         arRejectMessage.push(`This DG is a parent to ${dg.name}`)
                     }
-
+*/
                     dg.diff.forEach(function (ed) {
                         ed.type.forEach(function (typ) {
                             //if the diff is a deleted one, then don't worry about it
@@ -1624,7 +1524,7 @@ angular.module("pocApp")
                     let fullMsg = `Cannot delete this DG. ${arRejectMessage.join(' ')}`
                     alert(fullMsg)
                 } else {
-                    if (confirm("Are you sure you wish to remove this DG from the local store? If uploaded to the library, it will still be there.")) {
+                    if (confirm("Are you sure you wish to remove this DG from the local store? If saved as a Component or in a Collection, it will still be there, otherwise it is gone.")) {
 
                       //  traceSvc.addAction({action:'delete-local',model:$scope.hashAllDG[dgName]})
                         delete $scope.hashAllDG[dgName]
@@ -2107,7 +2007,7 @@ angular.module("pocApp")
             //process the world to get filter and other vars.
             //todo split world into comp & DG, dropping VS
 
-            $scope.updateMetaValues = function() {
+            $scope.updateMetaValuesDEP = function() {
                 $scope.tumourStreams = ["All"]
                 $scope.compCategories = ["All"]
 
@@ -2132,7 +2032,6 @@ angular.module("pocApp")
                 //xref is cross references between models/types - used in the 'Relationships' tab
 
                 $scope.xref = modelsSvc.getReferencedModels($scope.hashAllDG,$scope.hashAllCompositions)
-
             }
             //$scope.refreshUpdates() //<<<<<<<<<<<,
 
@@ -2210,7 +2109,7 @@ angular.module("pocApp")
                 $scope.editModel(newModel,true,parent)
             }
 
-            $scope.showComposition = function (comp) {
+            $scope.showCompositionDEP = function (comp) {
                 let show = true
                 if ($scope.input.selectedTumourStream !== 'All') {
                     if (comp && comp.meta && comp.meta.tumourStream !== $scope.input.selectedTumourStream) {
@@ -2413,7 +2312,7 @@ angular.module("pocApp")
                 delete $scope.input.showDGList
                 delete $scope.selectedCompositionNode
 
-                $('#htmlHISO').contents().find('html').html('');
+                //$('#htmlHISO').contents().find('html').html('');
                 //delete $scope.input.showDGChildren
             }
 
@@ -2437,100 +2336,6 @@ angular.module("pocApp")
             }
 
 
-            $scope.selectCompositionDEP = function(comp){
-                clearB4Select()
-                $scope.selectedComposition = comp
-
-                /* - don't think this is useful - but don't delete yet...
-                    let vo1 =  modelCompSvc.allDGsInComp(comp,$scope.hashAllDG)
-                    $scope.lstUsedDG = vo1.lstUsedDG //hashUsedDG
-                */
-
-
-
-                // $scope.$broadcast("compSelected")   //for the profiling - todo - cancel
-
-                //check the current checkedout state on the library.
-                //Always update the local version checkedout (not data) with the one from the library
-                let name = comp.name
-                let qry = `/model/comp/${name}`
-                $http.get(qry).then(
-                    function (data) {
-                        let libraryComp = data.data
-                        $scope.selectedComposition.checkedOut = libraryComp.checkedOut
-
-                        if ($scope.hashAllCompositions[name]) {
-                            $scope.hashAllCompositions[name].checkedOut = libraryComp.checkedOut
-                        } else {
-                            alert(`Composition ${name} not found in the local storage`)
-                        }
-                    }
-                )
-
-
-                //note that this excludes mult 0..0
-                //uses the snapshot svc
-                //return {allElements:ar,hashAllElements:hashAllElements}
-                let vo = modelCompSvc.makeFullList(comp,$scope.input.types,$scope.hashAllDG)      //overites the previou slist
-
-                $scope.allCompElements = vo.allElements     //list of all elements. used by the Table and Q generation (at least)
-
-                /* - Feb25 - nor working*/
-
-
-
-
-
-                /*
-                                const blob = new Blob(['\ufeff', htmlContent], {
-                                    type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                                });
-
-
-                                $scope.downloadLinkHISO = window.URL.createObjectURL(blob)
-                                $scope.downloadLinkHISOName = `myDoc.docx`
-
-
-                */
-
-
-                //build the Q. This is to find any errors - we don't otherwise use the Q in this app anymore
-                //actually - it is used when saving a version -
-
-                makeQSvc.getNamedQueries(function (hashNamedQueries) {
-                    delete $scope.compQErrors
-                    try {
-                        let vo1 = makeQSvc.makeHierarchicalQFromComp(comp,$scope.hashAllDG,hashNamedQueries)
-                        $scope.compQErrors = vo1.errorLog
-
-                    } catch(ex) {
-                        console.log(ex)
-                        alert("There was an issue creating the Questionnaire")
-                    }
-
-                })
-
-
-
-
-                let download = modelCompSvc.makeTSVDownload(vo.allElements)
-
-                $scope.downloadLinkCompTsv = window.URL.createObjectURL(new Blob([download ],{type:"text/tsv;charset=utf-8;"}))
-                $scope.downloadLinkCompTsvName = `comp-${comp.name}.tsv`
-
-
-                let rootNodeId = $scope.allCompElements[0].path
-                let treeData = modelsSvc.makeTreeFromElementList($scope.allCompElements)
-                makeCompTree(treeData,rootNodeId)
-
-
-
-                //generates the FSH representation of the Composition as a Logical Model
-                //$scope.compFsh = igSvc.makeFshForComp(comp,$scope.allCompElements,$scope.hashCompElements)
-                $scope.compFsh = igSvc.makeFshForComp(comp,$scope.allCompElements)
-
-            }
-
 
             //refresh the complete list of elements for the currently selected DG
             //used when the DG contents may have changed, but the same model has remained selected ($scope.selectModel selects a new model)
@@ -2541,6 +2346,7 @@ angular.module("pocApp")
                 $scope.relationshipsSummary = snapshotSvc.getRelationshipsSummary(dg.name)
                 $scope.dgNamedQueries = snapshotSvc.getNamedQueries(dg.name)
                 $scope.variablesForDG =snapshotSvc.getVariables(dg.name)
+
                 $scope.dgContainingThis = snapshotSvc.dgContainedBy(dg.name)    //all DGs that have a reference to this one or any of its children
 
 
@@ -2752,7 +2558,8 @@ angular.module("pocApp")
                     dnd: {
                         'is_draggable' : function(nodes,e) {
 
-                            return true
+                            return $scope.canEdit($scope.selectedModel)
+                            //return true
                             /*
                             if ($scope.userMode == 'playground') {
                                 return false
@@ -2805,6 +2612,9 @@ angular.module("pocApp")
                 let sourcePath = getId(data.element.id)
                 let targetPath = getId(data.event.target.id)
 
+                if (! sourcePath || ! targetPath) {
+                    return
+                }
 
                 let targetIsRoot = false
                 if (targetPath.indexOf('.') == -1) {
@@ -2841,6 +2651,7 @@ angular.module("pocApp")
 
                         let trimmedSourcePath = sourcePath.split('.').slice(1).join('.');
                         let trimmedTargetPath = targetPath.split('.').slice(1).join('.');
+                        console.log
 
                         const index = diff.findIndex(f => f.path === trimmedSourcePath);
                         if (index !== -1) {
@@ -2918,13 +2729,13 @@ angular.module("pocApp")
 
             })
 
-            $scope.expandCompTree = function () {
+            $scope.expandCompTreeDEP = function () {
                 $('#compositionTree').jstree('open_all');
             }
 
 
             //make the tree of the composition
-            function makeCompTree(treeData,rootNodeId) {
+            function makeCompTreeDEP(treeData,rootNodeId) {
 
                 $('#compositionTree').jstree('destroy');
 
@@ -2985,11 +2796,11 @@ angular.module("pocApp")
                 /* temp */
                 sortDG()
                 $scope.updateTermSummary()
-                $scope.updateMetaValues()
+                //$scope.updateMetaValues()
                 $scope.refreshUpdates()
 
-                $scope.input.selectedTumourStream = $scope.tumourStreams[0]
-                $scope.input.selectedCompCategory = $scope.compCategories[0]
+                //$scope.input.selectedTumourStream = $scope.tumourStreams[0]
+                //$scope.input.selectedCompCategory = $scope.compCategories[0]
 
                 delete $scope.selectedModel
 
