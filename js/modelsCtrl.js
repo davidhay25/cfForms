@@ -182,6 +182,15 @@ angular.module("pocApp")
 
             //codesystem lookup functions
             $scope.lookup = function (code,system) {
+
+                //can also pass in code|system as the code (from terminlogy report)
+                let ar = code.split('|')
+                if (ar.length > 1) {
+                    code = ar[0]
+                    system = ar[1]
+                }
+
+
                 system = system || snomed
                 let qry = `CodeSystem/$lookup?system=${system}&code=${code}`
                 let encodedQry = encodeURIComponent(qry)

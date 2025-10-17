@@ -1,7 +1,7 @@
 //controller for the 'showComposition' include
 angular.module("pocApp")
     .controller('optionsCtrl',
-        function ($scope,ed,readOnly) {
+        function ($scope,ed,readOnly,$http,$uibModal) {
 
             $scope.input = {}
             $scope.ed = ed
@@ -13,9 +13,55 @@ angular.module("pocApp")
                 ed.options.forEach(function (opt) {
                     txt += opt.display + "\n"
                 })
+
                 $scope.input.optionsList = txt
             }
 
+            //codesystem lookup functions
+            $scope.lookup = function (code,system) {
+
+                //can also pass in code|system as the code (from terminlogy report)
+                let ar = code.split('|')
+                if (ar.length > 1) {
+                    code = ar[0]
+                    system = ar[1]
+                }
+
+
+                system = system || snomed
+                let qry = `CodeSystem/$lookup?system=${system}&code=${code}`
+                let encodedQry = encodeURIComponent(qry)
+                $scope.showWaiting = true
+                $http.get(`nzhts?qry=${encodedQry}`).then(
+                    function (data) {
+                        $uibModal.open({
+                            templateUrl: 'modalTemplates/showParameters.html',
+                            //backdrop: 'static',
+                            //size : 'lg',
+                            controller : "showParametersCtrl",
+                            resolve: {
+                                parameters: function () {
+                                    return data.data
+                                },
+                                title : function () {
+                                    return `Concept lookup (${code})`
+                                },
+                                code: function () {
+                                    return code
+                                },
+                                system : function () {
+                                    return system
+                                }
+                            }
+                        })
+
+                    }, function (err) {
+                        alert(angular.toJson(err.data))
+                    }
+                ).finally(function () {
+                    $scope.showWaiting = false
+                })
+            }
 
             $scope.parseList = function (txt) {
                 $scope.ed.options = []

@@ -72,19 +72,19 @@
       <div class="tableFixHead">
         <table class="table table-bordered">
           <thead>
-          <tr><th>DG Name-Path</th><th>Where used</th></tr>
+          <tr><th>DG Name-Title</th><th>Where used</th></tr>
           </thead>
           <tbody>
           <tr ng-repeat="v in ::arVsSummary" ng-class="{issue:v.issue}" ng-if="! v[0].isValueSet">
             <td>
-              {{v.url}}
+              {{v[0].hiddenDGName}}-{{v[0].title}}
             </td>
 
             <td>
               <div ng-repeat = "item in ::v">
                 <div ng-if="item.DGName">
                   DG: <span class="clickable" ng-click="termSelectDG(item)" >{{::item.DGName}}</span>.
-                  Path: <span class="clickable" ng-click="termSelectDGItem(item)">{{::item.path}}</span>
+                  Title: <span class="clickable" ng-click="termSelectDGItem(item)">{{::item.title}}</span>
                   <span ng-if = item.options>
                   There are <span class="clickable " ng-click="viewOptions(item)">{{::item.options.length}} options</span> defined.
                 </span>
@@ -112,17 +112,15 @@
     <uib-tab heading = "DataGroups">
 
 
-      <div class="pull-right"> CodeableConcepts in the DataGroup. This is only in the DG - not in referenced DGs.
+      <div class="pull-right"> CodeableConcepts in the DataGroup. This is only in the DG - not in contained DGs.
        </div>
-
-
 
       <div class="clearfix"></div>
 
       <div class="tableFixHead">
         <table class="table table-bordered">
           <thead>
-          <tr><th>DG Name</th><th>DG title</th><th>Element path</th>
+          <tr><th>DG Name</th><th>DG title</th>
             <th>Element title</th><th>Element description</th><th>Element ValueSet</th><th># options</th></tr>
           </thead>
           <tbody>
@@ -130,15 +128,19 @@
             <td>
               <span class="clickable" ng-click="termSelectDG(item)">{{::item.DGName}}</span>
             </td>
+
             <td>{{item.DGTitle}}</td>
 
             <td>
-              <span class="clickable" ng-click="termSelectDGItem(item)">{{::item.path}}</span>
+              <span class="clickable" ng-click="termSelectDGItem(item)">{{::item.title}}</span>
             </td>
 
 
 
-            <td>{{item.title}}</td>
+
+
+
+
             <td>{{item.description}}</td>
             <td>
               <span class = 'clickable' ng-click="viewVS(item.valueSet)">{{::item.valueSet}}</span>
@@ -165,16 +167,18 @@
       <div class="tableFixHead">
         <table class="table table-bordered table-condensed">
           <thead>
-            <tr><th>Code|System</th><th>Display</th><th>Where used</th></tr>
+            <tr><th>Code|System</th><th>Display</th><th style="width: 40%" >Where used</th></tr>
           </thead>
           <tbody>
           <tr ng-repeat="(k,v) in ::codeSummary" ng-if="canShowCodeReportLine(k)">
-            <td>{{k}}</td>
+            <td>
+              <div class="clickable" ng-click="lookup(k)">{{k}}</div>
+            </td>
             <td>{{v.display}}</td>
             <td>
               <div ng-repeat="item in v.lst">
                 DG: <span class="clickable" ng-click="termSelectDG(item)" >{{::item.DGName}}</span>
-                Path: <span class="clickable" ng-click="termSelectDGItem(item)">{{::item.path}}</span>
+                Title: <span class="clickable" ng-click="termSelectDGItem(item)">{{::item.title}}</span>
                 Type: <span>{{item.type}}</span>
 
               </div>

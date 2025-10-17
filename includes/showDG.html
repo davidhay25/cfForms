@@ -814,7 +814,10 @@
                   <tr><th>Source</th><th>Operator</th><th>Value</th></tr>
                   <tr ng-repeat="dep in selectedNode.data.ed.enableWhen">
                     <td>
-                      {{dep.source | dropFirstInPath}}
+
+                      <!--{{dep.source | dropFirstInPath}}-->
+
+                      {{hashFullElementsById[dep.sourceId].title}}
 
                       <span ng-if="! hashFullElementsById[dep.sourceId]">
                         <i style="color: red"
@@ -878,7 +881,7 @@
 
               </uib-tab>
 
-              <uib-tab heading="DG Json">
+              <uib-tab heading="Element Json">
                 <div class="myScrollSmall">
                   <pre>{{edForJsonDisplay | json}}</pre>
                 </div>
@@ -1337,8 +1340,8 @@
 
     <uib-tab heading="Relationships">
 
-      <strong>DataGroups related to this one via the hierarchy</strong>
-      <br/> <br/>
+
+<br/>
       <div class="row">
         <!--
         <div class="col-md-3">
@@ -1376,7 +1379,7 @@
 
 
         <div class="col-md-6">
-          <strong>References directly from this DG</strong>
+          <strong>Contained DGs in this DG</strong>
           <br/>
 
 
@@ -1395,7 +1398,7 @@
 
         </div>
         <div class="col-md-6">
-          <strong>DataGroups and Compositions that reference this one</strong>
+          <strong>DataGroups that contain this one</strong>
           <table class="table table-bordered">
             <tr><th>Title (name)</th><th>Path</th></tr>
 

@@ -18,13 +18,13 @@ angular.module("pocApp")
                                     let code = `${ed.fixedCoding.code}|${ed.fixedCoding.system}`
                                     hashCode[code] = hashCode[code] || {display:ed.fixedCoding.display,lst:[]}
                                     let t = hashCode[code]
-                                    t.lst.push({code:code, DGName : key,hiddenDGName : key,path:ed.path,type:'fixed'})
+                                    t.lst.push({code:code, DGName : key,hiddenDGName : key,path:ed.path,title:ed.title,type:'fixed'})
                                 }
                                 if (ed.defaultCoding) {
                                     let code = `${ed.defaultCoding.code}|${ed.defaultCoding.system}`
                                     hashCode[code] = hashCode[code] || {display:ed.defaultCoding.display,lst:[]}
                                     let t = hashCode[code]
-                                    t.lst.push({code:code, display:ed.defaultCoding.display,DGName : key,hiddenDGName : key,path:ed.path,type:'default'})
+                                    t.lst.push({code:code, display:ed.defaultCoding.display,DGName : key,hiddenDGName : key,path:ed.path,title:ed.title,type:'default'})
                                 }
 
                                 if (ed.options) {
@@ -32,7 +32,7 @@ angular.module("pocApp")
                                         let code = `${opt.code}|${opt.system}`
                                         hashCode[code] = hashCode[code] || {display:opt.display,lst:[]}
                                         let t = hashCode[code]
-                                        t.lst.push({code:code, display:opt.display,DGName : key,hiddenDGName : key,path:ed.path,type:'option'})
+                                        t.lst.push({code:code, display:opt.display,DGName : key,hiddenDGName : key,path:ed.path,title:ed.title,type:'option'})
                                     })
 
                                 }
@@ -45,7 +45,7 @@ angular.module("pocApp")
                                             let code = `${ew.value.code}|${ew.value.system}`
                                             hashCode[code] = hashCode[code] || {display:ew.display,lst:[]}
                                             let t = hashCode[code]
-                                            t.lst.push({code:code, display:ew.value.display,dg:key,path:ed.path,type:'enableWhen'})
+                                            t.lst.push({code:code, display:ew.value.display,dg:key,path:ed.path,title:ed.title,type:'enableWhen'})
                                         }
 
                                     })
@@ -86,7 +86,7 @@ angular.module("pocApp")
                                 if (ed.mult !== '0..0') {
                                     if (ed.valueSet) {
                                         //hiddenDGName is used when linking to the DG item
-                                        let entry = {DGName : dg.name,hiddenDGName : dg.name, path: ed.path}
+                                        let entry = {DGName : dg.name,hiddenDGName : dg.name, path: ed.path, title:ed.title}
                                         entry.isValueSet = true
                                         hashVS[ed.valueSet] = hashVS[ed.valueSet] || []
 
@@ -102,8 +102,9 @@ angular.module("pocApp")
                                             //This is where there are options but no VS
 
                                             let vsUrlTmp = `${dg.name}-${ed.path}`
+                                            // vsUrlTmp = `${dg.name}-${ed.title}`
 
-                                            let entry = {hiddenDGName : dg.name,DGName : dg.name, path: ed.path}
+                                            let entry = {hiddenDGName : dg.name,DGName : dg.name, path: ed.path, title:ed.title}
                                             entry.options = ed.options
                                             hashVS[vsUrlTmp] = hashVS[vsUrlTmp] || []
                                             hashVS[vsUrlTmp].push(entry)

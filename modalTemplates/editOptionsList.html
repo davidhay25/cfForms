@@ -23,11 +23,16 @@
     <uib-tabset>
       <uib-tab heading="Current List">
         <table class="table table-bordered">
-          <tr><th>Code</th><th>Display</th><th>FSN</th></tr>
+          <tr><th>Code</th><th>Display</th><th>System</th></tr>
           <tr ng-repeat="row in ed.options">
-            <td>{{row.code}}</td>
+            <td>
+              <div class="clickable" ng-click="lookup(row.code,row.system)">
+                {{row.code}}
+              </div>
+
+            </td>
             <td>{{row.display}}</td>
-            <td>{{row.fsn}}</td>
+            <td>{{row.system}}</td>
           </tr>
         </table>
 

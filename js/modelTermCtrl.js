@@ -20,6 +20,8 @@ angular.module("pocApp")
             }
 
 
+
+
             $scope.viewOptions = function (item) {
                 $uibModal.open({
                     templateUrl: 'modalTemplates/editOptionsList.html',
