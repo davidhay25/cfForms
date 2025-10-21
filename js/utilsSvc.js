@@ -62,6 +62,7 @@ angular.module("pocApp")
         )
 
         return {
+
             getVersion : function(){
                 return "2.0.1"
             },

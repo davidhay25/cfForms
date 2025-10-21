@@ -781,9 +781,6 @@ angular.module("pocApp")
                     arLines.push("")
                 }
 
-
-                //console.log(dg.name)
-                //console.log(hash)
                 //the recursive processing function
                 function processNode(ar,node,spacer) {
                     //ar.push(node.ed.path)
@@ -827,8 +824,15 @@ angular.module("pocApp")
                         }
 
                         //this segment uses the path as the first word - useful for our models
-                        let ar =  ed.path.split('.')
-                        let name = ar[ar.length-1].replace(/slice:/g, '')
+                        //let ar =  ed.path.split('.')
+                        //let name = ar[ar.length-1].replace(/slice:/g, '')
+
+                        //change to title
+                        let title = ed.title || ed.path
+                        title = title.trim()
+                        let name = title.replace(/ /g,'_')
+
+
 /*
                         //this segment uses the title - better for iccr
                         let name = ed.title.trim()
@@ -851,7 +855,8 @@ angular.module("pocApp")
                         arLne.push(lne)
                         if (ed.valueSet) {
                             let vs = ed.valueSet.replace(/\s/g, '') //remove any spaces
-                            let lneVs =`* ${ar[ar.length-1]} from https://nzhts.digital.health.nz/fhir/ValueSet/${vs} (preferred)`
+                            //let lneVs =`* ${ar[ar.length-1]} from https://nzhts.digital.health.nz/fhir/ValueSet/${vs} (preferred)`
+                            let lneVs =`* ${name} from https://nzhts.digital.health.nz/fhir/ValueSet/${vs} (preferred)`
                             arLne.push(lneVs)
                         }
 

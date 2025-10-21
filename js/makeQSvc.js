@@ -1340,6 +1340,7 @@ angular.module("pocApp")
                 let Q = {resourceType:'Questionnaire'}
 
                 Q.id = `canshare-${dg.name}`    //todo adjust for environment
+
                 Q.name = config.name || dg.name //firstElement.ed.path
                 Q.title = dg.title //firstElement.title
                 Q.status = 'active'
@@ -1350,7 +1351,8 @@ angular.module("pocApp")
                 //let qUrl = config.url || dg.name  //todo adjust for environment
                 //Q.url = `http://canshare.co.nz/questionnaire/${qUrl}`
 
-                Q.url = `http://canshare.co.nz/questionnaire/${Q.name}`
+                //Q.url = `http://canshare.co.nz/questionnaire/${Q.name}`
+                Q.url = config.url
 
                 Q.version = config.version || 'draft'
                 Q.description = dg.description

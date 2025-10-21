@@ -933,7 +933,7 @@
                   <div  ng-style="{ 'padding-left': (element.ed.path | pathindent) }">
 
                    <div class="clickable" ng-click="termSelectDGItem({hiddenDGName:selectedModel.name,path:element.ed.path})">
-                     {{element.ed.path | lastInPath}}
+                     {{element.ed.title}}
                    </div>
 
 
@@ -1020,7 +1020,35 @@
         </uib-tab>
 
 
-        <uib-tab heading="Codes">
+        <uib-tab heading="Report">
+          <br/>
+
+          <a ng-show="downloadLinkDocName" class="btn btn-link pull-right" download="{{downloadLinkDocName}}"
+             href="{{downloadLinkDoc}}" title="{{downloadLinkDocName}}" >
+            Download HTML file
+          </a>
+
+          <div class="pull-right">
+            <button class="btn btn-link " ng-click="updateHISODoc()">Update</button>
+          </div>
+
+
+          <iframe id="htmlHISO" width="100%" height = "600px"></iframe>
+          <div class="pull-right">
+            <em>The links don't work in the web page. If you click one accidentally, just re-update the report</em>
+          </div>
+
+
+
+
+        </uib-tab>
+
+
+
+
+        <uib-tab heading="Item codes">
+
+          <em>The codes assigned to each item</em>
           <br/>
           <div class="tableFixHead">
             <table class="table-bordered table">
@@ -1323,9 +1351,25 @@
 
         </uib-tab>
 
-        <uib-tab ng-if = "false" heading="Order element">
-          <pre>{{selectedModel.ssOrder | json}}</pre>
+        <uib-tab heading="Json">
+          <br/>
+          <uib-tabset>
+            <uib-tab heading="DG Json">
+              <em>The definition for this DataGroup (not expanded)</em>
+              <span class="pull-right">
+       <i class="glyphicon glyphicon-paperclip pull-right clickable"
+          ng-click="copyToClipboard(selectedModel)"></i>
+      </span>
+              <div class="myScroll">
+                <pre>{{selectedModel | json}}</pre>
+              </div>
 
+            </uib-tab>
+
+            <uib-tab heading="Q Json">
+              <pre>{{fullQ | json}}</pre>
+            </uib-tab>
+          </uib-tabset>
         </uib-tab>
 
 
@@ -1427,30 +1471,7 @@
 -->
     </uib-tab>
 
-    <uib-tab ng-if="false">
-      <uib-tab-heading>Referenced by</uib-tab-heading>
 
-
-      <table class="table table-bordered">
-        <tr><th>Name</th><th>Path</th><th>Kind</th></tr>
-        <tr ng-repeat="item in xref[selectedModel.name] track by $index">
-          <td>
-            <div class="clickable" ng-click="selectModelFromList(item.name,item.kind)">
-              {{item.name}}
-            </div>
-
-
-          </td>
-          <td>{{item.path}}</td>
-          <td>{{item.kind}}</td>
-        </tr>
-      </table>
-
-
-
-
-
-    </uib-tab>
 
     <uib-tab >
 
@@ -1464,62 +1485,59 @@
 
 
       <h4>Dependencies</h4>
-
-      <table class="table-bordered table">
-        <tr><th>Target (what to show/hide)</th><th>Controlling element</th><th>Controller description</th><th>Op</th>
-          <th>Value (that will show target)</th>
-
-
-        </tr>
-        <tr ng-repeat="dep in allDependencies"
-          ng-class="{error:dep.error}">
-          <td>
-            <div class="clickable" ng-click="selectCondElement(dep.path)">
-              {{dep.path | dropFirstInPath}}
-
-            </div>
-            <div><em>{{fullElementHash[dep.path].title}}</em></div>
-          </td>
-
-          <td>
-            {{dep.ew.source | dropFirstInPath}}
-            <div><em>{{dep.ed.title}}</em></div>
-          </td>
-
-          <td>{{dep.ed.description}}
-            <div ng-if="dep.error">
-              <div class="alert alert-danger">{{dep.error}}</div>
-            </div>
-          </td>
-
-          <td>{{dep.ew.operator}}</td>
-          <td>
-            <div ng-if="dep.ew.value.code">{{dep.ew.value.code}} | {{dep.ew.value.display}}</div>
-            <div ng-hide="dep.ew.value.code">{{dep.ew.value}}</div>
-          </td>
-
-        </tr>
-      </table>
-
       <em>All of the hide / show dependencies in this DG</em>
 
 
+      <div class="tableFixHead">
+        <table class="table-bordered table">
+          <thead>
+            <tr><th>Target (what to show/hide)</th><th>Controlling element</th><th>Controller description</th><th>Op</th>
+              <th>Value (that will show target)</th>
 
-    </uib-tab>
+
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="dep in allDependencies"
+              ng-class="{error:dep.error}">
+            <td>
+              <div class="clickable" ng-click="selectCondElement(dep.path)">
+                {{dep.path | dropFirstInPath}}
+
+              </div>
+              <div><em>{{fullElementHash[dep.path].title}}</em></div>
+            </td>
+
+            <td>
+              {{dep.ew.source | dropFirstInPath}}
+              <div><em>{{dep.ed.title}}</em></div>
+            </td>
+
+            <td>{{dep.ed.description}}
+              <div ng-if="dep.error">
+                <div class="alert alert-danger">{{dep.error}}</div>
+              </div>
+            </td>
+
+            <td>{{dep.ew.operator}}</td>
+            <td>
+              <div ng-if="dep.ew.value.code">{{dep.ew.value.code}} | {{dep.ew.value.display}}</div>
+              <div ng-hide="dep.ew.value.code">{{dep.ew.value}}</div>
+            </td>
+
+          </tr>
+          </tbody>
 
 
-    <uib-tab ng-if="userMode == 'library'">
-      <uib-tab-heading>
-        Ordering <span class="badge"> {{selectedModel.ordering.length}}</span>
-      </uib-tab-heading>
-
-      <br/>
-      <div ng-controller="orderingCtrl">
-        <ng-include src="'includes/ordering.html'"></ng-include>
+      </table>
       </div>
 
-      <hr/>
+
+
+
+
     </uib-tab>
+
 
     <uib-tab>
       <uib-tab-heading>Elements <span class="badge">{{selectedModel.diff.length}}</span> </uib-tab-heading>
@@ -1528,55 +1546,62 @@
 
       <uib-tabset>
         <uib-tab heading="Table">
-          <table class="table-condensed table table-bordered">
-            <thead style="position:sticky;top:0">
-            <tr><th>Path</th><th>Title</th><th>Description</th><th>Card.</th><th>Type</th><th></th></tr>
-            </thead>
-            <tbody>
-            <tr ng-repeat="ed in selectedModel.diff">
-              <td>
-                <!--
-                <div class="clickableDotted" ng-click="input.selectedDiff = ed">{{ed.path}}</div>
--->
-                <div class="clickable"
-                     ng-click="termSelectDGItem({hiddenDGName:selectedModel.name,path:ed.path})">{{ed.path}}</div>
+
+          <div class="tableFixHead">
+            <table class="table-condensed table table-bordered">
+              <thead style="position:sticky;top:0">
+              <tr><th>Title</th><th>Description</th><th>Card.</th><th>Type</th><th style="width: 10%"></th></tr>
+              </thead>
+              <tbody>
+              <tr ng-repeat="ed in selectedModel.diff">
+                <td>
+                  <!--
+                  <div class="clickableDotted" ng-click="input.selectedDiff = ed">{{ed.path}}</div>
+  -->
+
+                  <div  ng-style="{ 'padding-left': (ed.path | pathindent) }">
+
+                  <div class="clickable"
+                       ng-click="termSelectDGItem({hiddenDGName:selectedModel.name,path:ed.path})">{{ed.title}}</div>
+
+                  </div>
+                </td>
+
+                <td>{{ed.description}}</td>
+                <td>{{ed.mult}}</td>
+                <td>{{ed.type[0]}}</td>
+                <td>
+                  <div ng-if="canEdit(selectedModel)">
+                    <i  class="btn btn-link glyphicon glyphicon-remove clickable"
+                        ng-click="deleteDGDiff($index)"></i>
+
+                    <i class="glyphicon glyphicon-edit clickable"
+                       ng-click="editDGItem({ed:ed})"></i>
+                  </div>
 
 
+                </td>
+              </tr>
+              </tbody>
 
 
-              </td>
-              <td>{{ed.title}}</td>
-              <td>{{ed.description}}</td>
-              <td>{{ed.mult}}</td>
-              <td>{{ed.type[0]}}</td>
-              <td>
-                <div ng-if="canEdit(selectedModel)">
-                  <i  class="btn btn-link glyphicon glyphicon-remove clickable"
-                      ng-click="deleteDGDiff($index)"></i>
-
-                  <i class="glyphicon glyphicon-edit clickable"
-                     ng-click="editDGItem({ed:ed})"></i>
-                </div>
+            </table>
+          </div>
 
 
-              </td>
-            </tr>
-            </tbody>
-
-
-          </table>
         </uib-tab>
         <uib-tab heading="List">
           <div class="row">
             <div class="col-md-6">
-              <input class="form-control" placeholder="Filter on path" ng-model="input.diffFilter"/>
+              <input class="form-control" placeholder="Filter on title" ng-model="input.diffFilter"/>
 
               <div class="list-group myScroll">
                 <div ng-class="{'list-group-item':true,listItemSelected:input.selectedDiff.path == ed.path}"
                      ng-click="input.selectedDiff = ed"
-                     ng-if="showDiff(input.diffFilter,ed.path)"
+                     style="cursor: pointer"
+                     ng-if="showDiff(input.diffFilter,ed.title)"
                      ng-repeat="ed in selectedModel.diff">
-                  {{ed.path}}
+                  {{ed.title}}
                 </div>
               </div>
 
@@ -1601,7 +1626,7 @@
       <br/><br/>
 
       <uib-tabset>
-        <uib-tab heading="List">
+        <uib-tab heading="Table">
           <div class="tableFixHead">
             <table class="table-bordered table">
               <thead>
@@ -1655,100 +1680,16 @@
     </uib-tab>
 
 
-    <uib-tab ng-if="false" heading="Audit">
-      <!-- Audit only looks at hierarchy - not referenced DG-->
-      <uib-tab-heading>Audit <span ng-if="dgAudit.lstRedundantEd.length > 0" class="badge">{{dgAudit.lstRedundantEd.length}}</span> </uib-tab-heading>
-        <br/>
-        <uib-tabset>
-
-          <uib-tab heading="Diff Analysis">
-
-            <div ng-if="dgAudit.lstRedundantEd.length > 0">
-              <h4>Redundant diff entries - no matching parent element</h4>
-              <table class="table-bordered table">
-                <tr><th>Path</th><th>Title</th><th>Type</th><th>Card.</th></tr>
-                <tr ng-repeat="row in dgAudit.lstRedundantEd">
-                  <td>{{row.path}}</td>
-                  <td>{{row.title}}</td>
-                  <td>{{row.type[0]}}</td>
-                  <td>{{row.mult}}</td>
-                </tr>
-              </table>
-              <div>
-                <div class="btn btn-link pull-right" ng-click="deleteAllRedundantDiff()">Delete all redundant diff</div>
-              </div>
-              <div class="clearfix"></div>
-
-            </div>
-
-
-
-
-            <h4>Diff entries that match a parent element</h4>
-            <table class="table-bordered table">
-              <tr><th>Path</th><th>Where defined</th><th>Type</th><th>Card.</th></tr>
-              <tr ng-repeat="row in dgAudit.allElements" ng-if="row.mult == '0..0'">
-                <td>{{row.path}}</td>
-                <td>{{row.definedTitle}}</td>
-                <td>{{row.type[0]}}</td>
-                <td>{{row.mult}}</td>
-              </tr>
-            </table>
-
-
-
-          </uib-tab>
-
-
-          <uib-tab heading="All elements">
-
-            <div class="row">
-              <div class="col-md-12">
-                <h4>All elements</h4>
-                <table class="table-bordered table">
-                  <tr><th>Path</th><th>Where defined</th><th>Type</th><th>Card.</th></tr>
-                  <tr ng-repeat="row in dgAudit.allElements" ng-if="row.mult !== '0..0'">
-                    <td>{{row.path}}</td>
-                    <td>{{row.definedTitle}}</td>
-                    <td>{{row.type[0]}}</td>
-                    <td>{{row.mult}}</td>
-                  </tr>
-                </table>
-              </div>
-              <div class="col-md-0">
-
-
-
-              </div>
-            </div>
-
-
-
-          </uib-tab>
-          <uib-tab heading="Json">
-            <pre>{{dgAudit | json}}</pre>
-          </uib-tab>
-        </uib-tabset>
-
-
-
-
-
-    </uib-tab>
-
     <uib-tab heading="Rendered form">
       <ng-include src="'includes/qViewer.html'"></ng-include>
     </uib-tab>
 
 
-    <uib-tab heading="Json">
-      <em>The definition for this model (not expanded)</em>
-      <span class="pull-right">
-       <i class="glyphicon glyphicon-paperclip pull-right clickable"
-          ng-click="copyToClipboard(selectedModel)"></i>
-      </span>
-      <pre>{{selectedModel | json}}</pre>
-    </uib-tab>
+
+
+
+
+
 
 
   </uib-tabset>

@@ -1,7 +1,7 @@
 angular.module("pocApp")
     .controller('editDGCtrl',
         function ($scope,model,hashTypes,hashValueSets,isNew,modelsSvc,snapshotSvc, parent,$localStorage,
-                  utilsSvc, modelDGSvc,$http,userMode,$uibModal,$timeout,$filter,viewVS,modelReviewSvc) {
+                  utilsSvc, modelDGSvc,$http,userMode,$uibModal,$timeout,$filter,viewVS,modelReviewSvc, url) {
 
 
             //if parent is set, then 'isNew' will be also...
@@ -11,6 +11,7 @@ angular.module("pocApp")
             $scope.edit = {}
             $scope.isNew = isNew        //if new, then allow the model metadata to be set
             $scope.userMode = userMode
+            $scope.url = url
 
             $scope.input.fixedValues = []   //all the fixed values defined by this DG (not shared like Named Queries)
 

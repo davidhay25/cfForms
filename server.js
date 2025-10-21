@@ -32,10 +32,11 @@ const modelModule = require("./serverModuleModel")
 const QModule = require("./serverModuleQ")
 const libraryModule = require("./serverModuleLibrary")
 const playgroundModule = require("./serverModulePlayground")
-
+const adminModule = require("./serverModuleAdmin")
 
 
 let express = require('express');
+const {MongoClient} = require("mongodb");
 let app = express();
 app.use(bodyParser.json({limit:'50mb',type:['application/json+fhir','application/fhir+json','application/json']}))
 app.use('/', express.static(__dirname,{index:'/formsFrontPage.html'}));
@@ -52,17 +53,30 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 let mongoHostName = process.env.MONGOHOSTNAME || "127.0.0.1"
+let qUrlPrefix = process.env.QURLPREFIX || "http://canshare.co.nz/questionnaire"
 
 const mongoUri = `mongodb://${mongoHostName}:27017`  //local machine
 console.log(`Mongo connection uri is ${mongoUri}`)
 
 console.log(`Default terminology server is ${termServerUrl}`)
 
-terminologyModule.setup(app,termServerUrl)
-modelModule.setup(app,mongoDbName,mongoUri)      //pass in the mongo database name to use
-QModule.setup(app,mongoDbName,mongoUri)
-libraryModule.setup(app)
-playgroundModule.setup(app,mongoDbName,mongoUri)
+
+
+async function setup() {
+    const client = new MongoClient(mongoUri);
+    let database = client.db(mongoDbName)
+    await client.connect()
+    console.log(`Connected to database ${mongoUri} at ${mongoHostName}`)
+
+    adminModule.setup(app,database)
+    terminologyModule.setup(app,termServerUrl)
+    modelModule.setup(app,database)      //pass in the mongo database name to use
+    QModule.setup(app,database)
+    libraryModule.setup(app)
+    playgroundModule.setup(app,database)
+}
+setup()
+
 
 //common calls (not specifically related to requester or lab. ?move to separate module
 //ontoserver -
@@ -70,12 +84,13 @@ playgroundModule.setup(app,mongoDbName,mongoUri)
 app.get('/config', (req, res) => {
     res.json({
         logoUrl: process.env.APP_LOGO_URL || 'images/canshareLogo.png',
-        termServerUrl : termServerUrl
+        termServerUrl : termServerUrl,
+        qUrlPrefix : qUrlPrefix
 
     });
 });
 
-
+/*
 
 app.get('/validatorHints',function (req,res) {
     let fle = require("./validatorHints.json")
@@ -110,6 +125,7 @@ app.get('/config', async function(req,res){
     res.json(config)
 })
 
+*/
 
 
 

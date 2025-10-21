@@ -23,6 +23,10 @@
 
     <style>
 
+        .inset {
+            margin-left: 8px;
+        }
+
         .isHidden {
             text-decoration: line-through
         }
@@ -199,13 +203,14 @@
                     <div ng-show="input.selectedInputOption.code == 'published'">
                         <div class="row">
                             <div class="col-md-6">
-                                <h5>Published Questionnaires (from Forms designer)</h5>
+                                <h5>Published Questionnaires (from Questionnaire editor)</h5>
+
                                 <table class="table table-bordered">
-                                    <tr><th>Name</th><th>Description</th><th>Latest version</th></tr>
+                                    <tr><th>Title</th><th>Description</th><th>Latest version</th></tr>
                                     <tr ng-repeat="Q in lstQ"
                                         ng-class="{listItemSelected:selectedMiniQ == Q}">
                                         <td>
-                                            <div class="clickable" ng-click="selectPublishedQ(Q)">{{Q.name}}</div>
+                                            <div class="clickable" ng-click="selectPublishedQ(Q)">{{Q.title}}</div>
                                         </td>
                                         <td>{{Q.description}}</td>
                                         <td>{{Q.version}}</td>
@@ -218,7 +223,8 @@
                                     <button class="btn btn-primary pull-right" ng-click="viewQ()">Details</button>
                                     -->
                                     <h4>Metadata</h4>
-
+                                    <div><strong>Title</strong></div>
+                                    <div class="inset">{{selectedMiniQ.title}}</div>
                                     <div><strong>Name</strong></div>
                                     <div class="inset">{{selectedMiniQ.name}}</div>
                                     <div><strong>Description</strong></div>
@@ -227,7 +233,7 @@
                                     <div><strong>Last updated</strong></div>
                                     <div class="inset">{{selectedMiniQ.date | date}}</div>
 
-                                    <div><strong>Url</strong></div>
+                                    <div><strong>Base Url</strong></div>
                                     <div class="inset">{{selectedMiniQ.url}}</div>
 
                                     <div><strong>Latest version</strong></div>
@@ -269,6 +275,14 @@
                                                          ng-click="viewPublishedQ(input.ddSelectedVersion.Q)">
                                                 View</button></div>
                                         </div>
+                                    </div>
+
+                                    <br/>
+                                    <div class="banner">
+                                        To refer to this Questionnaire in a QuestionnaireResponse, QR.questionnaire value should be:
+
+                                        <div><strong>{{selectedQVersion.url}}|{{selectedQVersion.version}}</strong></div>
+
                                     </div>
 
 

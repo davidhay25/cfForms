@@ -58,58 +58,6 @@ function setup(app) {
 
 
 
-/*
-
-    app.get('/proxy/*',async function(req,res){
-
-        //let tsInstance = nzhtsconfig.serverBaseAuthor
-
-        let qry = `${nzhtsconfig.serverBaseAuthor}${req.originalUrl.replace("/proxy/","")}`
-
-        if (req.originalUrl.indexOf('$expand') > -1) {
-            qry += "&displayLanguage=en-x-sctlang-23162100-0210105"
-        }
-
-
-        //console.log(req.originalUrl,qry)
-
-
-
-
-        let token = await getNZHTSAccessToken()
-        //console.log(`nzhts query: ${req.query.qry}`)
-        if (token) {
-
-            let config = {headers:{authorization:'Bearer ' + token}}
-            config['content-type'] = "application/fhir+json"
-
-            axios.get(qry,config).then(function(data) {
-
-                res.json(data.data)
-
-            }).catch(function(ex) {
-                if (ex.response) {
-                    //console.log("----- NOT found -----")
-                    res.status(ex.response.status).json(ex.response.data)
-                } else {
-                    res.status(500).json(ex)
-                }
-
-            })
-        } else {
-
-            res.status(500).json({msg:"Unable to get Access Token."})
-        }
-
-
-
-    })
-
-
-*/
-
-
-
 
     //get the status of a specific job
     app.get('/job/status/:token',function (req,res) {
@@ -156,8 +104,6 @@ function setup(app) {
                 //shouldn't be any errors - CS is definately there ad we're just after the version
 
             }
-
-//console.log('ver',csVersion)
 
             //get all the CanShare valuesets...
             axios.get(qry,config).then(async function(data) {
@@ -219,7 +165,7 @@ function setup(app) {
 
                 //now expand it
                 let vsExpandQry = `https://authoring.nzhts.digital.health.nz/fhir/ValueSet/$expand?url=${url}`
-                //console.log(vsExpandQry)
+
                 let result = await axios.get(vsExpandQry,config)
 
                 arLog.push(`There are ${result.data.expansion.total} concepts in the ValueSet expansion (ie codes that are in a VS as unpublished, but have been published since the VS was updated)`)
@@ -371,7 +317,7 @@ function setup(app) {
 
                         if (expandedVS.expansion && expandedVS.expansion.contains) {
                             analysis.vsLength.push({url:expandedVS.url,title:vs.title,expandedCount:expandedVS.expansion.contains.length})
-                       //     console.log(qryVs,expandedVS.url,expandedVS.expansion.contains.length)
+
                             for (const concept of expandedVS.expansion.contains) {
                                 let key = `${concept.system}|${concept.code}|`
                                 analysis.conceptVS[key] = analysis.conceptVS[key] || {concept:concept,vs:[]}
@@ -415,7 +361,7 @@ function setup(app) {
         let arVsUrl = req.body
         let lstConcepts = []    //the list that will be returned
         let hashConcepts = {}   //concepts keyed on code+system
-        //console.log(arVsUrl)
+
         let token = await getNZHTSAccessToken()
         if (token) {
             let config = {headers:{authorization:'Bearer ' + token}}
@@ -436,7 +382,7 @@ function setup(app) {
 
                     }
                 }
-                //console.log(hashConcepts)
+
 
                 for (const key of Object.keys(hashConcepts)) {
                     lstConcepts.push(hashConcepts[key])
@@ -488,7 +434,7 @@ function setup(app) {
             config['content-type'] = "application/fhir+json"
 
             axios.get(qry,config).then(function(data) {
-                //console.log(data.data)
+
                 res.json(data.data)
             }).catch(function(ex) {
                 if (ex.response) {
@@ -563,7 +509,7 @@ function setup(app) {
             let report = []
             let inx=0
             let qry = `${nzhtsconfig.serverBase}ValueSet?identifier=http://canshare.co.nz/fhir/NamingSystem/valuesets%7c&_count=5000`
-            console.log(qry)
+
             let response = await axios.get(qry, config)
             let bundle = response.data
             for (const entry of bundle.entry) {
@@ -633,7 +579,7 @@ function setup(app) {
 
 
                 let vsExpandQry = `${nzhtsconfig.serverBaseProd}ValueSet/$expand?url=${vs.url}&_summary=false`
-//console.log(vsExpandQry)
+
 
                 //let vsExpandQry = `https://authoring.nzhts.digital.health.nz/fhir/ValueSet/$expand?url=${vs.url}&_summary=false`
                 try {
@@ -646,7 +592,7 @@ function setup(app) {
                 }
 
                 jobs[jobId].progress = ` ${ctr}/${cnt}`
-                //console.log(entry.resource.id)
+
 
                 ctr++
 

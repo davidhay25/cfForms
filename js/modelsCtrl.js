@@ -6,7 +6,7 @@ angular.module("pocApp")
         function ($scope,$http,$localStorage,modelCompSvc,modelsSvc,$window,orderingSvc,
                   snapshotSvc,vsSvc,makeQSvc,playgroundsSvc,$localForage, reportSvc,
                   $timeout,$uibModal,$filter,modelTermSvc,modelDGSvc,igSvc,librarySvc,
-                  utilsSvc,$location) {
+                  utilsSvc,$location,documentSvc) {
 
             //change the background colour of the DG summary according to the environment
             $scope.modelInfoClass = 'modelInfo'
@@ -32,7 +32,7 @@ angular.module("pocApp")
                     let fullUrl = `${url}?messaging_handle=${encodeURIComponent($scope.messagingHandle)}&messaging_origin=${encodeURIComponent($scope.messagingOrigin)}`
                     iframe.src = fullUrl
                 } else {
-                    alert("The forms iFrame was not loaded. Contact dev support. ")
+                    alert("The forms iFrame was not loaded. You can continue. Contact dev support. ")
                 }
 
             }
@@ -54,6 +54,10 @@ angular.module("pocApp")
                 config.expandVS = false     //use proxy to expand vs
                 config.name = model.name
 
+                let qName = `${$scope.world.name}-${model.name}`
+                qName = qName.replace(/\s+/g, "");
+                config.url = `${$scope.systemConfig.qUrlPrefix}/${qName}`
+
                 //config.url = qName
 
                 let voQ = makeQSvc.makeHierarchicalQFromDG(model,allElements,config)
@@ -61,6 +65,7 @@ angular.module("pocApp")
 
                 $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:Q});
 
+                $scope.fullQ = Q //for the display
                 console.log(voQ)
 
             }
@@ -371,8 +376,8 @@ angular.module("pocApp")
                         //need to create a Q name that is unique - todo get this from dg so can update independantly of name
 
 
-                        qName = `${$scope.world.name}-${model.name}`
-
+                        let qName = `${$scope.world.name}-${dg.name}`
+                        qName = qName.replace(/\s+/g, "");
                         //qName = qName.replace(/\s+/g, "");
 
 
@@ -388,11 +393,14 @@ angular.module("pocApp")
                         config.fhirType = dg.type// Used for definition based extraction
                         config.expandVS = false     //use proxy to expand vs
                         config.name = qName
-                        config.url = qName
+                        config.url = `${$scope.systemConfig.qUrlPrefix}/${qName}`
                         config.version = String(dg.pubVersion +1)
                         //we make the Q with the new version. If it is not published, then the dg won't be updated so all good
 
-                        config.url = $scope.world.name + '-' + dg.name
+                        config.url = `${$scope.systemConfig.qUrlPrefix}/${qName}`
+
+
+
 
                         let voQ = makeQSvc.makeHierarchicalQFromDG(dg,allElements,config)
                         let Q = voQ.Q
@@ -457,36 +465,25 @@ angular.module("pocApp")
                     makeQSvc.getNamedQueries(function (hashNamedQueries) {
 
                         //need to create a Q name that is unique
-                        let qName = model.name
-                        if ($scope.userMode == 'playground') {
-                            qName = `${$scope.world.name}-${model.name}`
-                        }
+                        let qName = `${$scope.world.name}-${model.name}`
                         qName = qName.replace(/\s+/g, "");
 
-                      //  let voQ
-                    //    if (kind == 'dg') {
-                            let config = {expandVS:true,enableWhen:true}
-                            config.namedQueries = hashNamedQueries
-                            config.hashAllDG = $scope.hashAllDG
-                            config.fhirType = model.type// Used for definition based extraction
-                            config.expandVS = false     //use proxy to expand vs
-                            config.name = qName
+                        let config = {expandVS:true,enableWhen:true}
+                        config.namedQueries = hashNamedQueries
+                        config.hashAllDG = $scope.hashAllDG
+                        config.fhirType = model.type// Used for definition based extraction
+                        config.expandVS = false     //use proxy to expand vs
+                        config.name = qName
+                        config.url = `${$scope.systemConfig.qUrlPrefix}/${qName}`
 
-                            config.url = qName
+                        //set the version to the next one that will be published
+                        let version = model.pubVersion || 0
+                        config.version = version +1 + '-draft'
 
-                            //set the version to the next one that will be published
-                            let version = model.pubVersion || 0
-                            config.version = model.pubVersion +1 + '-draft'
-
-
-                            let voQ = makeQSvc.makeHierarchicalQFromDG(model,allElements,config)
-                     //   } else {
-                     //       let compConfig = {hideEnableWhen : false}
-                      //      voQ = makeQSvc.makeHierarchicalQFromComp(model,$scope.hashAllDG,hashNamedQueries,compConfig)
-                      //  }
-
+                        let voQ = makeQSvc.makeHierarchicalQFromDG(model,allElements,config)
 
                         //save in the questionnaires collection. It will update any previous Q - based on the Q.name - an upsert
+                        //note that this is NOT the same db as published dbs
                         let qry = `Questionnaire/${qName}`
                         let t = {Q:voQ.Q,errorLog:voQ.errorLog, lidHash: voQ.lidHash}
                         $http.put(qry,t).then(
@@ -1266,6 +1263,15 @@ angular.module("pocApp")
             //also assemble a list of bespoke tage (ie tags where the system is 'bespoke'
             $scope.makeAllDTList = function() {
 
+
+                //$scope.allTypes used for editDG
+                $scope.allTypes = utilsSvc.fhirDataTypes()
+                Object.keys($scope.hashAllDG).forEach(function (key) {
+                    $scope.allTypes.push(key)
+                })
+
+                /* disable tags
+
                 $scope.tags = {} //a hash keyed on tag code containing an array of DG with that tag
 
                 $scope.tagNames = []        //use an array for the list filtered by tag. This is a string list of codes where system == bespoke
@@ -1333,6 +1339,8 @@ angular.module("pocApp")
                         })
                     })
                 }
+
+                */
 
                 //----------build the graph of all DT
 
@@ -2197,7 +2205,6 @@ angular.module("pocApp")
                         isNew: function () {
                             return isNew
                         },
-
                         parent: function () {
                             return parent
                         },
@@ -2206,6 +2213,16 @@ angular.module("pocApp")
                         },
                         viewVS : function () {
                             return $scope.viewVS    //this is a function
+                        }, url : function () {
+                            let url = ""
+                            if (model && model.name) {
+
+                                url = `${$scope.world.name}-${model.name}`
+                                url = url.replace(/\s+/g, "");
+                                url = `${$scope.systemConfig.qUrlPrefix}/${url}`
+                            }
+                            return url
+
                         }
 
                     }
@@ -2327,10 +2344,10 @@ angular.module("pocApp")
 
 
 
-            $scope.updateHISODocDEP = function () {
-                //generate the HISO document
+            $scope.updateHISODoc = function () {
+                //generate the HISO document from the list of elements
 
-                let htmlContent = documentSvc.makeHISODocument($scope.selectedComposition, $scope.allCompElements,$scope.hashAllDG)
+                let htmlContent = documentSvc.makeHISODocument($scope.fullElementList,$scope.selectedModel)
 
                 $('#htmlHISO').contents().find('html').html(htmlContent)
 
@@ -2338,10 +2355,9 @@ angular.module("pocApp")
                     {type: "text/html"}));
 
                 //$scope.downloadLinkJsonName = "downloaded"
-                var now = moment().format();
-                $scope.downloadLinkDocName =  `${$scope.selectedComposition.name}-${now}.html`
-
-                //$scope.downloadLinkDocName =  'myDoc-' + now + '.html';
+                var now =  new Date().toISOString()
+                $scope.downloadLinkDocName =  `${$scope.selectedModel.name}-${now}.html`
+;
             }
 
 
@@ -2369,6 +2385,7 @@ angular.module("pocApp")
                     name = `${name}-${$scope.world.id}` //for collections, append the collection id to the saved name...
                 }
 */
+
                 //get the current component version of this (if any) for the diff...
                 $http.get(`frozen/${name}`).then(
                     function (data) {
@@ -2381,9 +2398,6 @@ angular.module("pocApp")
                 )
 
 
-
-                    //just testing
-                //snapshotSvc.getExtractableDG(dg.name)
 
                 $scope.refreshUpdates()     //update the xref
 
@@ -2426,6 +2440,8 @@ angular.module("pocApp")
                 let vo = modelDGSvc.makeGraphOneDG(dg,$scope.fullElementList,$scope.hashAllDG)
                 makeGraph(vo.graphData)
 
+                $scope.updateHISODoc()
+
 
 
                 //always get all the valueset contents
@@ -2465,28 +2481,8 @@ angular.module("pocApp")
 
                     $scope.fhirResourceType = igSvc.findResourceType(dg,$scope.hashAllDG)   //not sure if this is used wo fsh stuff
 
-                    //in library mode check the current checkedout state on the library.
-                    //Always update the local version checkedout (not data) with the one from the library
-                    if ($scope.userMode == 'library') {
-                        let name = dg.name
-                        let qry = `/model/DG/${name}`
-                        $http.get(qry).then(
-                            function (data) {
-                                let libraryDG = data.data
-                                $scope.selectedModel.checkedOut = libraryDG.checkedOut
-                                if ($scope.hashAllDG[name]) {
-                                    $scope.hashAllDG[name].checkedOut = libraryDG.checkedOut
-                                } else {
-                                    alert(`DG ${name} not found in the local storage`)
-                                }
-                            }, function (err) {
-                                console.log(err)
-                            }
-                        )
-                    }
 
-
-                    //re-create the forms preview
+                    //re-create the forms preview using the lab
                     $scope.previewQ()
 
                  //   $scope.refreshUpdates()     //update the xref

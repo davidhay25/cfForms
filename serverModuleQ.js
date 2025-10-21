@@ -1,19 +1,12 @@
 
 
-let MongoClient = require('mongodb').MongoClient;
-let database        //this will be the database connection
+//let MongoClient = require('mongodb').MongoClient;
+//et database        //this will be the database connection
 const path = require('path');
 
-async function setup(app,mongoDbName,uri) {
+//async function setup(app,mongoDbName,uri) {
+async function setup(app,database) {
 
-    //const uri = "mongodb://127.0.0.1:27017"  //local machine
-    const client = new MongoClient(uri);
-    database = client.db(mongoDbName)
-
-    await client.connect()
-    console.log("model connected in serverModuleQ")
-
-    //Q functions
 
     app.post('/q/publish',async function(req,res){
         let Q = req.body

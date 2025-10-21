@@ -144,7 +144,7 @@ angular.module("pocApp")
             }
 
             //set the current order of the DG
-            $scope.setOrder = function () {
+            $scope.setOrderDEP = function () {
                 let ar = []
                 $scope.fullElementList.forEach(function (item) {
                     let path = item.ed.path
@@ -169,7 +169,7 @@ angular.module("pocApp")
 
             }
 
-            $scope.removeOrder = function () {
+            $scope.removeOrderDEP = function () {
                 delete $scope.selectedModel.ssOrder
                 alert("Order has been removed from DG")
 
@@ -178,9 +178,12 @@ angular.module("pocApp")
             }
 
 
-            $scope.showDiff = function(filter,path) {
-                if (! filter || ! path) {return true}
-                let p = path.toLowerCase()
+            $scope.showDiff = function(filter,title) {
+
+                if (! filter || ! title) {return true}
+
+                let p = title.toLowerCase()
+
                 if (p.indexOf(filter.toLowerCase()) > -1) {return true}
 
             }

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="/">
+    <meta charset="UTF-8">
+    <title>Admin</title>
+
+    <script src="js/libs/jquery-1.9.0.min.js"></script>
+    <script src="js/libs/angular.min1-5.js"></script>
+    <script src="js/libs/ui-bootstrap-tpls-2.0.1.min.js"></script>
+    <script src="js/libs/moment.min.js"></script>
+
+    <script src="js/libs/ngStorage.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/common.css"/>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+
+    <script>
+        angular.module("pocApp",['ui.bootstrap','ngStorage']).config(function($locationProvider) {
+            $locationProvider.html5Mode(true);
+            $locationProvider.hashPrefix('!');
+        });
+
+        angular.module("pocApp").config(['$compileProvider', function ($compileProvider) {
+            $compileProvider.aHrefSanitizationWhitelist(/^\s*(http|https?|ftp|mailto|blob):/);
+        }]);
+
+
+
+        angular.module("formsApp",[])
+        angular.module('topApp', ['pocApp', 'formsApp'])
+
+    </script>
+
+    <script src="js/adminCtrl.js"></script>
+
+<!--
+    <script src="js/qrVisualizerCtrl.js"></script>
+    <script src="js/libs/angular-sanitize.js"></script>
+    <script src="js/showParameters.js"></script>
+    <script src="js/filters.js"></script>
+    <script src="js/viewVSCtrl.js"></script>
+    <script src="js/qrVisualizerSvc.js"></script>
+    <script src="js/viewItemCtrl.js"></script>
+    <script src="js/makeQHelperSvc.js"></script>
+    -->
+    <script src="js/utilsSvc.js"></script>
+
+    <style>
+        .fixed-span {
+            display: inline-block; /* or block */
+            width: 150px;          /* fixed width */
+            overflow: hidden;      /* optional, hides overflow */
+            white-space: nowrap;   /* optional, prevents wrapping */
+            text-overflow: ellipsis; /* optional, shows "..." if clipped */
+        }
+
+        .inVS {
+            background-color: lightgreen;
+        }
+
+        .missingAnswer {
+            background-color: mistyrose;
+        }
+    </style>
+
+
+</head>
+<body style="padding: 8px;padding-top: 80px">
+<div ng-app="topApp" ng-controller="adminCtrl" class="container-fluid">
+
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+
+        <div class="container-fluid">
+            <div class="col-md-3">
+                    <span>
+                        <a class="navbar-brand" href="#">
+                            Administration
+                        </a>
+                    </span>
+
+            </div>
+
+            <div class="col-md-1">
+                <div class="navbar-text">
+
+                </div>
+            </div>
+
+
+
+
+
+            <div class="col-md-2">
+                <div class="navbar-text">
+
+
+                </div>
+
+            </div>
+
+            <div class="col-md-3">
+                <div class="navbar-text">
+
+
+                </div>
+            </div>
+
+            <div class="col-md-1">
+
+            </div>
+
+            <div class="col-md-2">
+                <a href="https://teaho.govt.nz/" target="_blank">
+                    <img width="150" height="auto" class="pull-right"
+                         style="padding: 3px"
+                         src="images/TAK-logo-midgreen.png"/>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-2">
+
+
+
+        </div>
+
+        <div class="col-md-4">
+
+
+
+
+
+        </div>
+
+    </div>
+
+
+
+</div>
+</body>

@@ -119,28 +119,13 @@
                             <div class="col-md-2">
                                 Questionnaire URL
                             </div>
-                            <div class="col-md-4">
-
-                                <!--
-                                 <input type="text"  class="form-control" ng-model="input.qUrl">
-                                -->
-
-
-                                <input type="text"  class="form-control" ng-model="input.qUrl">
-
-
+                            <div class="col-md-10">
+                                <div ng-show="url">{{url}}</div>
+                                <div ng-hide="url">Will be assigned when the DG is saved</div>
                             </div>
-                            <div class="col-md-6">
-                                The url - which is the primary identifier of the Questionnaire.
-                                <!--
-                                If not specified it default to {collection name}-{dg name}.
-                                Once set it should not be changed - unless you are sure!
--->
-                            </div>
+
                         </div>
                         <br/>
-
-
 
                         <div class="row">
                             <div class="col-md-2">

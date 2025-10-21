@@ -145,7 +145,7 @@ function setup(app, termServerUrl) {
             //need to re-urlencode the |
             qry = qry.split('|').join("%7c")
 
-            console.log(`TS query: ${qry}`)
+
 
             let token = await getNZHTSAccessToken()
             //console.log(`nzhts query: ${req.query.qry}`)
