@@ -15,9 +15,6 @@
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
     <link rel="stylesheet" type="text/css" href="css/common.css"/>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-
-
     <script>
         angular.module("pocApp",['ui.bootstrap','ngStorage']).config(function($locationProvider) {
             $locationProvider.html5Mode(true);
@@ -28,8 +25,6 @@
             $compileProvider.aHrefSanitizationWhitelist(/^\s*(http|https?|ftp|mailto|blob):/);
         }]);
 
-
-
         angular.module("formsApp",[])
         angular.module('topApp', ['pocApp', 'formsApp'])
 
@@ -38,6 +33,7 @@
     <script src="js/adminCtrl.js"></script>
 
 <!--
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="js/qrVisualizerCtrl.js"></script>
     <script src="js/libs/angular-sanitize.js"></script>
     <script src="js/showParameters.js"></script>
@@ -123,22 +119,169 @@
         </div>
     </nav>
 
-    <div class="row">
-        <div class="col-md-2">
+    <uib-tabset>
 
 
 
-        </div>
+        <uib-tab heading="Actions">
+            <br/>
+            <div class="row">
+                <div class="col-md-1">
+                    <button class="btn-primary btn" ng-click="doBackup()">Backup</button>
+                </div>
+                <div class="col-md-3">
+                    Create an export file from the database and save to the local computer. The file can subsequently be used
+                    to resource or update a database on another server.
+                </div>
+                <div class="col-md-6">
 
-        <div class="col-md-4">
+                </div>
+            </div>
+
+            <br/>
+            <div class="row">
+                <div class="col-md-1">
+                    <button class="btn-primary btn" ng-click="">Restore</button>
+                </div>
+                <div class="col-md-3">
+                    Restore all or part of a database from a previously created export file.
+                </div>
+                <div class="col-md-8">
+
+
+                </div>
+            </div>
+
+
+            <div ng-show = "false" class="row">
+                <div class="col-md-3">
+                    <br/>
 
 
 
 
 
-        </div>
+                    <div class="list-group">
+                        <div ng-class="{'list-group-item' : true,listItemSelected:command == input.selectedCommand}"
+                             style="cursor: pointer"
+                             ng-click = "input.selectedCommand = command"
+                             ng-repeat = "command in commands">
+                            {{command.display}}
+                        </div>
+                    </div>
+                </div>
 
-    </div>
+                <div class="col-md-9">
+                    <div class="row">
+                        <div class="col-md-2">
+                            {{input.selectedCommand.display }}
+                        </div>
+                        <div class="col-md-9">
+                            {{input.selectedCommand.description }}
+                        </div>
+                        <div class="col-md-1">
+                            <button
+                                    ng-if="input.selectedCommand"
+                                    class="btn btn-primary" ng-click="execute(input.selectedCommand)">Execute</button>
+                        </div>
+                    </div>
+
+                    {{input.selectedCommand}}
+
+
+                    <pre>{{input.backup | json}}</pre>
+                </div>
+            </div>
+
+
+
+
+        </uib-tab>
+        <uib-tab heading="Browse databases">
+            <br/>
+            <strong>Table</strong>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="list-group">
+                        <div ng-class="{'list-group-item' : true,listItemSelected:table == selectedTable}"
+                             style="cursor: pointer"
+                             ng-click = "selectTable(table)"
+                             ng-repeat = "table in tables">
+                            {{table.display}}
+                        </div>
+                    </div>
+
+                    <div><strong>Filter</strong></div>
+                    <textarea class="form-control"
+                              placeholder=' eg {"name":"Patient"}'
+                              ng-model="input.filter"></textarea>
+
+                    <br/>
+                    <div><strong>Sort</strong></div>
+                    <textarea class="form-control"
+                              placeholder=' eg {"name":1,"version":-1}'
+                              ng-model="input.sort"></textarea>
+
+                    <button class="btn btn-link pull-right" ng-click="selectTable(selectedTable,input.filter,input.sort)">Refresh</button>
+
+                    <div class="clearfix"></div>
+                    <em>Filter and sort must be valid json. Use " as delimeter</em>
+                    <br/>
+                    <div><strong>Examples</strong></div>
+                    <div>Filter</div>
+                    <div>{"name":"test"}</div>
+
+                    <div>Sort</div>
+                    <div>{"version":-1}</div>
+
+                </div>
+
+                <div class="col-md-4">
+
+
+
+
+                    <div class="tableFixHead">
+                        <table class="table-bordered table table-condensed">
+                            <thead>
+                            <tr>
+                                <th ng-repeat="col in selectedTable.summaryFields">{{col}}</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat="row in tableSummary"
+                                style="cursor: pointer"
+                                ng-class="{listItemSelected:selectedRow == row}"
+                                ng-click="getRecord(row)">
+
+                                <td ng-repeat="col in selectedTable.summaryFields">
+                                    <div >{{row[col]}}</div>
+                                </td>
+                            </tr>
+                            </tbody>
+
+
+                        </table>
+                    </div>
+
+
+
+
+
+                </div>
+                <div class="col-md-5">
+                    <div class="myScroll">
+                        <pre ng-show="selectedRecord">{{selectedRecord | json}}</pre>
+                    </div>
+
+
+                </div>
+
+            </div>
+        </uib-tab>
+    </uib-tabset>
+
+
 
 
 

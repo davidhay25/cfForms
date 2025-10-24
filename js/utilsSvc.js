@@ -40,16 +40,15 @@ angular.module("pocApp")
 
         let config = null;
 
-        /*
-       // this.loadConfig = function() {
+
         //set the config
-         $http.get('config').then(res => {
-            config = res.data;
-            console.log(config)
-            return config;
-        });
-      //  };
-*/
+         $http.get('config').then(function (data) {
+             config = data.data
+         })
+
+
+
+
         $http.get("model/namedquery").then(
             function (data) {
 
@@ -62,6 +61,13 @@ angular.module("pocApp")
         )
 
         return {
+
+            checkVSUrl : function (url) {
+                if (url.indexOf('http') == -1) {
+                    url = `${config.defaultVsPrefix}/${url}`
+                }
+                return url
+            },
 
             getVersion : function(){
                 return "2.0.1"
@@ -120,6 +126,37 @@ angular.module("pocApp")
                     var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
                     return v.toString(16);
                 })
+            },
+            getUUIDHash : function (uuid) {
+                //return a shortened version of the uuid - used for linkIds in Q
+                // Simple, fast hash (32-bit) — not cryptographically secure
+
+                if (! uuid) {
+                    return "noIdPresent"
+                }
+
+
+                let hash = 0;
+                for (let i = 0; i < uuid.length; i++) {
+                    hash = (hash << 5) - hash + uuid.charCodeAt(i);
+                    hash |= 0; // Force 32-bit integer
+                }
+
+                // Convert hash to unsigned and then to Base64URL
+                const bytes = new Uint8Array([
+                    (hash >>> 24) & 0xff,
+                    (hash >>> 16) & 0xff,
+                    (hash >>> 8) & 0xff,
+                    hash & 0xff,
+                ]);
+
+                const base64url = btoa(String.fromCharCode(...bytes))
+                    .replace(/\+/g, '-')   // URL-safe
+                    .replace(/\//g, '_')
+                    .replace(/=+$/, '');
+
+                return base64url; // e.g. "q8F1fw"
+
             },
 
             copyToClipboard : function(text) {

@@ -874,7 +874,6 @@ angular.module("pocApp")
                 })
 
                 dg.snapshot = newSnapshot
-
             }
 
         }
@@ -908,8 +907,6 @@ angular.module("pocApp")
                     if (Array.isArray(element) && element.length == 0) {
                         canAdd = false
                     }
-
-
 
                     if (canAdd) {
                         newEd[key] = ed[key]
@@ -1150,17 +1147,13 @@ angular.module("pocApp")
                 cleanSnapshot(dg)   //remove 'empty' attributes
                 delete dg.parent
 
+                //copy from the snapshot to the diff.
                 //the path in a diff doesn't have the leading dg name.
                 dg.diff = []
                 for (let i=0;i < dg.snapshot.length; i++) {
-                    //for (let i=1;i < dg.snapshot.length; i++) {
                     let ed = dg.snapshot[i]
-                    //ed.path = $filter('dropFirstInPath')(ed.path)
                     dg.diff.push(ed)
                 }
-
-
-                //dg.diff = dg.snapshot
 
                 //now replace all the non-FHIR DTs with 'Group'
                 updateTypes(dg)

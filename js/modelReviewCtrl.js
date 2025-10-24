@@ -358,8 +358,13 @@ angular.module("pocApp")
 
                     //a graph of items
                     //very slow with large graphs todo - ? only look for small Q
-                    let vo = makeQHelperSvc.getItemGraph($scope.fullQ)
+                    try {
+                        let vo = makeQHelperSvc.getItemGraph($scope.fullQ)
                         makeItemsGraph(vo.graphData)
+                    } catch (ex) {
+                        console.error(ex)
+                    }
+
 
                     $scope.previewQ(Q)
 

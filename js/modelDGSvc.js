@@ -190,7 +190,6 @@ angular.module("pocApp")
                             }
 
                         }
-
                     }
                 })
 
@@ -224,21 +223,20 @@ angular.module("pocApp")
                                         //is there any element where the last segment in the source matches
                                         let sourceLast = $filter('lastInPath')(ew.source)
                                         if (hashByLast[sourceLast]) {
-
-
-
                                             entry.error = `Warning! EW ${ew.source}  missing sourceId, but ${hashByLast[sourceLast].length} elements found with last segment match`
                                         } else {
                                             entry.error = `Warning! EW ${ew.source}  missing sourceId`
                                         }
-
-
-
-
                                     }
+                                }
 
+                                //check for a coding with no code
+                                if (ew.value && ! ew.value.code) {
+                                    entry.error = (entry.error || '') + ' Missing code';
 
                                 }
+
+
 
                             }
                             if (findStrategy == 'path') {

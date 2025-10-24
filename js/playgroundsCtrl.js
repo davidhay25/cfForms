@@ -20,7 +20,7 @@ angular.module("pocApp")
                 function (data) {
                     $scope.vsSummary = data.data
                 }, function (err) {
-                    alert(angular.toJson(err.data))
+                    alert(angular.toJson(err))
                 }
             )
 
@@ -30,8 +30,11 @@ angular.module("pocApp")
                     return true
                 }
                 let f = filter.toLowerCase()
-                let n = row.name?.toLowerCase()
-                let d = row.description?.toLowerCase()
+                let n = row.name?.toLowerCase() || ""
+                let d = row.description?.toLowerCase() || ""
+
+
+
                 if (n.indexOf(f) > -1 || d.indexOf(f) > -1) {
                     return true
                 }

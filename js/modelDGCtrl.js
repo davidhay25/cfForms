@@ -193,7 +193,7 @@ angular.module("pocApp")
             }
 
 
-            $scope.cloneDG = function (dg) {
+            $scope.cloneDGDEP = function (dg) {
                 $uibModal.open({
                     templateUrl: 'modalTemplates/getName.html',
                     backdrop: 'static',

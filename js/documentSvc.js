@@ -53,10 +53,15 @@ angular.module("pocApp")
 
                             arDoc.push("<table class='dTable'>");
 
-                            addRowIfNotEmpty(arDoc, 'Description', ed.description)
+                            addRow(arDoc, 'Description', ed.description)
 
-                            addRowIfNotEmpty(arDoc, 'Source standards', ed.sourceReference)
+                            addRow(arDoc, 'Source standards', ed.sourceReference)
 
+
+                            //note that there are multiple instances where a row of 'Value domain' can be entered
+                            //the assumption is tthat there will be a valueset OR optons OR a fixed code son only 1 will be generated
+                            //if ther eare non then we need to add an empty one...
+                            let addedValueDomain = false
 
                             if (ed.valueSet) {
                                 let vs = ed.valueSet
@@ -64,51 +69,57 @@ angular.module("pocApp")
                                     vs = 'https://nzhts.digital.health.nz/fhir/ValueSet/'+vs
                                 }
 
-                                addRowIfNotEmpty(arDoc, 'Value domain', vs)
-
+                                addRow(arDoc, 'Value domain', vs)
+                                addedValueDomain = true
                             }
 
                             if (ed.fixedCoding) {
-                                let disp = `${ed.fixedCoding.code} | ${ed.fixedCoding.display} | ${ed.fixedCoding.system}`
-                                addRowIfNotEmpty(arDoc, 'Fixed code', disp)
+                                let disp = `${ed.fixedCoding.code} |${ed.fixedCoding.display}| ${ed.fixedCoding.system}`
+                                addRow(arDoc, 'Value domain', disp)
+                                addedValueDomain = true
                             }
 
-                            if (ed.options) {
+                            if (ed.options && ed.options.length > 0) {
                                 let ar = []
                                 for (const concept of ed.options) {
-                                    let lne =`${concept.code}|${concept.display}|${concept.system}`
+                                    let lne =`${concept.code} |${concept.display}| ${concept.system}`
                                     ar.push(lne)
                                 }
                                 let text = ar.join('\n')
-                                addRowIfNotEmpty(arDoc, 'Value domain', text)
+                                addRow(arDoc, 'Value domain', text)
+                                addedValueDomain = true
                             }
 
-                            addRowIfNotEmpty(arDoc, 'Data type', type)
+                            if (!addedValueDomain) {
+                                addRow(arDoc, 'Value domain', "")
+                            }
+
+                            addRow(arDoc, 'Data type', type)
 
                             let stuff = getHisoDefaults(type)
 
-                            addRowIfNotEmpty(arDoc, 'Layout', stuff.hisoLayout)  //<<<todo
+                            addRow(arDoc, 'Layout', stuff.hisoLayout)  //<<<todo
 
                             if (ed.units && ed.units.length > 0) {
-                                addRowIfNotEmpty(arDoc, 'Unit of measure', ed.units.join(" "))
+                                addRow(arDoc, 'Unit of measure', ed.units.join(" "))
                             }
 
                             if (ed.itemCode) {
-                                let itemCode = `${ed.itemCode.code}|${ed.itemCode.display}|${ed.itemCode.system} `
-                                addRowIfNotEmpty(arDoc, 'Observable entity', itemCode)
+                                let itemCode = `${ed.itemCode.code} |${ed.itemCode.display}| ${ed.itemCode.system} `
+                                addRow(arDoc, 'Observable entity', itemCode)
                             }
 
                             let occurence = "Optional, "
                             if (ed.mult) {
                                 if (ed.mult.indexOf('1.') > -1) {
-                                    occurence = "Required, "
+                                    occurence = "Mandatory, "
                                 }
                                 if (ed.mult.indexOf('*') > -1) {
                                     occurence += "multiple occurrences"
                                 } else {
                                     occurence += "single occurrence"
                                 }
-                                addRowIfNotEmpty(arDoc, 'Cardinality', occurence)
+                                addRow(arDoc, 'Cardinality', occurence)
                             }
 
 
@@ -119,10 +130,10 @@ angular.module("pocApp")
                                     if (sourceEd) {
                                         let value = ew.value
                                         if (value.code) {
-                                            value = `${value.code}|${value.display}|${value.system}`
+                                            value = `${value.code} |${value.display}| ${value.system}`
                                         }
 
-                                        let lne = `Enable when ${sourceEd.title} ${ew.operator} ${value}`
+                                        let lne = `Conditional on ${sourceEd.title} ${ew.operator} ${value}`
                                         cond.push(lne)
                                     }
                                 }
@@ -130,9 +141,9 @@ angular.module("pocApp")
                             if (ed.notes) {
                                 cond.push(ed.notes)
                             }
-                            addRowIfNotEmpty(arDoc, 'Guide for use', cond.join('\n'))
+                            addRow(arDoc, 'Guide for use', cond.join('\n'))
 
-                            addRowIfNotEmpty(arDoc, 'Rules',ed.rules)
+                            addRow(arDoc, 'Verification rules',ed.rules)
 
 
 
@@ -229,7 +240,7 @@ angular.module("pocApp")
                         case "date" :
                             meta.hisoDT = "Date"
                             meta.hisoLength = 8
-                            meta.hisoLayout = "CCYY[MM[DD]]"
+                            meta.hisoLayout = "YYYY[MM[DD]]"
                             meta.hisoClass = "full date"
                             break
 
@@ -260,12 +271,16 @@ angular.module("pocApp")
 
 
 
-                function addRowIfNotEmpty(ar,description,data) {
-                    if (data) {
+                function addRow(ar,description,data) {
 
 
-                        let display = data;
 
+
+
+
+                    let display = data || "";
+
+                    if (display) { //if there's a display, then split into multiple lines if needed
                         let arData =  data.split('\n')
                         if (arData.length > 1)  {
                             display = ""
@@ -273,20 +288,22 @@ angular.module("pocApp")
                                 display += "<div>" + lne + "</div><br/>"
                             })
                         }
-
-
-                        ar.push('<tr>');
-                        ar.push('<td valign="top" width="20%" class="col1">' + description + "</td>");
-
-                        if (data && data.toLowerCase() == 'no description') {
-                            ar.push('<td></td>');
-                        } else {
-                            ar.push('<td>' + display + "</td>");
-                        }
-
-
-                        ar.push('</tr>');
                     }
+
+
+
+                    ar.push('<tr>');
+                    ar.push('<td valign="top" width="20%" class="col1">' + description + "</td>");
+
+                    if (data && data.toLowerCase() == 'no description') {
+                        ar.push('<td></td>');
+                    } else {
+                        ar.push('<td>' + display + "</td>");
+                    }
+
+
+                    ar.push('</tr>');
+
                 }
 
                 function addTaggedLine(tag,data) {

@@ -58,6 +58,10 @@
                             <button class="btn btn-link" ng-click="uploadJson()">Upload Json file</button>
                         </div>
 
+                        <br/><br/>
+
+                        <checkbox ng-model="input.newCollection"></checkbox> Import as new collection
+
 
                     </div>
                     <div class="col-md-6 col-sm-6">
@@ -147,6 +151,14 @@
 
     <div class="modal-header">
 
-        Options to export and import DataGroups and Compositions
+        <div ng-hide="input.newCollection">
+            The DGs in this import file will be added to the current collection. If there is a DG
+            with the same name as one in the import file, it will be replaced.
+        </div>
+
+        <div ng-show="input.newCollection">
+            A new collection will be created when this collection in imported.
+        </div>
+
     </div>
 </div>

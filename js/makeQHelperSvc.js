@@ -36,29 +36,98 @@ angular.module("pocApp")
 
         return {
 
-            addConditionalVS : function (item,ed) {
-                //Adds the extension to support conditional ValueSets
-             //   iif(%country.answer.value.code == 'AU', 'http://example.org/Valueset/Au-States')
-         //   | iif(%country.answer.value.code == 'NZ', 'http://example.org/Valueset/NZ-States')
-                /* "conditionalVS": [
-        {
-          "path": "cvs.control",
-          "value": {
-            "code": "opt1",
-            "display": "opt1"
-          },
-          "valueSet": "https://nzhts.digital.health.nz/fhir/ValueSet/canshare-tnm8-adrenal-cortical-carcinoma-cm"
-        },
-        {
-          "path": "cvs.control",
-          "value": {
-            "code": "opt2",
-            "display": "opt2"
-          },
-          "valueSet": "https://nzhts.digital.health.nz/fhir/ValueSet/canshare-tnm8-adrenal-cortical-carcinoma-cn"
-        }
-      ],*/
+            addConditionalVS : function (item,ed,hashEd,errorLog) {
+                //if there are conditional VS then change the original to type text and hidden with
+                //  each condition being a child as a clone of the original with the appropriate binding
+                //todo may change the whole generation process - : create items as list (so can insert / delete) then create hierachy
 
+                let newItems = []   //a collection of new items to add
+                if (ed.conditionalVS && ed.conditionalVS.length > 0) {
+
+                    let clone = angular.copy(item)  //one of these for each additional condition
+
+                    //for now just alter the existing item by adding the WE and changing the valueSet
+                    //only 1 conditional VS can be set. Will update when i re-write the Q generator
+
+                    //the first conditional simply changes the oruginal
+                    let cv = ed.conditionalVS[0]
+                    let controller = hashEd[cv.path]    //the item whose values sets the ValueSet
+                    if (controller ) {
+                        item.answerValueSet = utilsSvc.checkVSUrl(cv.valueSet)      //adds the 'http://... prefix if not present
+                        let ew = {answerCoding:cv.value}       //assume a coding (only type supported)
+                        ew.operator = "="                   //only support =
+                        ew.question = utilsSvc.getUUIDHash(controller.id) //the linkId is the hashed value of the controller id
+                        item.enableWhen = item.enableWhen || []
+                        item.enableWhen.push(ew)
+                    } else {
+                        errorLog.push({msg:`ED with path ${ed.path} has an invalid conditional valueset (can't find controller)`})
+                    }
+
+                    //if  there are more than one
+                    for (let ctr = 1; ctr < ed.conditionalVS.length; ctr++) {
+                       // alert(ctr)
+                        let cv = ed.conditionalVS[ctr]
+                        let controller = hashEd[cv.path]    //the item whose values sets the ValueSet
+                        if (controller ) {
+                            let value = cv.value    //the value (a coding) that enables this item
+                            let newItem = angular.copy(clone)    //the new item will be the same as the old...
+
+                            newItem.linkId = utilsSvc.getUUIDHash(utilsSvc.getUUID()) //needs a new id
+                            newItem.answerValueSet = utilsSvc.checkVSUrl(cv.valueSet)      //... but with the new Value set and...
+                            newItem.enableWhen = newItem.enableWhen || []   //... an enableWhen
+                            let ew = {answerCoding:value}       //assume a coding (only type supported)
+                            ew.operator = "="                   //only support =
+                            ew.question = utilsSvc.getUUIDHash(controller.id) //the linkId is the hashed value of the controller id
+                            newItem.enableWhen.push(ew)
+
+                            newItems.push(newItem)             //add the new item as a child to the old...
+
+                            console.log(item,clone,newItem)
+                        } else {
+                            errorLog.push({msg:`ED with path ${ed.path} has an invalid conditional valueset (can't find controller)`})
+                        }
+
+
+                    }
+
+                    /*
+
+
+
+                    //mark it as hidden
+                    item.extension = item.extension || []
+                    item.extension.push({url:extHidden,valueBoolean:true})
+
+                    item.item = item.item || []     //we will be adding children
+                    for (const cv of ed.conditionalVS) {
+                        let controller = hashEd[cv.path]    //the item whose values sets the ValueSet
+                        if (controller ) {
+                            let value = cv.value    //the value (a coding) that enables this item
+                            let newItem = angular.copy(clone)    //the new item will be the same as the old...
+                            newItem.linkId = utilsSvc.getUUIDHash(utilsSvc.getUUID()) //needs a new id
+                            newItem.answerValueSet = cv.valueSet      //... but with the new Value set and...
+                            newItem.enableWhen = newItem.enableWhen || []   //... an enableWhen
+                            let ew = {answerCoding:value}       //assume a coding (only type supported)
+                            ew.operator = "="                   //only support =
+                            ew.question = utilsSvc.getUUIDHash(controller.id) //the linkId is the hashed value of the controller id
+                            newItem.enableWhen.push(ew)
+                            item.item.push(newItem)             //add the new item as a child to the old...
+
+                            console.log(item)
+                        } else {
+                            errorLog.push({msg:`ED with path ${ed.path} has an invalid conditional valueset (can't find controller)`})
+                        }
+
+
+
+                    }
+                    //
+*/
+                }
+
+                return newItems
+
+                /*
                 if (ed.conditionalVS && ed.conditionalVS.length > 0) {
                     let ar = []
                     for (const cv of ed.conditionalVS) {
@@ -86,7 +155,7 @@ angular.module("pocApp")
 
 
                 }
-
+*/
             },
 
             removePrefix : function (Q) {
@@ -352,7 +421,7 @@ angular.module("pocApp")
                 return clone
             },
             updateExpressions: function (Q,hashLinkId) {
-                //update any expressions based on the replacements in hashLinkId
+                //update any expressions to use the hashed uuid
                 let logIssues = []
 
                 function processItem(item) {
@@ -364,7 +433,8 @@ angular.module("pocApp")
                                 //looking for {{?}} placeholders
                                 let newExp = exp.replace(/{{(.*?)}}/g, (_, key) => {
                                     const trimmedKey = key.trim();
-                                    let newLinkId = getReplacementLinkId(trimmedKey)
+                                    //oct22 let newLinkId = getReplacementLinkId(trimmedKey)
+                                    let newLinkId = utilsSvc.getUUIDHash(trimmedKey)
                                     if (newLinkId){
                                         return newLinkId
                                     } else {
@@ -395,7 +465,7 @@ angular.module("pocApp")
 
                 return logIssues
 
-                function getReplacementLinkId(key) {
+                function getReplacementLinkIdDEP(key) {
 
                     if (hashLinkId[key]) {
                         return hashLinkId[key]
@@ -425,12 +495,12 @@ angular.module("pocApp")
                     }
                 }
 
-
             },
 
-            updateEnableWhen : function (Q,hashId) {
+            updateEnableWhenDEPX : function (Q,hashId) {
                 //update the enableWhens based on the replacements in hashId which used the ED id
 
+                //oct22 - the source can now just be the hashed ed.id
                 let logIssues = []
 
                 function processItem(item) {
@@ -442,7 +512,10 @@ angular.module("pocApp")
                         lst.forEach(function (ew) {
                             //note that this is the id of the controlling element
                             let questionId = ew.question //ew.sourceId    //the ED id of the source (controlling) elemeny
+                            ew.question = utilsSvc.getUUIDHash(questionId)
+                            item.enableWhen.push(ew)
 
+                            /* oct22
                             if (hashId[questionId]) {
                                 ew.question = hashId[questionId]
                                 item.enableWhen.push(ew)
@@ -450,13 +523,12 @@ angular.module("pocApp")
                                 logIssues.push({msg:`EnableWhen at ${item.linkId} refers to ${questionId} which is not found`})
                                 //console.warn(`${questionId} not found at ${item.linkId}`)
                             }
+                            */
                         })
 
                         if (item.enableWhen.length == 0) {
                             delete item.enableWhen
                         }
-
-
 
                     }
                     if (item.item) {
@@ -465,8 +537,6 @@ angular.module("pocApp")
                         }
                     }
                 }
-
-
 
                 for (let item of Q.item) {
                     processItem(item)
@@ -505,7 +575,6 @@ angular.module("pocApp")
                                     console.log(`Error fining match for EW path ${ew.source}. ${matches.length} matchs found`)
                                 }
 
-
                                 logIssues.push({msg:`${question} not found at ${item.linkId}`})
                             }
                         }
@@ -517,8 +586,6 @@ angular.module("pocApp")
                     }
                 }
 
-
-
                 for (let item of Q.item) {
                     processItem(item)
                 }
@@ -527,7 +594,7 @@ angular.module("pocApp")
 
             },
 
-            updateLinkIds : function (Q,startInx) {
+            updateLinkIdsDEP : function (Q,startInx) {
                 //change all the linkIds from the path to a sequential number. For cosmetic reasons
                 //does mean that EW and expressoins will need to be separately updated
                 let that = this
@@ -538,7 +605,11 @@ angular.module("pocApp")
                 function processItem(item,updateLinkId) {
                     //update the hash
                     if (updateLinkId) {
-                        let key = `id-${ctr++}`
+
+                        //experimenting with using a shortened hash as the same linkId
+                        //let key = `id-${ctr++}`
+                        let key = utilsSvc.getUUIDHash(item.linkId)
+
                         hashByLinkId[item.linkId] = key
                         //some items won't have a prefix as they were inserted by the Q builder - eg help text
                         if (item.prefix) {
@@ -553,7 +624,6 @@ angular.module("pocApp")
                             processItem(child,updateLinkId)
                         }
                     }
-
                 }
 
 
@@ -561,7 +631,6 @@ angular.module("pocApp")
                 Q.item.forEach(function (item) {
                     processItem(item,true)
                 })
-
 
                 return {hashByLinkId:hashByLinkId,hashById:hashById,maxInx:ctr}     //we'll save the hash with the Q
 
@@ -610,17 +679,7 @@ angular.module("pocApp")
                     }
 
                 }
-/*
-                let pathSoFar = first[0]
-                for (const segment of ar) {
-                    //will start with the second segment
-                    if (! hash[pathSoFar]) {
-                        hash[pathSoFar] = {placeHolder:true,linkId:pathSoFar}
-                        console.log(`added ${pathSoFar}`)
-                    }
-                    pathSoFar += '.' + segment
-                }
-*/
+
                 function makePath(ar,length) {
                     let path = ""
                     for (let i = 0;i < length; i++) {

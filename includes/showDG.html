@@ -28,9 +28,7 @@
       <div class="col-md-6">
         <strong>{{selectedModel.title}} </strong> ({{selectedModel.name}}) <em>{{selectedModel.description}}</em>
 
-      <div ng-if="selectedModel.linkedDG">
-        Linked to  <em>{{selectedModel.linkedDG.split('-')[0]}}</em>
-      </div>
+
 
         <div>
           <div ng-if="selectedModel.dirty">
@@ -52,7 +50,7 @@
           <span class=" clickable"
               ng-click="editModel(selectedModel)">Edit</span>
 
-          <span class="clickable spacer"
+          <span ng-if = "false" class="clickable spacer"
               ng-click="cloneDG(selectedModel)">Make a copy</span>
 
           <span class="clickable spacer"
@@ -71,7 +69,7 @@
 
         <div class="pull-right">
           <button class="btn btn-link" ng-click="loadReview('dg')">Questionnaire</button>
-          <button class="btn btn-link" ng-click="showLink('dg')">Link</button>
+          <button class="btn btn-link" ng-click="showLink('dg')">Link to viewer</button>
           <button class="btn btn-link"
                   ng-if = canEdit(selectedModel)
                   ng-click="publishQ(selectedModel)">Publish</button>
@@ -195,7 +193,7 @@
             <div class="clearfix"></div>
 
             <div>
-              <div class="clickable pull-right"
+              <div ng-if = 'false' class="clickable pull-right"
 
                    ng-if="userMode == 'playground' && selectedModel.linkedDG &&
                       (! selectedNode || selectedNode.data.ed.type[0] == 'Group' || selectedNode.data.ed.kind == 'root')"
@@ -1539,7 +1537,7 @@
     </uib-tab>
 
 
-    <uib-tab>
+    <uib-tab ng-if ="false">
       <uib-tab-heading>Elements <span class="badge">{{selectedModel.diff.length}}</span> </uib-tab-heading>
       <em>The element definitions in the .diff element. ie directly defined in the DG. </em>
       <br/><br/>
@@ -1619,7 +1617,7 @@
     </uib-tab>
 
 
-    <uib-tab>
+    <uib-tab ng-if="false">
       <uib-tab-heading>Snapshot <span class="badge">{{fullElementList.length -1}}</span></uib-tab-heading>
 
       <em>The full list of element definitions including those from contained DGs </em>

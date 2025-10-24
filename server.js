@@ -85,7 +85,8 @@ app.get('/config', (req, res) => {
     res.json({
         logoUrl: process.env.APP_LOGO_URL || 'images/canshareLogo.png',
         termServerUrl : termServerUrl,
-        qUrlPrefix : qUrlPrefix
+        qUrlPrefix : qUrlPrefix,
+        defaultVsPrefix : "https://nzhts.digital.health.nz/fhir/ValueSet"  //often the vs url is just the name...
 
     });
 });

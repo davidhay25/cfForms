@@ -313,33 +313,20 @@ angular.module("pocApp")
 
             $scope.updateComponent = function (type,model) {
 
-                if (type == 'dg') {
-                    let msg = "Copy the expanded version of this DG to the Component store. Can subsequently be imported into Collections."
-                    if ($scope.userMode == 'playground') {
-                        msg = "Update in the  Component store"
-                    }
-                    if (confirm(msg)) {
-                        let frozen = snapshotSvc.getFrozenDG(model.name)
-                        frozen.source = $scope.userMode
-                        frozen.sourceId = $scope.world.id
 
-
-
-
-
-                        saveModel(frozen)
-                    }
+                let msg = "Copy the expanded version of this DG to the Component store. Can subsequently be imported into Collections."
+                if ($scope.userMode == 'playground') {
+                    msg = "Update in the  Component store"
                 }
-/*
-                if (type == 'comp') {
 
-                    //make the DG replica of a composition
-                    let frozen = snapshotSvc.getFrozenComp($scope.selectedComposition,$scope.allCompElements)
+                if (confirm(msg)) {
+                    let frozen = snapshotSvc.getFrozenDG(model.name)
                     frozen.source = $scope.userMode
+                    frozen.sourceId = $scope.world.id
                     saveModel(frozen)
-
                 }
-*/
+
+
                 function saveModel(frozen) {
                     $http.put(`frozen/${frozen.name}`,frozen).then(
                         function (data) {
@@ -863,16 +850,24 @@ angular.module("pocApp")
             }
 
             $scope.showLink = function (type) {
-                let host = $location.absUrl().split('?')[0]
 
-                if (type == 'dg') {
-                    host += "?dg=" + $scope.selectedModel.name
-                }
+                let qName = `${$scope.world.name}-${$scope.selectedModel.name}`
+                qName = qName.replace(/\s+/g, "");
+
+
+                let host = `${$location.protocol()}:${$location.host()}:${$location.port()}/modelReview.html?q-${qName}`
+
+
+                //let host = $location.absUrl().split('?')[0]
                 /*
-                if (type == 'comp') {
-                    host += "?comp=" + $scope.selectedComposition.name
-                }
-*/
+                               if (type == 'dg') {
+                                   host += "?dg=" + $scope.selectedModel.name
+                               }
+
+                               if (type == 'comp') {
+                                   host += "?comp=" + $scope.selectedComposition.name
+                               }
+               */
                 $scope.localCopyToClipboard (host)
                 alert(`Link: ${host} \ncopied to clipBoard`);
 

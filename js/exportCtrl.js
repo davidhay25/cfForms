@@ -31,6 +31,8 @@ angular.module("pocApp")
 
             $scope.import = function () {
 
+
+
                 $scope.$close($scope.uploadedWorld)
             }
 

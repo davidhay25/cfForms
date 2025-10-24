@@ -5,10 +5,6 @@ angular.module("pocApp")
     .service('makeQSvc', function($http,codedOptionsSvc,QutilitiesSvc,snapshotSvc,$filter,vsSvc,
                                   orderingSvc,utilsSvc,makeQHelperSvc) {
 
-
-
-
-
         let unknownCodeSystem = "http://example.com/fhir/CodeSystem/example"
         let extLaunchContextUrl = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-launchContext"
 
@@ -74,8 +70,16 @@ angular.module("pocApp")
         resourcesForPatientReference['Task'] = {path:'for'}
         //resourcesForPatientReference['Patient'] = {}   //treated as a special case
 
+        function capitalizeFirstLetterDEP(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
 
-
+        function createUUIDDEP () {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            })
+        }
 
         function addPrePopExtensions(Q) {
             //add the SDC extensions required for pre-pop
@@ -353,6 +357,91 @@ angular.module("pocApp")
             return extractionContext
         }
 
+        //given an ed, return the control type and hint
+        //function is a property of the service return object - can be removed when I'm sure all is working OK
+        function getControlDetailsDEP(ed) {
+            //return the control type & hint based on the ed
+
+            let controlHint = "string"            //this can be any value - it will be an extension in the Q - https://hl7.org/fhir/R4B/extension-questionnaire-itemcontrol.html
+            let controlType = "string"          //this has to be one of the defined type values
+
+            if (ed.options && ed.options.length > 0) {
+                controlHint = "drop-down"
+                controlType = "choice"
+            }
+
+            if (ed.type) {
+                switch (ed.type[0]) {
+                    case 'string' :
+                        controlType = "string"      //default to single text box
+                        if (ed.controlHint == 'text') {
+                            controlType = "text"
+                        }
+                        break
+                    case 'boolean' :
+                        controlHint = "boolean"
+                        controlType = "boolean"
+                        break
+                    case 'decimal' :
+                        controlHint = "decimal"
+                        controlType = "decimal"
+                        break
+                    case 'integer' :
+                        controlHint = "integer"
+                        controlType = "integer"
+                        break
+                    case 'Quantity' :
+                        controlHint = "quantity"
+                        controlType = "quantity"
+                        if (ed.units) {
+                            //p
+                            //console.log(ed.units)
+                        }
+                        break
+                    case 'dateTime' :
+                        controlHint = "dateTime"
+                        controlType = "dateTime"
+                        break
+                    case 'date' :
+                        controlHint = "date"
+                        controlType = "date"
+                        break
+                    case 'CodeableConcept' :
+                        //  controltype is always choice. May want typeahead later
+
+                        controlHint = "drop-down"
+                        controlType = "choice"
+
+                        if (ed.controlHint ) {
+                            controlHint = ed.controlHint
+                            //csiro only supports autocomplete on open-choice
+                            if (controlHint == 'autocomplete') {
+                                controlType = "open-choice"
+                            }
+                        }
+                        break
+                    case 'Group' :
+                        controlHint = "display"
+                        controlType = "display"
+                        break
+
+
+                }
+
+                //determine if this is a referece to another DG
+                //make a display if so as we're not nesting in the Q in the same way as in th emodel
+                    let type = ed.type[0]
+                    if (snapshotSvc.getDG(ed.type[0])) {
+                        controlHint = "display"
+                        controlType = "display"
+                    }
+
+            }
+
+
+            return {controlType:controlType,controlHint:controlHint}
+
+        }
 
 
         //If the ed has the 'otherType set, then an additional item mutst be created - possibl with an enableWhen
@@ -470,18 +559,7 @@ angular.module("pocApp")
 
                     //2Feb - make the question the sourceId. Then, adjust to the path after the Q has been generated
                     //qEW.question = ew.sourcePathId || "MissingSourceId"
-
-
-
-                    //oct24 - can directly set the question to the hash of the sourceid
-                    //qEW.question = ew.sourceId || "MissingSourceId"
-                    if (ew.sourceId) {
-                        qEW.question = utilsSvc.getUUIDHash(ew.sourceId)
-                    } else {
-                        qEW.question = "MissingSourceId"
-                    }
-
-
+                    qEW.question = ew.sourceId || "MissingSourceId"
                     //---------------
 
                     //qEW.question = `${pathPrefix}${ew.source}` //linkId of source is relative to the parent (DG)
@@ -943,11 +1021,234 @@ angular.module("pocApp")
 
             },
 
+            makeHierarchicalQFromComp : function (comp,hashAllDG,namedQueries,compConfig) {
+                //construct a Q from the composition
+                //strategy is to gather the DG from the comp sections, create DG Qs then assemble them into the comp Q
+                //assumption is that the composition itself doesn't change the DG contents - it is just a selector of DGs
+
+                //automatically adds the tab container level so UI has tabs for sections
+                compConfig = compConfig || {}
+
+
+                let that = this
+                let errorLog = []
+            //    let allEW = []      //all EnableWhens - for validation
+
+                let Q = {resourceType:'Questionnaire'}
+                Q.title = comp.title
+                Q.status = 'active'
+                Q.name = comp.name
+                //make the version of the Q the same as the composition version
+                Q.version = comp.version
+
+                Q.id = `canshare-${comp.name}`
+                Q.url = `http://canshare.co.nz/questionnaireUrl/${comp.name}`
+                addPrePopExtensions(Q)
+                addUseContext(Q)
+                addPublisher(Q)
+                Q.item = []
+
+                let containerSection = {text: comp.title, linkId: `${comp.name}`, extension: [], type: 'group', item: []}
+                let ext = {url: extItemControlUrl}
+                ext.valueCodeableConcept = {
+                    coding: [{
+                        code: "tab-container",
+                        system: "http://hl7.org/fhir/questionnaire-item-control"
+                    }]
+                }
+
+                //http://hl7.org/fhir/ValueSet/questionnaire-item-control
+                containerSection.extension.push(ext)
+
+                Q.item.push(containerSection)
+
+                let hashEd = {}         //has of ED by path (=linkId)
+                let hashVS = {}         //all valueSets
+
+                let linkIdCtrStart = 0      //the start counter for re-numbering linkids
+
+                let patientId = utilsSvc.getUUID()// createUUID() // crypto.randomUUID();
+
+                for (const section of comp.sections) {
+                    if (section.items && section.items.length > 0) {
+                        //let sectionItem = {linkId:`sect-${section.name}`,text:section.title,type:'group',item:[]}
+                        //let sectionItem = {linkId:`${section.name}`,text:section.title,type:'group',item:[]}
+                        let sectionItem = {linkId:`${comp.name}.${section.name}`,text:section.title,type:'group',item:[]}
+
+                        //sectionItem.repeats = true
+                        containerSection.item.push(sectionItem)
+
+                        //make up an ed for the section for the display in the UI. It's not a real ed...
+                        let sectionEd = {linkId:sectionItem.linkId,path:sectionItem.linkId}
+                        hashEd[sectionItem.linkId] = sectionEd
+
+                        // for (const contentDG of section.items) {
+                        for (const [sectionIndex, contentDG] of section.items.entries()) {     //a section can have multiple DGs within it.
+                            let dgType = contentDG.type[0]        //the dg type. Generally a 'section' dg
+
+                            //todo - should this ordering be done in the snapshot service???
+                            let dgElementList = snapshotSvc.getFullListOfElements(dgType)
+
+                            //adjust according to 'insertAfter' values
+                            let dg = hashAllDG[dgType]
+                            orderingSvc.sortFullListByInsertAfter(dgElementList,dg,hashAllDG)
+
+                            //path prefix is prepended to the linkid (=path) from the DG. used to adjust enablewhen targets
+                            let pathPrefix = sectionItem.linkId
+
+                            let config = {expandVS:true,enableWhen:true,pathPrefix : pathPrefix,calledFromComp:true}
+                            config.hashAllDG = hashAllDG
+                            config.namedQueries = namedQueries
+                            if (compConfig.hideEnableWhen) {
+                                config.enableWhen = false
+                            }
+                            config.startInx = linkIdCtrStart
+
+                            config.patientId = patientId //'testPatient'    //will be a uuid
+
+                            let vo = that.makeHierarchicalQFromDG(dg,dgElementList,config)
+
+                            linkIdCtrStart = vo.maxInx
+
+                          //  allEW.push(...vo.allEW)
+
+                            let dgQ = vo.Q
+
+                            //if there are any variables defined by the DG then add them to the root
+                            //they would have been added by the DG routine, but the Q root is ignored here.
+                            //add the named queries as variables in the Q.
+                            if (dg.namedQueries) {
+                                dg.namedQueries.forEach(function (nqName) {
+                                    addNamedQuery(Q,nqName,config.namedQueries)
+                                })
+                            }
+
+                            //the list of all EDs
+                            Object.keys(vo.hashEd).forEach(function (linkId) {
+                                hashEd[linkId] = vo.hashEd[linkId]
+                            })
+
+                            //all ValueSets
+                            Object.keys(vo.hashVS).forEach(function (url) {
+                                hashVS[url] =  hashVS[url] || []
+                                hashVS[url].push(...vo.hashVS[url])
+                            })
+
+                            //any errors
+                            //console.log(`${dgType} ${vo.errorLog.length}`)
+                            if (vo.errorLog.length > 0) {
+                                errorLog.push(...vo.errorLog)
+                            }
+
+                            //the section is populated by DGs - but there are a couple of ways that has been done.
+                            //sectionPatientDetails is a DG thhat has the Patient DG as a child
+                            //bresteReporthistolymphnodes has the elements directly
+                            //to be discussed next week
+
+                            //now we can actually add add the child elements from the DG to the Composition Q
+                            //First we need to see if there was an extract context defined on the DG Q. If so
+                            //it needs to be added to the section. It will be an extension with the url of extExtractionContextUrl
+                            //Note that there will only be a single extension of this type on the Q. If a DG has
+                            //multiple resources extracted from it, they will be in the items...
+
+                            //let arExt = getExtension(vo.Q,extExtractionContextUrl,'Code')
+/* - temp
+                            let arExt = getExtension(vo.Q,extExtractionContextUrl,'String')
+                            if (arExt.length) {
+                                sectionItem.extension = sectionItem.extension || []
+                                let ext = {url:extExtractionContextUrl,valueString:arExt[0]}
+                                sectionItem.extension.push(ext)
+                            }
+                            */
+
+
+
+                            if (dgQ && dgQ.item[0]) {
+
+                                //todo - added this level of nesting as CSIRO renderer doesn't support pre-pop in tabs
+                                //makes the tree bad though...
+                                let dgItem = {linkId:`${comp.name}.${section.name}.section.${sectionIndex}`,text:section.title,type:'group',repeats:true,item:[]}
+
+
+                                //-----------
+                                //see if this is a DG that extracts to a resource with a patient reference
+                                //wellington oct29
+
+                                if (resourcesForPatientReference[dg.type]) {
+                                    //This is a resource that has a reference to the patient. We assume that there is a variable
+                                    //called 'patientID' that we can set
+                                    let elementName = resourcesForPatientReference[dg.type] //the element on the resource with the reference
+
+                                    let definition = `http://hl7.org/fhir/StructureDefinition/${dg.type}#${dg.type}.${elementName}.reference`         //path in
+                                    let type = "String"
+                                    let value = config.patientId //`Patient/${patientId}`
+
+                                    //addReference(item,definition,type,expression)
+
+                                    addFixedValue(dgItem,definition,type,value)
+                                }
+
+
+                                //---------------
+
+
+
+                                if (dgQ.item[0].extension) {
+
+                                    for (const ext of dgQ.item[0].extension) {
+
+                                    }
+
+                                    dgItem.extension = dgItem.extension || []
+                                    dgItem.extension.push(...dgQ.item[0].extension)
+                                    dgItem.repeats = true
+
+                                }
+
+
+
+                                //if the item has children then add them
+                                if (dgQ.item[0].item) {
+                                    for (const child of dgQ.item[0].item){
+                                        dgItem.item.push(child)
+                                        //temp  sectionItem.item.push(child)
+                                    }
+                                }
+
+                                sectionItem.item.push(dgItem)
+
+                            }
+                        }
+                    }
+
+                }
+
+                //console.log(allEW)
+
+                /*
+                //validate the enablewhens
+                for (const ew of allEW) {
+                    if (! hashEd[ew.question]) {
+                        errorLog.push({msg:`EnableWhen on ${ew.target} refers to a missing element: ${ew.question}`,dgName:ew.dgName})
+                    }
+                }
+
+                */
+
+                //return {Q:Q,hashEd:hashEd,hashVS:hashVS,errorLog:errorLog,allEW:allEW}
+
+                //need to ensure callers of this don't do anything with allEW
+                return {Q:Q,hashEd:hashEd,hashVS:hashVS,errorLog:errorLog,allEW:[]}
+
+            },
+
             makeHierarchicalQFromDG : function  (dg,lstElements,config) {
                 config.getControlDetails = this.getControlDetails //need to use the function defined in the service object which is called externally...
                 //Used in the new Q renderer
                 //config.enableWhen (boolean) will cause the enableWhens to be set. It's a debugging flag...
-
+                //config.patientId is the patient id to use for the fixed value extension  //TODO NOT USED ANYMORE
+                config.patientId = config.patientId || utilsSvc.getUUID() //createUUID()
+                //config.pathPrefix is used for enable when targets. Only used from composition. It may be null
                 //config.namedQueries allows the NQ to be passed in
                 let pathPrefix = ""
                 if (config.pathPrefix) {
@@ -993,6 +1294,7 @@ angular.module("pocApp")
                     }
                 })
 
+                //console.log(basePathsToHide)
 
                 //now create the list of ED to include in the Q
                 //we do this first so that we can exclude all child elements of hidden elements as well
@@ -1010,6 +1312,10 @@ angular.module("pocApp")
                             }
                         }
                     }
+
+                    //now we need to look at the conditional ValueSets. If an item has condtional ValueSets defined
+                    //then an ed is constructed for each VS with an enableWhen defined.
+                    //todo - should the original be defined - what about the linkId
 
 
                     if (okToAdd) {
@@ -1042,16 +1348,23 @@ angular.module("pocApp")
                 Q.date = new Date().toISOString()
 
 
+                //let qUrl = config.url || dg.name  //todo adjust for environment
+                //Q.url = `http://canshare.co.nz/questionnaire/${qUrl}`
+
+                //Q.url = `http://canshare.co.nz/questionnaire/${Q.name}`
                 Q.url = config.url
 
                 Q.version = config.version || 'draft'
                 Q.description = dg.description
 
+
+
+
                 addPrePopExtensions(Q)      //launchPatient & LaunchPractitioner
                 addUseContext(Q)
                 addPublisher(Q)
 
-                //set any default terminology server on the DG
+                //set any default terminology server
                 if (dg.termSvr) {
                     Q.extension = Q.extension || []
                     let ext = {url:extensionUrls.peferredTerminologyServer,valueUrl:dg.termSvr}
@@ -1066,6 +1379,53 @@ angular.module("pocApp")
 
 
                 let hashIdName = {}     //associate an idname (from allocateId) with the path
+                //todo - think I've deprecated resourceReferences
+                if (false && dg.resourceReferences) {
+                    //we need to set consistent 'idname' properties - that will be used by allocateId
+
+                    let ctr = 0
+                    for (const ref of dg.resourceReferences) {
+                        let target = ref.target     //
+                        if (hashIdName[target]) {
+                            //some other reference is targetting this resource - use the same idName
+                           ref.idName = hashIdName[target]
+                        } else {
+                            ctr ++
+                            let ar = target.split('.')
+                            let idName = `${ar[ar.length-1]}${ctr}`
+                            hashIdName[target] = idName
+                            ref.idName = idName
+                        }
+                    }
+
+                    //now for all of the unique id's add an allocateId extension to the root
+                    //this will be the extracted resource id todo - may deprecate this function in favour of adhoc exts - still thinking
+
+                    Object.keys(hashIdName).forEach(function (key) {
+                        let ext = {url:extAllocateIdUrl,valueString:hashIdName[key]}
+                        Q.extension.push(ext)
+                    })
+
+                    //add the reference target to the root so an id will be created
+                    for (const ref of dg.resourceReferences) {
+
+                        for (const item of lstQElements) {
+                            let ed = item.ed
+                            let path = ed.path
+                            if (path == ref.source) {
+                                //console.log('source')
+                                ed.markReference = ed.markReference || []
+                                ed.markReference.push(ref)      //note that the ref.idName has just bee updated
+                            }
+
+                            if (path == ref.target) {
+                                ed.markTarget = ref.idName
+                            }
+
+                        }
+                    }
+                }
+
 
                 config.hashIdName = hashIdName  //when we create the Q item we need to add the id as a fullUrl property in definitionExtract
 
@@ -1089,13 +1449,6 @@ angular.module("pocApp")
                 let hashEd = {}         //has of ED by path (=linkId)
                 let hashVS = {}         //hash of all ValueSets defined
 
-                //create the has of all ED first
-                for (const item of lstQElements) {
-                    let ed = item.ed
-                    let path = ed.path
-                    hashEd[path]= ed
-                }
-
                 for (const item of lstQElements) {
                     let ed = item.ed
                     let path = ed.path
@@ -1105,28 +1458,21 @@ angular.module("pocApp")
                     //testHash
                     makeQHelperSvc.checkParentalHash(testHash,path)
 
-                    /*
                     //If this is being called from the composition then add the pathprefix to the path (linkId)
                     let newLink = path
                     if (pathPrefix) {
                         newLink = `${pathPrefix}${path}`
                     }
                     hashEd[newLink] = ed
-*/
+
                     if (currentItem) {
                         //this is not the first
                         let parentItemPath = $filter('dropLastInPath')(path)
-                        //todo - testing uuid currentItem = {linkId:`${pathPrefix}${path}`,type:'string',text:ed.title}
-                        //temp oct22 currentItem = {linkId:`${ed.id}`,type:'string',text:ed.title}
-                        currentItem = {linkId:`${utilsSvc.getUUIDHash(ed.id)}`,type:'string',text:ed.title}
+                        currentItem = {linkId:`${pathPrefix}${path}`,type:'string',text:ed.title}
 
                         //we pass in hashItems so the decorate function can update other items - like setting a fixed value
-
-                       //oct24 - passing in the wrong hash! let vo = decorateItem(currentItem,ed,extractionContext,dg,config,hashItems)
-                        let vo = decorateItem(currentItem,ed,extractionContext,dg,config,hashEd)
-
+                        let vo = decorateItem(currentItem,ed,extractionContext,dg,config,hashItems)
                         extractionContext = vo.extractionContext
-
 
 
 
@@ -1141,15 +1487,10 @@ angular.module("pocApp")
                         //here is where the new item is added to it's parent...
                         //We need to deal with 'out of order' elements - ie where we get to an item before its parent...
                         let canAdd = true
-
-                        //not being used at present.
-                        /*
                         if (vo.excludeFromQ) {
                             canAdd = false
                         }
-                        */
                         //console.log(`Adding: ${path} to  ${parentItemPath}`)
-                        //this is all code that (hopefully) shouldn't be needed when building a Q from a collection as
                         if (! hashItems[parentItemPath]) {
                             console.error(`${parentItemPath} not present - adding...`)
 
@@ -1181,17 +1522,9 @@ angular.module("pocApp")
                             hashItems[parentItemPath].item = hashItems[parentItemPath].item || []
                             hashItems[parentItemPath].item.push(currentItem)
                             //temp Sep182025 hashItems[parentItemPath].type = "group"
+
+
                             hashItems[path] = currentItem   //ready to act as a parent...
-
-
-                         //   if (vo.additionalItems.length > 0) {
-                                //the decorate routine added additional items. eg Conditional Valuesets
-                                for (let item of vo.additionalItems) {
-                                    hashItems[parentItemPath].item.push(item)
-                                }
-
-                         //   }
-
 
                             //We also need to process 'other' items. These are used in choice elements when the desired option is not in the options list
                             let newItem = addOtherItem(ed,currentItem)
@@ -1217,9 +1550,8 @@ angular.module("pocApp")
                     } else {
                         //this is the first item in the DG Q.
 
-                        //temp oct22 - testing uuidscurrentItem = {linkId:`${pathPrefix}${path}`,type:'group',text:ed.title}
-                        currentItem = {linkId:`${ed.id}`,type:'group',text:ed.title}
-                        currentItem = {linkId:`${utilsSvc.getUUIDHash(ed.id)}`,type:'group',text:ed.title}
+                        // Sep18currentItem = {linkId:`${pathPrefix}${path}`,type:'display',text:ed.title}
+                        currentItem = {linkId:`${pathPrefix}${path}`,type:'group',text:ed.title}
 
                         decorateItem(currentItem,ed,extractionContext,dg,config)
 
@@ -1312,38 +1644,77 @@ angular.module("pocApp")
 
                 }
 
+               // console.log(hashItems)
 
-                //process the conditional VS
-                //
+                /* this is redundant after the move to using Ids...
+
+                //validate the enablewhens - but not if the generation is called from the composition
+                //if the error is to an element that has conditional ValueSets, then it isn't really an error
+                //as the EW was updated to refer to all the conditional copies made (and a copy made in the  conditionalED[] array
+                let newAllEW = []   //the set of all enableWhens - excluding the conditional ValueSet ones...
 
 
+                for (const ew of allEW) {
+                    ew.dgName = firstElement.ed.path        //so that the DGName can be reported back to the composiiton
+                    //ew.dgPath = ew.question
+                    if (! hashEd[ew.question] ) {
+                        //the question (controller element) was not found
+                        //is this an element that had conditional valueSets?
+                        if (! conditionalED[ew.question]) {
+                            //no it isn't - it is an error
+                            newAllEW.push(ew)       //we still add it to the list - it needs to be fixed
+
+                            if (! config.calledFromComp) {
+
+                                errorLog.push({msg:`EnableWhen on ${ew.target} refers to a missing element: ${ew.question}`})
+                            }
+
+
+                        } else {
+                            //this is an element that had a conditional VS - and the element was not included in the Q so it doesn't go in thelist
+                        }
+
+
+                    } else {
+                        //the question / control element was found so add to the updated 'allEW' list
+                        newAllEW.push(ew)
+                    }
+                }
+
+
+                */
+
+
+                //at this point the Q has been built, but if there were any elements with conditionalVS
+                //then that element will not have been added to the Q (conditional items for each possible VS will have been)
+                //and any other items that have a dependency on that one will need to be corrected...
 
                 //NOTE: This does need to be here to support conditional VS - just commenting it out while I check EW creation
                 //to avoid confusing things
                 //temp correctEW(Q,conditionalED)
 
-                //oct22 - setting the linkId dorectly to the hashed ed.idlet vo = makeQHelperSvc.updateLinkIds(Q,startInx)
+                let vo = makeQHelperSvc.updateLinkIds(Q,startInx)
 
+                //console.log(vo)
 
                 //the 'question' entry in the EW will be to the sourceId id. This replaces with linkId
-                //oct22errorLog.push(...  makeQHelperSvc.updateEnableWhen(Q,vo.hashById))
-
-                //oct 24 errorLog.push(...  makeQHelperSvc.updateEnableWhen(Q))
+                errorLog.push(...  makeQHelperSvc.updateEnableWhen(Q,vo.hashById))
 
                 //in the expression definition in an ED , refer to other ED's putting the path in {{}}
                 //this is needed as the linkIds are no longer the path - todo example
-                //oct22errorLog.push(...makeQHelperSvc.updateExpressions(Q,vo.hashByLinkId))
-                errorLog.push(...makeQHelperSvc.updateExpressions(Q))
+                errorLog.push(...makeQHelperSvc.updateExpressions(Q,vo.hashByLinkId))
 
                 //clear all the item.prefix entres
                 makeQHelperSvc.removePrefix(Q)
 
 
-                //this is the return from the 'makeHierarchicalQFrom DG function
-                //oct22 return {Q:Q,hashEd:hashEd,hashVS:hashVS,errorLog:errorLog, lidHash:vo.lidHash,maxInx:vo.maxInx}
-                return {Q:Q,hashEd:hashEd,hashVS:hashVS,errorLog:errorLog}
 
 
+
+
+               //return {Q:Q,hashEd:hashEd,hashVS:hashVS,errorLog:errorLog, allEW : newAllEW, lidHash:vo.lidHash,maxInx:vo.maxInx}
+
+                return {Q:Q,hashEd:hashEd,hashVS:hashVS,errorLog:errorLog, lidHash:vo.lidHash,maxInx:vo.maxInx}
 
                 //add details to item
                 //extraction context is the url of the profile (could be a core type)
@@ -1351,10 +1722,7 @@ angular.module("pocApp")
                     if (! ed.type) {
                         return
                     }
-                    //let excludeFromQ = false
-
-                    //some functions - eg conditional vs - can add additional items...
-                    let additionalItems = []
+                    let excludeFromQ = false
 
                     //save the original path. useful when tracking down the origin of things...
                     makeQHelperSvc.addExtensionOnce(item,{url:extOriginalPath,valueString:ed.path})
@@ -1363,6 +1731,9 @@ angular.module("pocApp")
 
                     //If this ed is a reference to another DG, it can have a different extraction context...
                     if (config.hashAllDG[edType]) {
+
+
+
 
                         let referencedDG = config.hashAllDG[edType]
                         let extractType = snapshotSvc.getExtractResource(edType)    //the FHIR type this DG extracts to, if any... Follows the parental hierarchy
@@ -1470,7 +1841,11 @@ angular.module("pocApp")
 
 
                         if (extractionContext) {
+
                             addFixedValues(item,referencedDG)
+
+
+
                         }
                     }
 
@@ -1480,6 +1855,12 @@ angular.module("pocApp")
                         addPopulationContext (ed.selectedNQ,item)
                     }
 
+                    /* duplicate
+                    //Will display child elements in a table
+                    if (ed.gTable) {
+                        addItemControl(item,'gtable')
+                    }
+*/
 
 
                     if (ed.itemCode && ed.itemCode.code) {
@@ -1500,14 +1881,11 @@ angular.module("pocApp")
                     //add any units
                     addUnits(item,ed)
 
-
-                    //the function can return additional items to insert into the Q as peers after this one.
-                    //this is needed if there is more than one conditional vs
-
-                    //additionalItems.push(... makeQHelperSvc.addConditionalVS(item,ed,hashEd))
+                    //add extension for any conditional vs
+                    makeQHelperSvc.addConditionalVS(item,ed)
 
                     //The only way an element here will have hideInQ set but still be included is for fixed values.
-                    //they get added to the Q - but with the hidden extension so they're available for extraction
+                    //they get added to the Q - but with the hidden extension
 
                     //hiddenInQ is an item that does appear but not shown
                     //not the same as hideInQ which means they dont appear in Q at all (poor naming choice there)
@@ -1526,14 +1904,11 @@ angular.module("pocApp")
                         }
                     }
 
+
                     //set the control type. Do this early on as other fnctions may change it (eg fixedCoding)
                     //note that the function is defined on config as the scope is a little clumsy...
                     let vo = config.getControlDetails(ed)
                     item.type = vo.controlType
-
-
-                    additionalItems.push(... makeQHelperSvc.addConditionalVS(item,ed,hashEd))
-
 
                     switch (vo.controlHint) {
                         case "autocomplete" :
@@ -1616,7 +1991,6 @@ angular.module("pocApp")
                                 let ar1 = ed.path.split('.')
                                 ar1.pop()
                                 let p1 = ar1.join('.')
-                                //todo >>>>>>>>> !!!! THis is not correct!! We need an item not an ed...
                                 let parentItem = hashEd[p1]
                                 if (parentItem) {
                                     addFixedValue(parentItem,canonical,'Coding',concept)
@@ -1713,7 +2087,20 @@ angular.module("pocApp")
                                 item.extension = ed.extension || []
                                 item.extension.push(ext)
                             }
+
+
                         }
+
+                        //if there are units
+                        /* - not sure what to do about this.
+                        if (ed.units && ed.units.length > 0) {
+                            let ext = {url:extQuantityUnit}
+                            ext.valueCoding = {code:ed.units[0],system:"http://unitsofmeasure.org",display:ed.units[0]}
+                            item.extension = ed.extension || []
+                            item.extension.push(ext)
+
+                        }
+                        */
                     }
 
                     //placeholder
@@ -1746,10 +2133,9 @@ angular.module("pocApp")
                     }
 
                     if (ed.helpText){
-
                         const guid = utilsSvc.getUUID() //createUUID()
 
-                        let foItem = {linkId:utilsSvc.getUUIDHash(guid),text:ed.helpText,type:'display'}
+                        let foItem = {linkId:guid,text:ed.helpText,type:'display'}
 
                         let ext1 = {url:extItemControlUrl}
                         ext1.valueCodeableConcept = {
@@ -1775,6 +2161,7 @@ angular.module("pocApp")
                         //let expression = `%Launch${ed.prePop}`
                         let expression = `${ed.prePop}`
                         //let expression = `%${dg.name}.${ed.prePop}`
+
 
                         ext.valueExpression = {language:"text/fhirpath",expression:expression}
                         item.extension = item.extension || []
@@ -1803,7 +2190,11 @@ angular.module("pocApp")
                             errorLog.push({msg:`${ed.path} has a default value not in the answerOptions (It may be in the valueset)`})
                         }
 
+                       // item.initial = item.initial || []
+
+                       // item.initial.push({valueCoding: makeQHelperSvc.cleanCC(ed.defaultCoding)})
                     }
+
 
                     //collapsible sections
                     if (ed.collapsible) {
@@ -1825,6 +2216,28 @@ angular.module("pocApp")
                     }
 
                     addAdHocExtension(Q,item,ed.adHocExtension)
+
+                    //fixed values assigned to the ED
+                    //todo - use of these has been deprecated - to be removed DEP
+                    if (false && ed.qFixedValues) {
+
+                        let ar = extractionContext.split('/')
+
+                        ed.qFixedValues.forEach(function (fv) {
+                            let extractPath = `${extractionContext}#${fv.path}`
+
+                            if (typeof fv.value == 'string' && fv.value.indexOf('%') > -1) {
+                                //this is assumed to be an expression
+                                addFixedValue(item,extractPath,fv.type,null,fv.value)
+                            } else {
+                                addFixedValue(item,extractPath,fv.type,fv.value)
+                            }
+
+
+                        })
+
+
+                    }
 
 
                     //important that this segment is the last as it can adjust items (eg the valueset stuff)
@@ -1859,16 +2272,59 @@ angular.module("pocApp")
 
 
 
-                    //todo - could this return additional items to insert as a peer to this one?
-                    //conditonal VS would be a use for this...
-
-                    //return {excludeFromQ:excludeFromQ,extractionContext :extractionContext}
-
-                    return {extractionContext :extractionContext,additionalItems:additionalItems}
+                    return {excludeFromQ:excludeFromQ,extractionContext :extractionContext}
 
                 }
 
+                function correctEWDEP(Q,conditionalED) {
 
+                    function checkItem(item) {
+
+                        if (item.enableWhen) {
+                            let newEWList = []
+
+                            item.enableWhen.forEach(function (ew) {
+                                if (conditionalED[ew.question]) {
+                                    console.log(`${item.linkId} needs adjusting`)
+
+
+                                    //we'll create new EW's for each of the conditional ED's that were created
+                                    conditionalED[ew.question].forEach(function (path) {
+                                        let newEw = angular.copy(ew)
+                                        newEw.question = path
+                                        newEWList.push(newEw)
+                                    })
+
+
+                                } else {
+                                    newEWList.push(ew)
+                                }
+
+                            })
+
+                            item.enableWhen = newEWList
+                            item.enableBehavior = 'any'
+
+
+
+
+                        }
+                        if (item.item) {
+                            item.item.forEach(function (child) {
+                                checkItem(child)
+                            })
+                        }
+
+                    }
+
+                    Q.item.forEach(function (item) {
+                        checkItem(item)
+                    })
+
+
+                    return Q
+
+                }
             },
 
 
