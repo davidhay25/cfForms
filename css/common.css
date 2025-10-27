@@ -139,16 +139,28 @@
 .tableFixHead {
     overflow-y: auto;
     height: 800px;
+
 }
+
+.tableFixHeadSmall {
+    overflow-y: auto;
+    height: 600px;
+
+}
+
 .tableFixHead thead th {
     position: sticky;
     top: 0;
 }
+.tableFixHeadSmall thead th {
+    position: sticky;
+    top: 0;
+}
+
 table {
     border-collapse: collapse;
     width: 100%;
 }
-
 
 th,
 td {

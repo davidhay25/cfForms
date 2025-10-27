@@ -1,0 +1,52 @@
+<div>
+  <!--<div ng-controller="newResourceCtrl">-->
+
+  <div class="modal-header">
+    <div class="row">
+      <div class="col-md-8 col-sm-8">
+        <h3 class="modal-title">
+          Collections in the local store
+        </h3>
+      </div>
+
+
+      <div class="col-md-4 col-sm-4">
+        <button class="btn btn-link pull-right" ng-click="$dismiss()">Cancel</button>
+          <!--
+        <button ng-show = "input.name"
+                class="btn btn-primary pull-right" ng-click="save()">Close</button>
+          -->
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-body">
+
+    <table class="table table-bordered">
+      <tr><th>Name</th><th>Description</th><th># DG / Comp</th><th>Updated</th><th>Version</th></tr>
+      <tr ng-repeat="row in localStore">
+        <td>{{row.name}}</td>
+        <td>{{row.description}}</td>
+
+        <td>{{row.dgCount}}</td>
+        <td>{{row.updated | ageSeconds}}</td>
+        <td>{{row.version}}</td>
+        <td><span class="clickable"  ng-click="load(row,'local')">Load</span>
+        </td>
+        <td><span style="padding-left: 20px" class="clickable"  ng-click="delete(row,'local')">Delete</span></td>
+      </tr>
+    </table>
+
+      <pre>{{localStore | json}}</pre>
+
+
+      <uib-tabset>
+
+      </uib-tabset>
+
+
+  </div>
+  <div class="modal-header">
+
+  </div>
+</div>

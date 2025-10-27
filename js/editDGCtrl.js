@@ -13,6 +13,8 @@ angular.module("pocApp")
             $scope.userMode = userMode
             $scope.url = url
 
+            let snomed = "http://snomed.info/sct"
+
             $scope.input.fixedValues = []   //all the fixed values defined by this DG (not shared like Named Queries)
 
 
@@ -34,6 +36,41 @@ angular.module("pocApp")
                     }
                 }
             )
+
+
+            $scope.lookupItemCode = function (code) {
+                $scope.input.itemCode = $scope.input.itemCode || {}
+                $scope.input.itemCode.system = $scope.input.itemCode.system || snomed
+
+                let qry = `CodeSystem/$lookup?system=${$scope.input.itemCode.system}&code=${code}&displayLanguage=en-x-sctlang-23162100-0210105`
+
+                let encodedQry = encodeURIComponent(qry)
+                $scope.showWaiting = true
+                $http.get(`nzhts?qry=${encodedQry}`).then(
+                    function (data) {
+                        console.log(data)
+
+                        let parameters = data.data
+
+                        for (const param of parameters.parameter) {
+
+                            if (param.name == 'display') {
+                                $scope.input.itemCode.display = param.valueString
+
+                            }
+
+                        }
+                    }, function (err) {
+                        if (err.status == "404") {
+                            alert("This Concept was not found on the National Terminology Server")
+                        } else {
+                            alert(angular.toJson(err))
+                        }
+                    }
+                )
+
+            }
+
 
             //when a DG is to be created from a Q
             $scope.pasteQ = function (Qstring) {
@@ -71,8 +108,6 @@ angular.module("pocApp")
 
 
 
-
-            //construct a has of all types (DT + FHIR) for the full list of elements routine
             //construct a has of all types (DT + FHIR) for the full list of elements routine
             $scope.allTypes = angular.copy(hashTypes)
 
@@ -309,7 +344,7 @@ angular.module("pocApp")
 
                     if (model.linkedDG) {
                         //set the 'linkedDG' control to the selected model
-                        //let ar = $scope.allFrozen.filter(dg => dg.name == model.linkedDG)
+
                         let ar = $scope.allFrozen.filter(dg => dg.name == model.linkedDG)
 
 
@@ -321,12 +356,17 @@ angular.module("pocApp")
                         }
                     }
 
-                    //input.linkedDG
-                    //$scope.input.linkedDG = model.linkedDG
 
 
                     if (model.obsExtract) {
                         $scope.input.obsExtract = true
+                    }
+
+                    if (model.itemCode) {
+                        $scope.input.itemCode = {}
+                        $scope.input.itemCode.code = model.itemCode.code
+                        $scope.input.itemCode.system = model.itemCode.system
+                        $scope.input.itemCode.display = model.itemCode.display
                     }
 
 
@@ -388,24 +428,13 @@ angular.module("pocApp")
 
                     $scope.model.name = name  //we can use the 'isUnique' to know if the model can be added
 
-                    if (userMode == 'library') {
-                        modelsSvc.isUniqueNameOnLibrary(name,'dg').then(
-                            function () {
-                                //name is unique
-                                $scope.isUnique = true
-                            }, function (err) {
-                                $scope.isUnique = false
-                            }
-                        )
-                    } else {
-                        //this is playground mode
-                        $scope.isUnique = true
-                        if (hashTypes[name]) {
-                            $scope.isUnique = false
-                        }
+                    $scope.isUnique = true
+                    if (hashTypes[name]) {
+                        $scope.isUnique = false
                     }
                 }
             }
+
 
             $scope.isRequired = function (element) {
                 if (element.ed && element.ed.mult && element.ed.mult.substring(0,1) == 1) {
@@ -553,6 +582,15 @@ angular.module("pocApp")
                 } else {
                     delete $scope.model.obsExtract
                 }
+
+
+                if ($scope.input.itemCode.code) {
+                    $scope.model.itemCode = {}
+                    $scope.model.itemCode.code = $scope.input.itemCode.code
+                    $scope.model.itemCode.system = $scope.input.itemCode.system
+                    $scope.model.itemCode.display = $scope.input.itemCode.display
+                }
+
 
                 //update the named queries
                 delete $scope.model.namedQueries

@@ -78,14 +78,25 @@
             <div class="col-md-1">
                 <div class="navbar-text btn" >
                     <button
-                            class="btn btn-success pull-right" ng-click="library()">Library</button>
+                            class="btn btn-success pull-right" ng-click="library()">Components</button>
                 </div>
             </div>
 
-            <div class="col-md-2">
-
+            <div class="col-md-1">
+                <div class="navbar-text btn" >
+                    <button
+                            class="btn btn-success pull-right" ng-click="showLocalStore()">Local store</button>
+                </div>
 
             </div>
+
+            <div class="col-md-1">
+                <div class="navbar-text btn" >
+                   <checkbox ng-model="input.showHelpScreen"></checkbox>Show Help
+                </div>
+
+            </div>
+
 
             <div class="col-md-1">
                 <div class="navbar-text">
@@ -324,6 +335,16 @@
 
                 </div>
                 <div ng-class="rightPanel">
+
+
+                    -----------
+                    <ng-include
+                            ng-if="input.showHelpScreen"
+                            src="'includes/helpScreen.html'">
+
+                    </ng-include>
+                    ----
+
 
                     <div ng-show="!showDGList && selectedModel.kind == 'dg'">
                         <ng-include src="'includes/showDG.html'"></ng-include>
@@ -806,12 +827,7 @@
 
         $provide.decorator('$exceptionHandler', function ($delegate) {
             return function (exception, cause) {
-                //  $delegate(exception, cause);
-//console.log(cause)
                 console.log("Untrapped exception",exception.stack)
-                //$http.post("model/access",{})
-
-                // logErrorsToBackend(exception, cause);
 
                 let obj = {type:'err',module:'model',msg:exception.stack}
                 $.ajax({
@@ -857,17 +873,21 @@
 <script src="js/compSectionsCtrl.js"></script>
 <script src="js/publishCompCtrl.js"></script>
 
+<script src="js/orderingSvc.js"></script>
 
 
+<script src="js/orderingCtrl.js"></script>
+<script src="js/modelCompSvc.js"></script>
 
-
+<script src="js/libraryDGCtrl.js"></script>
+<script src="js/libraryCompCtrl.js"></script>
 
 -->
 <script src="js/documentSvc.js"></script>
 
 <script src="js/vsSvc.js"></script>
 <script src="js/cmTesterSvc.js"></script>
-<script src="js/modelCompSvc.js"></script>
+
 <script src="js/modelTermSvc.js"></script>
 <script src="js/igSvc.js"></script>
 <script src="js/modelTermCtrl.js"></script>
@@ -898,30 +918,17 @@
 <script src="js/modelDGDialogCtrl.js"></script>
 <script src="js/modelDGDialogSvc.js"></script>
 <script src="js/libraryCtrl.js"></script>
-<script src="js/libraryDGCtrl.js"></script>
-<script src="js/libraryCompCtrl.js"></script>
 
+
+
+<script src="js/localStoreCtrl.js"></script>
 
 <script src="js/changeTypeCtrl.js"></script>
 
 <script src="js/makeQSvc.js"></script>
 <script src="js/librarySvc.js"></script>
 
-
-
 <script src="js/utilsSvc.js"></script>
-
-<!--
-<script>
-    angular.module('pocApp').run(function(utilsSvc) {
-        console.log(utilsSvc)
-        utilsSvc.loadConfig();
-    });
-</script>
--->
-
-
-
 
 <script src="js/codedOptionsSvc.js"></script>
 
@@ -939,11 +946,6 @@
 
 
 
-<script src="js/orderingSvc.js"></script>
-
-
-
-<script src="js/orderingCtrl.js"></script>
 
 <script src="js/libs/firebase.js"></script>
 <script src="js/libs/angularfire.min.js"></script>
@@ -989,6 +991,7 @@
         messagingSenderId: "12147821347",
         appId: "1:12147821347:web:5963d577cb050259475a96"
     };
+
     if (firebase) {
         console.log('init firebase')
         firebase.initializeApp(firebaseConfig);

@@ -470,8 +470,6 @@ angular.module("pocApp")
                     }
 
                     text = text || ed.title || leafPath
-
-
                     let node = {id:id,text:text,parent:parent,data:{ed:ed,host:host}}
 
                     node.data.level = ed.kind       //Questionnaire uses 'level'
@@ -490,11 +488,6 @@ angular.module("pocApp")
                         }
                     }
 
-                    //todo ??? does a DG have z elements ???
-                    if (ed.zElement) {
-                        node.icon = `icons/icon-q-open-choice.png`
-                    }
-
                     if (ed.type && ed.type[0] == 'CodeableConcept') {
                         node.icon = "icons/icon_datatype.gif"
                     }
@@ -509,8 +502,6 @@ angular.module("pocApp")
                     if (ed.sourceModelName && (ed.sourceModelName !== rootEd.path) && (! ed.definedOnDG)) {
                         arStyle.push("color : #999999")
                     }
-
-
 
 
                     //required
@@ -534,7 +525,12 @@ angular.module("pocApp")
                     } else {
                         //if there is hideInQ then it has precedence over showing enablewhen
 
-                        if (ed.enableWhen && ed.enableWhen.length > 0) {
+                        if (ed.enableWhen?.length > 0) {
+                            arStyle.push("text-decoration-line: underline")
+                            arStyle.push("text-decoration-style: dotted")
+                        }
+
+                        if (ed.conditionalVS?.length > 0) {
                             arStyle.push("text-decoration-line: underline")
                             arStyle.push("text-decoration-style: dotted")
                         }

@@ -1123,6 +1123,43 @@ angular.module("pocApp")
                // delete $scope.input.newOptionSystem - don't delete
             }
 
+
+
+            $scope.lookupItemCode = function (code) {
+
+                $scope.input.itemCode = $scope.input.itemCode || {}
+                $scope.input.itemCode.system = $scope.input.itemCode.system || snomed
+
+                let qry = `CodeSystem/$lookup?system=${$scope.input.itemCode.system}&code=${code}&displayLanguage=en-x-sctlang-23162100-0210105`
+
+                let encodedQry = encodeURIComponent(qry)
+                $scope.showWaiting = true
+                $http.get(`nzhts?qry=${encodedQry}`).then(
+                    function (data) {
+                        console.log(data)
+
+                        let parameters = data.data
+
+                        for (const param of parameters.parameter) {
+
+                            if (param.name == 'display') {
+                                $scope.input.itemCode.display = param.valueString
+
+                            }
+
+                        }
+                    }, function (err) {
+                        if (err.status == "404") {
+                            alert("This Concept was not found on the National Terminology Server")
+                        } else {
+                            alert(angular.toJson(err))
+                        }
+                    }
+                )
+
+            }
+
+
             //lookup from the TS
             $scope.lookupFSN = function (code) {
 
@@ -1150,15 +1187,13 @@ angular.module("pocApp")
 
                                 console.log(parsedPart)
                                 // if (parsedPart.name == 'use' && parsedPart.valueCoding) {
+
                                 if (parsedPart.use && parsedPart.use.code == '900000000000003001') {
                                     //this is the FSN
                                     if (parsedPart['value']) {
                                         $scope.input.newOptionFSN = parsedPart['value']
                                     }
-
                                 }
-
-
                             }
                         }
 
@@ -1168,8 +1203,13 @@ angular.module("pocApp")
 
 
                     },function (err) {
-                        alert("This Concept was not found on the National Terminology Server")
-                        console.log(err)
+                        if (err.status == "404") {
+                            alert("This Concept was not found on the National Terminology Server")
+                        } else {
+                            alert(angular.toJson(err))
+                        }
+
+
                     }
                 )
 

@@ -115,7 +115,15 @@
                 <div class="col-md-3">
                   <input type="text" placeholder="Code" class="form-control" ng-model="input.itemCode.code"/>
                 </div>
-                <div class="col-md-4">
+
+                <div class="col-md-1">
+                  <button class="btn btn-info" ng-click="lookupItemCode(input.itemCode.code)">?
+
+                  </button>
+                </div>
+
+
+                <div class="col-md-3">
                   <input type="text" placeholder="System" class="form-control" ng-model="input.itemCode.system"/>
                 </div>
                 <div class="col-md-5">

@@ -3,7 +3,7 @@
 //>>>>>>>>>>>>>>>>> can be removed
 angular.module("pocApp")
     .controller('modelsCtrl',
-        function ($scope,$http,$localStorage,modelCompSvc,modelsSvc,$window,orderingSvc,
+        function ($scope,$http,$localStorage,modelsSvc,$window,
                   snapshotSvc,vsSvc,makeQSvc,playgroundsSvc,$localForage, reportSvc,
                   $timeout,$uibModal,$filter,modelTermSvc,modelDGSvc,igSvc,librarySvc,
                   utilsSvc,$location,documentSvc) {
@@ -16,6 +16,47 @@ angular.module("pocApp")
             } else if ( host.indexOf('test.') > -1 ) {
                 $scope.modelInfoClass = 'modelInfoTest'
             }
+
+            $scope.version = utilsSvc.getVersion()
+            $scope.input = {}
+            $scope.input.showFullModel = true
+
+
+            //if there is no world then this is the first time this browser has been used to access forms
+            //todo - may need different logic if logged in (of course, won't know that at this point...
+            if (! $localStorage.world ) {
+
+                $localStorage.world =  {dataGroups:{},compositions:{},Q:{}}
+                $localStorage.world.saveTo = "browser"      //default to local models
+
+                $scope.input.showHelpScreen = true
+
+
+              //  $localStorage.world.Q = {}
+            } else {
+                //$localStorage.world = $localStorage.world || {dataGroups:{},compositions:{},Q:{}}
+              //  $localStorage.world.Q =  $localStorage.world.Q || {}  //?? not using this now...
+            }
+
+
+            //This is the browser cache object.
+
+
+            $scope.world = $localStorage.world
+
+            $scope.localStorage = $localStorage
+            $scope.input.types = $localStorage.world.dataGroups  //<<<< temp
+
+            //create a separate object for the DG - evel though still referenced by world. Will assist split between DG & comp
+            $scope.hashAllDG = $localStorage.world.dataGroups
+
+
+            $scope.Math = Math;
+
+            let snomed = "http://snomed.info/sct"
+
+            $scope.userMode = "playground"      //actually the collections mode
+
 
 
             //--------- setup the form viewer
@@ -63,6 +104,9 @@ angular.module("pocApp")
                 let voQ = makeQSvc.makeHierarchicalQFromDG(model,allElements,config)
                 let Q = voQ.Q
 
+                $scope.qErrorLog = voQ.errorLog
+
+
                 $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:Q});
 
                 $scope.fullQ = Q //for the display
@@ -103,47 +147,58 @@ angular.module("pocApp")
 
             // $scope.fhirBase = "http://hl7.org/fhir/R4B/"
 
-            $scope.Math = Math;
-
-            let snomed = "http://snomed.info/sct"
-
-            $scope.userMode = $localStorage.userMode || "playground"      //possible modes are 'library' or 'playground'
 
 
             $timeout(function () {
                 utilsSvc.getConfig().then(
                     function (config) {
                         $scope.systemConfig = config
-                        //console.log($scope.systemConfig)
+                        console.log($scope.systemConfig)
                     }
                 )
             },500)
 
 
-            $scope.version = utilsSvc.getVersion()
-            $scope.input = {}
-            $scope.input.showFullModel = true
 
-            //$scope.input.metaProcedures = ['Small diagnostic sample','Resection','Radiation therapy','SACT therapy']
-            //$scope.input.metaCategories = ['Histopathology request','Histopathology report','Treatment summary']
 
-            //always reset trace. an emergency fix - I'll remove trace later
-           // $localStorage.trace = {on:false,limit:500,contents:[]}
-            //$localStorage.trace.on = false
 
-            //get configuration - specifically the default terminology server
-            $scope.config = {}
+            //these are models in the browser cache
+            $scope.showLocalStore = function () {
 
-            $http.get('config').then(
-                function (data) {
-                    $scope.config = data.data
+                $uibModal.open({
+                    templateUrl: 'modalTemplates/localStore.html',
+                    backdrop: 'static',
+                    size : 'xlg',
+                    controller : "localStoreCtrl",
+                    resolve: {
+                        collection: function () {
+                            return $scope.world
+                        }
+                    }
+                }).result.then(function (playground) {
 
-                }
-            )
+                    console.log(playground)
+                    playground.saveTo = "browser"       //will cause this to be saved in the browser cache
 
-            $scope.toggleTraceDEP = function () {
-                $localStorage.trace.on = ! $localStorage.trace.on
+                    $localStorage.world = playground
+                    $scope.world = playground
+
+                    //$localStorage.initialPlayground = angular.copy(playground) //save the loaded version so we know if it has been changed
+
+                    $scope.input.types = $localStorage.world.dataGroups  //todo - fix this<<<< temp
+                    $scope.hashAllDG = $localStorage.world.dataGroups
+
+                    $scope.init()
+
+
+
+
+                })
+
+
             }
+
+
 
             $scope.canShowComponent = function (dg,filter) {
                 if (! filter) {
@@ -170,19 +225,7 @@ angular.module("pocApp")
             }
 
 
-            //This is the browser cache object.
-            $localStorage.world = $localStorage.world || {dataGroups:{},compositions:{},Q:{}}
-            $localStorage.world.Q =  $localStorage.world.Q || {}
 
-            $scope.world = $localStorage.world
-
-            $scope.localStorage = $localStorage
-            $scope.input.types = $localStorage.world.dataGroups  //<<<< temp
-
-
-
-            //create a separate object for the DG - evel though still referenced by world. Will assist split between DG & comp
-            $scope.hashAllDG = $localStorage.world.dataGroups
 
 
             //codesystem lookup functions
@@ -230,55 +273,6 @@ angular.module("pocApp")
                     $scope.showWaiting = false
                 })
             }
-
-
-            /*
-            //look for DG errors like repeating parents in the hierarchy tree
-            if (Object.keys($scope.hashAllDG).length > 0 ) {         //There are DG's stored locally]
-                //this was introduced when there were lots of issues - I don't *think* it's needed any more
-                //keep for now modelDGSvc.checkAllDG($scope.hashAllDG)
-
-                //If there's a DG with no diff, all sorts of bad stuff happens. Shouldn't occur, but if it does it's a pain
-                //this at least prevents the app from crashing, so remedial action can be taken
-                Object.keys($scope.hashAllDG).forEach(function (key) {
-                    $scope.hashAllDG[key].diff = $scope.hashAllDG[key].diff || []
-
-                    for (let ed of $scope.hashAllDG[key].diff) {
-                        if (! ed.type) {
-                            ed.type = ['Group']
-                            alert(`Warning! Element ${ed.path} of DG ${key} had no type. Setting to Group`)
-                        }
-                    }
-
-                })
-
-            } else {
-
-                if (false && $scope.userMode == 'library') {
-                    if (confirm("There don't appear to be any local DataGroups's. Would you like to refresh from the Library?")) {
-
-                        let qry = '/model/allDG'
-                        $http.get(qry).then(
-                            function (data) {
-
-                                let arDG = data.data
-                                arDG.forEach(function (dg) {
-                                    if (dg.kind == 'dg') {
-                                        $scope.hashAllDG[dg.name] = dg
-                                    }
-
-                                })
-                                alert("All DataGroups have been downloaded. To access Compositions, click the Library button at the top of the screen, then the Compositions tab and select the Compositions you wish to download and view")
-
-                            })
-                    } else {
-                        alert("The app won't work correctly. I suggest you start again and agree to the Library refresh")
-
-                    }
-                }
-            }
-
-*/
 
 
             //create a diff between the current model and the copy in the component store (if any)
@@ -338,8 +332,6 @@ angular.module("pocApp")
                 }
             }
 
-
-
             $scope.showContainerQ = function (name) {
                 //alert(name)
                 let model = $scope.hashAllDG[name]
@@ -391,6 +383,7 @@ angular.module("pocApp")
 
                         let voQ = makeQSvc.makeHierarchicalQFromDG(dg,allElements,config)
                         let Q = voQ.Q
+                        $scope.qErrorLog = voQ.errorLog
 
 
                         $uibModal.open({
@@ -429,19 +422,8 @@ angular.module("pocApp")
             //the review screen is now the Q viewer
             $scope.loadReview = function (kind,model) {
 
-                //let allElements
-
                 model = model || $scope.selectedModel //default to the current model
                 let allElements = snapshotSvc.getFullListOfElements(model.name) //$scope.fullElementList
-                /*
-                if (kind == 'comp') {
-                    allElements = $scope.allCompElements
-                    model = model || $scope.selectedComposition
-                } else {
-                    model = model || $scope.selectedModel //default to the current model
-                    allElements = snapshotSvc.getFullListOfElements(model.name) //$scope.fullElementList
-                }
-*/
 
                 vsSvc.getAllVS(allElements, function () {
                     $scope.showWaiting = false
@@ -468,6 +450,7 @@ angular.module("pocApp")
                         config.version = version +1 + '-draft'
 
                         let voQ = makeQSvc.makeHierarchicalQFromDG(model,allElements,config)
+                        $scope.qErrorLog = voQ.errorLog
 
                         //save in the questionnaires collection. It will update any previous Q - based on the Q.name - an upsert
                         //note that this is NOT the same db as published dbs
@@ -522,6 +505,9 @@ angular.module("pocApp")
                             //a new playground has been created or loaded.
                             //todo - why do both 'worlds need to be set?
 
+                            playground.saveTo = "library"   //will cause this to be saved to the library
+
+
                             $localStorage.world = playground
                             $scope.world = playground
 
@@ -552,9 +538,6 @@ angular.module("pocApp")
                 })
 
             }
-
-
-
 
             $scope.updatePlayground = function (both) {
 
@@ -692,6 +675,7 @@ angular.module("pocApp")
 
             //--------------
 
+            //clear everything out...
             resetLocalEnvironment = function () {
                 $localStorage.world = {compositions:{},dataGroups: {}}
                 $scope.world = $localStorage.world
@@ -705,7 +689,7 @@ angular.module("pocApp")
             //snapshot generator functions
             $scope.snapshotSvc = snapshotSvc    //so the web pages can call it directly
 
-            //$scope.ssHx = []
+
 
             $scope.makeSnapshots = function() {
 
@@ -727,7 +711,7 @@ angular.module("pocApp")
                 $scope.lstAllDGSSTitle = snapshotSvc.getDGListTitle()
 
                 //assign the snapshot svc to the modelSvc so that it can read the snapshots of DGs
-                modelCompSvc.setSnapshotSvc(snapshotSvc)
+               // modelCompSvc.setSnapshotSvc(snapshotSvc)
 
                 //all adhoc extensions in the model
                 $scope.allAdHocExt = snapshotSvc.getAllAdHocExt()
@@ -738,9 +722,6 @@ angular.module("pocApp")
                 $scope.diffAnalysis = snapshotSvc.diffAnalysis($scope.hashAllDG)
 
             }
-
-
-            //--------------------------
 
 
 
@@ -856,18 +837,6 @@ angular.module("pocApp")
 
 
                 let host = `${$location.protocol()}:${$location.host()}:${$location.port()}/modelReview.html?q-${qName}`
-
-
-                //let host = $location.absUrl().split('?')[0]
-                /*
-                               if (type == 'dg') {
-                                   host += "?dg=" + $scope.selectedModel.name
-                               }
-
-                               if (type == 'comp') {
-                                   host += "?comp=" + $scope.selectedComposition.name
-                               }
-               */
                 $scope.localCopyToClipboard (host)
                 alert(`Link: ${host} \ncopied to clipBoard`);
 
@@ -980,17 +949,12 @@ angular.module("pocApp")
 
                 if (user) {
                     $scope.user = {email:user.email,displayName : user.displayName}
-
                     modelsSvc.setUser($scope.user)
                     $scope.$digest()
                 } else {
                     delete $scope.user
-
-                    //$scope.loadAllQ()
                     $scope.$digest()
                 }
-
-
 
             });
 
@@ -1144,6 +1108,7 @@ angular.module("pocApp")
 
                     }
 
+/*
                     if (vo.comp) {
                         //a hash of dg
                         Object.keys(vo.comp).forEach(function (key) {
@@ -1152,7 +1117,7 @@ angular.module("pocApp")
                         })
 
                     }
-
+*/
 
                     //should be present in all
                     vo.meta = vo.meta || {}
@@ -1351,6 +1316,8 @@ angular.module("pocApp")
                         //todo - this call is duplicated...
                         let vo1 = modelDGSvc.makeTreeViewOfDG($scope.hashAllDG)
                         showAllDGTree(vo1.treeData)         //this is the inheritance
+
+                        /*
                         try {
                             //the tree data for the sections branch of DG
                             let sections = modelDGSvc.makeSectionsTree($scope.hashAllDG)
@@ -1359,16 +1326,7 @@ angular.module("pocApp")
                             console.log(ex)
                             alert("Error building sections tree")
                         }
-
-
-                        /* category no longer used
-                        //--- make the category hash for the category tree display of DG
-                        let hashCategories = modelDGSvc.analyseCategories($scope.hashAllDG)
-                        let vo2 = modelDGSvc.makeTreeViewOfCategories(hashCategories)
-                        showCategoryDGTree(vo2.treeData)
-
-                        */
-                        //Jan15 - why is this here modelDGSvc.makeDgDownload($scope.hashAllDG)
+*/
 
 
                     } catch (ex) {
@@ -1378,6 +1336,10 @@ angular.module("pocApp")
 
 
                 },500)
+
+
+
+
             }
 
 
@@ -2073,18 +2035,7 @@ angular.module("pocApp")
 
             //---------- functions to edit a model from the tree
 
-            //allow the user to set the VS for a given element
-            $scope.setValueSetDEP = function (element) {
 
-                let vs = prompt("ValueSet url")
-                if (vs) {
-                    element.valueSet = vs       //for the immediate display
-
-                    modelsSvc.updateOrAddElement($scope.selectedModel,element)
-
-                }
-
-            }
 
             //------------
 
@@ -2121,61 +2072,6 @@ angular.module("pocApp")
                 $scope.editModel(newModel,true,parent)
             }
 
-            $scope.showCompositionDEP = function (comp) {
-                let show = true
-                if ($scope.input.selectedTumourStream !== 'All') {
-                    if (comp && comp.meta && comp.meta.tumourStream !== $scope.input.selectedTumourStream) {
-                        show = false
-                    }
-                }
-
-                if ($scope.input.selectedCompCategory !== 'All') {
-                    if (comp.meta.category !== $scope.input.selectedCompCategory) {
-                        show = false
-                    }
-                }
-
-
-                return show
-            }
-
-            $scope.newCompositionDEP = function() {
-
-                let title = prompt("What is the name (no spaces, & must be unique)")
-                if (title) {
-                    let name = title.replace(/\s/g, '') //remove any spaces
-
-                    modelsSvc.isUniqueNameOnLibrary(name,'comp').then(
-                        function () {
-                            //name is unique - ie the comp was not found on the server
-                            //todo why check locally as well?
-                            let isUnique =  ! $scope.hashAllCompositions[name]
-
-                            if (isUnique) {
-                                let newComp = {kind:'comp', name:name, title:title, sections:[]}
-                                newComp.checkedOut = $scope.user.email
-
-                                //save a copy to the Library (a we do with DGs)
-                                librarySvc.checkOut(newComp,$scope.user)
-
-
-                                $scope.hashAllCompositions[newComp.name] = newComp
-
-                                $scope.selectComposition(newComp)
-                            } else {
-                                alert("Sorry, that name has already been used locally.")
-                            }
-
-                        },
-                        function () {
-                            alert("Sorry, that name has already been used in the Library.")
-                            //name is not unique
-                        }
-                    )
-
-                }
-
-            }
 
 
             //edit an existing model (DG) or add a new one
@@ -2420,14 +2316,14 @@ angular.module("pocApp")
 
 
                 //adjust according to 'insertAfter' values. Note that if the user updates the order, the updateList will be empty
-                orderingSvc.sortFullListByInsertAfter($scope.fullElementList,dg,$scope.hashAllDG)
+                //orderingSvc.sortFullListByInsertAfter($scope.fullElementList,dg,$scope.hashAllDG)
 
                 //this is intended to allow a DG to apply the ordering to referenced DGs - but it's confusing. working on a better solution
                 //$scope.dgReferencesOrdering = orderingSvc.getOrderingForReferences($scope.fullElementList,dg,$scope.hashAllDG)
 
                 // ordering move instructions by element to move. So we can have a display to detect elements with multiple move instructions {dupsExist:dupsExist,hash:hash}
-                $scope.orderingByToMove = orderingSvc.getOrderingByToMove(dg)
-                $scope.referencedDGOrdering = orderingSvc.createMoveFromReferences($scope.fullElementList,$scope.selectedModel,$scope.hashAllDG)
+                //$scope.orderingByToMove = orderingSvc.getOrderingByToMove(dg)
+                //$scope.referencedDGOrdering = orderingSvc.createMoveFromReferences($scope.fullElementList,$scope.selectedModel,$scope.hashAllDG)
 
                 $scope.dgFshLM = igSvc.makeFshForDG(dg,$scope.fullElementList)
 
@@ -2734,31 +2630,6 @@ angular.module("pocApp")
             }
 
 
-            //make the tree of the composition
-            function makeCompTreeDEP(treeData,rootNodeId) {
-
-                $('#compositionTree').jstree('destroy');
-
-                $scope.compTree = $('#compositionTree').jstree(
-                    {'core': {'multiple': false, 'data': treeData,
-                            'themes': {name: 'proton', responsive: true}}}
-                ).on('changed.jstree', function (e, data) {
-
-                    if (data.node) {
-                        $scope.selectedCompositionNode = data.node;
-                    }
-
-                    $scope.$digest();       //as the event occurred outside of angular...
-                }).bind("loaded.jstree", function (event, data) {
-                    let id = treeData[0].id
-                    $(this).jstree("open_node",id);
-                    //let treeObject = $(this).jstree(true).get_json('#', { 'flat': false })
-
-
-                    $scope.$digest();
-                });
-
-            }
 
             $scope.fitAllDGGraph = function () {
                 if ($scope.graphAllDG && $scope.graphAllDG.view) {

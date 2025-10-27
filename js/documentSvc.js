@@ -107,6 +107,8 @@ angular.module("pocApp")
                             if (ed.itemCode) {
                                 let itemCode = `${ed.itemCode.code} |${ed.itemCode.display}| ${ed.itemCode.system} `
                                 addRow(arDoc, 'Observable entity', itemCode)
+                            } else {
+                                addRow(arDoc, 'Observable entity', null)
                             }
 
                             let occurence = "Optional, "

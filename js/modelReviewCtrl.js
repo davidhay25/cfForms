@@ -1,7 +1,7 @@
 angular.module("pocApp")
     .controller('modelReviewCtrl',
         function ($scope,$http,modelsSvc,modelCompSvc,$timeout, $uibModal,makeQSvc,utilsSvc,$window,$filter,
-                  orderingSvc,snapshotSvc,vsSvc,qHelperSvc,$localStorage,makeQHelperSvc,modelReviewSvc) {
+                  snapshotSvc,vsSvc,qHelperSvc,$localStorage,makeQHelperSvc,modelReviewSvc) {
 
             $scope.input = {}
 

@@ -84,7 +84,7 @@ angular.module("pocApp")
 
                             console.log(item,clone,newItem)
                         } else {
-                            errorLog.push({msg:`ED with path ${ed.path} has an invalid conditional valueset (can't find controller)`})
+                            errorLog.push({msg:`ED with path ${ed.path} has an invalid conditional valueset (can't find controller) ${cv.path}`})
                         }
 
 

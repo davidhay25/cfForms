@@ -43,7 +43,7 @@ async function saveHistory(DG,userEmail,comment) {
 }
 
 function sendErrorNotification(data) {
-    axios.post("https://maker.ifttt.com/trigger/poc_error/json/with/key/dUZYc-uqt_dac43pA5twl4",data)
+   // axios.post("https://maker.ifttt.com/trigger/poc_error/json/with/key/dUZYc-uqt_dac43pA5twl4",data)
 }
 
 //return true if the 2 models are different
@@ -140,7 +140,7 @@ async function setup(app,database) {
 
         try {
             await database.collection("telemetry").insertOne(doc)
-            sendErrorNotification(doc)
+          //  sendErrorNotification(doc)
             res.json(doc)
         } catch (ex) {
             console.log(ex)

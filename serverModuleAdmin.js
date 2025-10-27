@@ -5,7 +5,9 @@ const { ObjectId } = require('mongodb');
 let tables = []       //an array of tables (mongo collections) that can be queried
 tables.push({display:"Collections",col:'playground',summaryFields:['name','description','publishedVersion']})
 //tables.push({display:"Generated Q",col:'questionnaire',summaryFields:['Q.name','Q.description']})
-tables.push({display:"Published Q",col:'publishedQ',summaryFields:['name','title','version','date']})
+tables.push({display:"Published Q",col:'publishedQ',
+    sort: {name:1,version:-1},
+    summaryFields:['name','title','version','date']})
 tables.push({display:"Components",col:'frozenDG',summaryFields:['name','updated']})
 
 

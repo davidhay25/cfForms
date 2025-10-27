@@ -3,7 +3,7 @@
 angular.module("pocApp")
 
     .service('makeQSvc', function($http,codedOptionsSvc,QutilitiesSvc,snapshotSvc,$filter,vsSvc,
-                                  orderingSvc,utilsSvc,makeQHelperSvc) {
+                                  utilsSvc,makeQHelperSvc) {
 
 
 
@@ -1105,14 +1105,7 @@ angular.module("pocApp")
                     //testHash
                     makeQHelperSvc.checkParentalHash(testHash,path)
 
-                    /*
-                    //If this is being called from the composition then add the pathprefix to the path (linkId)
-                    let newLink = path
-                    if (pathPrefix) {
-                        newLink = `${pathPrefix}${path}`
-                    }
-                    hashEd[newLink] = ed
-*/
+
                     if (currentItem) {
                         //this is not the first
                         let parentItemPath = $filter('dropLastInPath')(path)
@@ -1532,7 +1525,7 @@ angular.module("pocApp")
                     item.type = vo.controlType
 
 
-                    additionalItems.push(... makeQHelperSvc.addConditionalVS(item,ed,hashEd))
+                    additionalItems.push(... makeQHelperSvc.addConditionalVS(item,ed,hashEd,errorLog))
 
 
                     switch (vo.controlHint) {
