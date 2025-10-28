@@ -1,3 +1,20 @@
 <div>
-    Help screen
+
+
+
+    <h3>Questionnaire editor</h3>
+
+
+    <p>This app will build a questionnaire from an internal model. It has the following parts</p>
+
+    <ul>
+        <li>The fundamental part is the DataGroup (DG). A hierarchical set of elements that describes some entity
+            of value - such as a Patient or a Specimen. Each element has a datatype as well as numerous other
+            attributes such as name, description and cardinality. </li>
+        <li>The DG datatype can either be a FHIR datatype or another DG - in other words a DG can contain other DGs.
+            This allows complex DGs to be constructed from simpler ones.</li>
+        <li>The DG can be converted into a Questionnaire - each DG defines a single Questionnaire.</li>
+    </ul>
+
+
 </div>

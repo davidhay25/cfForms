@@ -78,21 +78,21 @@
             <div class="col-md-1">
                 <div class="navbar-text btn" >
                     <button
-                            class="btn btn-success pull-right" ng-click="library()">Components</button>
+                            class="btn btn-primary pull-right" ng-click="library()">Library</button>
                 </div>
             </div>
 
             <div class="col-md-1">
                 <div class="navbar-text btn" >
                     <button
-                            class="btn btn-success pull-right" ng-click="showLocalStore()">Local store</button>
+                            class="btn btn-primary pull-right" ng-click="showLocalStore()">Local store</button>
                 </div>
 
             </div>
 
             <div class="col-md-1">
                 <div class="navbar-text btn" >
-                   <checkbox ng-model="input.showHelpScreen"></checkbox>Show Help
+                   <checkbox ng-model="input.showHelpScreen"></checkbox> Show Help
                 </div>
 
             </div>
@@ -167,13 +167,14 @@
              ng-if = "canEdit()"
              ng-click="updatePlayground(true)">Update Repository</div>
 
+
         <div  ng-if = "! canEdit() && userMode == 'playground'" class="btn btn-warning pull-right">
             Read only mode
         </div>
 
 
         <button class="pull-right btn-link btn"
-                ng-if="userMode == 'library'"
+
                 ng-click="clearLocal()">Clear local</button>
 
         <button class="pull-right btn-link btn" ng-click="export()">Import / Export</button>
@@ -285,7 +286,6 @@
 
 
 
-
                             <div class="list-group background">
                                 <div ng-class="{'list-group-item':true,listItemSelected:selectedModel == v}" style="cursor: pointer"
                                      ng-click="selectModel(v)"
@@ -337,13 +337,14 @@
                 <div ng-class="rightPanel">
 
 
-                    -----------
                     <ng-include
                             ng-if="input.showHelpScreen"
-                            src="'includes/helpScreen.html'">
+                            src="'includes/helpScreen.html?bust=x'">
 
                     </ng-include>
-                    ----
+
+
+
 
 
                     <div ng-show="!showDGList && selectedModel.kind == 'dg'">

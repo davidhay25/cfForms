@@ -24,7 +24,7 @@ angular.module("pocApp")
 
             //if there is no world then this is the first time this browser has been used to access forms
             //todo - may need different logic if logged in (of course, won't know that at this point...
-            if (! $localStorage.world ) {
+            if (! $localStorage.world || $localStorage.world) {
 
                 $localStorage.world =  {dataGroups:{},compositions:{},Q:{}}
                 $localStorage.world.saveTo = "browser"      //default to local models
