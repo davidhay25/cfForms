@@ -1098,21 +1098,14 @@ angular.module("pocApp")
                 return arUsage
 
             },
+            cleanDG : function(dg) {
+                return  cleanSnapshot(dg)   //remove 'empty' attributes
+            },
             getFrozenComp : function (comp,allElements) {
                 //construct a model that represents a composition - but similar to a DG
                 //effecively an expanded DG
 
                 let dg = {kind:'dg',name:comp.name,title:comp.title,diff:[],snapshot:[]}
-
-                //add a
-
-              //  comp.sections.forEach(function (sect) {
-
-
-
-             //   })
-
-               // return dg
 
 
                 for (const thing of allElements) {

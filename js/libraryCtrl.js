@@ -9,7 +9,7 @@ angular.module("pocApp")
             $scope.user = user
             $scope.userMode = userMode
 
-            $scope.canBulkUpdateDGLibrary = function () {
+            $scope.canBulkUpdateDGLibraryDEP = function () {
                 //a function to copy all the DG to the libraray. Only for me running locally.
                 //for use after importing a json file.
                 if (! user) {return false}
@@ -120,10 +120,7 @@ angular.module("pocApp")
             }
 
 
-            $scope.fixIds = function () {
-                //assign new ids for any duplicates.
 
-            }
 
             $scope.close = function () {
                 $scope.$close()

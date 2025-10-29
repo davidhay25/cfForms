@@ -583,6 +583,7 @@ angular.module("pocApp")
                     delete $scope.model.obsExtract
                 }
 
+                $scope.input.itemCode = $scope.input.itemCode || {}
 
                 if ($scope.input.itemCode.code) {
                     $scope.model.itemCode = {}

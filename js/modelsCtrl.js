@@ -8,6 +8,7 @@ angular.module("pocApp")
                   $timeout,$uibModal,$filter,modelTermSvc,modelDGSvc,igSvc,librarySvc,
                   utilsSvc,$location,documentSvc) {
 
+
             //change the background colour of the DG summary according to the environment
             $scope.modelInfoClass = 'modelInfo'
             let host = $location.absUrl()
@@ -24,7 +25,7 @@ angular.module("pocApp")
 
             //if there is no world then this is the first time this browser has been used to access forms
             //todo - may need different logic if logged in (of course, won't know that at this point...
-            if (! $localStorage.world || $localStorage.world) {
+            if (! $localStorage.world ) {
 
                 $localStorage.world =  {dataGroups:{},compositions:{},Q:{}}
                 $localStorage.world.saveTo = "browser"      //default to local models
@@ -162,7 +163,7 @@ angular.module("pocApp")
 
 
 
-            //these are models in the browser cache
+            //these are collections in the browser cache
             $scope.showLocalStore = function () {
 
                 $uibModal.open({
@@ -175,29 +176,43 @@ angular.module("pocApp")
                             return $scope.world
                         }
                     }
-                }).result.then(function (playground) {
+                }).result.then(function (vo) {
 
-                    console.log(playground)
-                    playground.saveTo = "browser"       //will cause this to be saved in the browser cache
+                    let playground = vo.playground
+                    if (playground) {       //a whole collection was selected to be made the working copt
+                        console.log(playground)
+                        playground.saveTo = "browser"       //will cause this to be saved in the browser cache
 
-                    $localStorage.world = playground
-                    $scope.world = playground
+                        $localStorage.world = playground
+                        $scope.world = playground
 
-                    //$localStorage.initialPlayground = angular.copy(playground) //save the loaded version so we know if it has been changed
+                        //$localStorage.initialPlayground = angular.copy(playground) //save the loaded version so we know if it has been changed
 
-                    $scope.input.types = $localStorage.world.dataGroups  //todo - fix this<<<< temp
-                    $scope.hashAllDG = $localStorage.world.dataGroups
+                        $scope.input.types = $localStorage.world.dataGroups  //todo - fix this<<<< temp
+                        $scope.hashAllDG = $localStorage.world.dataGroups
 
-                    $scope.init()
+                        $scope.init()
+                    }
 
-
-
+                    if (vo.arDG) {      //a number of DG's were selected from importing
+                        for (const dg of vo.arDG) {
+                            //we checked for any name collisions in the modal...
+                            $scope.hashAllDG[dg.name] = dg
+                        }
+                        sortDG()
+                        $scope.init()
+                    }
 
                 })
 
 
             }
 
+
+            //save the current collection to the browser cache
+            $scope.updateBrowserCache = function () {
+                $scope.savePGtoLocal()
+            }
 
 
             $scope.canShowComponent = function (dg,filter) {
@@ -505,8 +520,15 @@ angular.module("pocApp")
                             //a new playground has been created or loaded.
                             //todo - why do both 'worlds need to be set?
 
-                            playground.saveTo = "library"   //will cause this to be saved to the library
+                            //if the used is not logged in, then make this a local collection
+                            if ($scope.user?.email) {
+                                playground.saveTo = "library"   //will cause this to be saved to the library
 
+                            } else {
+                                playground.saveTo = "browser"
+                                //as this will become a local collection that can't be updated to the library, remove the lockedTo
+                                delete playground.lockedTo
+                            }
 
                             $localStorage.world = playground
                             $scope.world = playground
@@ -539,6 +561,26 @@ angular.module("pocApp")
 
             }
 
+            $scope.getWorldMeta = function () {
+                let newWorld = angular.copy($scope.world)
+                delete newWorld.dataGroups
+                delete newWorld.compositions
+                delete newWorld.Q
+                return newWorld
+            }
+
+            $scope.makeLocal = function () {
+                let msg = "This will change the collection to a local one. It will then be saved in the" +
+                    "browser cache rather than to the Library."
+                if (confirm(msg)) {
+                    $scope.world.copiedFrom = $scope.world.id   //in case we want to know what it was a copy of
+                    $scope.world.id = utilsSvc.getUUID()        //assign a new id
+                    delete $scope.world.lockedTo                //local collections are not locked
+                    $scope.world.saveTo = "browser"             //makes it a local
+                }
+
+            }
+
             $scope.updatePlayground = function (both) {
 
                 //save the current playground to the library
@@ -565,6 +607,7 @@ angular.module("pocApp")
                     }
                 )
 
+                //save to library
                 function updatePlayground() {
                     $localStorage.world.updated = new Date()
                     if ($localStorage.world.version) {      //the version is incremented whenever the pg is updated. It's not the same as the published version
@@ -576,9 +619,16 @@ angular.module("pocApp")
                     $http.put(`playground/${$localStorage.world.id}`,$localStorage.world).then(
                         function (data) {
 
-                            //reset the change checked
+                            //reset the change checker - todo - nor sure about this..
                             $localStorage.initialPlayground = angular.copy($localStorage.world)
 
+                            let msg = "The Collection has been updated."
+                            if (! $localStorage.world.description) {
+                                msg += " You can edit the description in this page."
+                            }
+                            alert(msg)
+
+/*
                             if (both) {
                                 //update repo and local
                                 $scope.savePGtoLocal(true,true,function () {
@@ -587,12 +637,13 @@ angular.module("pocApp")
 
                             } else {
 
-                                let msg = "The Form has been updated."
+                                let msg = "The Collection has been updated."
                                 if (! $localStorage.world.description) {
                                     msg += " You can edit the description in this page."
                                 }
                                 alert(msg)
                             }
+                            */
 
                         }, function (err) {
                             alert(angular.toJson(err.data))
@@ -602,10 +653,28 @@ angular.module("pocApp")
 
             }
 
-            //todo - in 2 minds as to whether to keep this or not. It is a kind of backup...
+            //save the current PG / collection to the local store
             $scope.savePGtoLocal = function (hideAlert,noversionupdate,cb) {
-                let key = `pg-${$scope.world.id}`
+
+                let msg = ""
+
+                if (! $scope.world.name) {
+                    msg += 'Please name the collections (in the Collection info tab). '
+                }
+
+                $scope.world.dataGroups = $scope.world.dataGroups || {}
+                let cntDG = Object.keys($scope.world.dataGroups).length
+                if (cntDG < 1) {
+                    msg += 'Please add at least one dataGroup. '
+                }
+
+                if (msg) {
+                    alert(msg)
+                    return
+                }
+
                 $scope.world.id = $scope.world.id || utilsSvc.getUUID()
+                let key = `pg-${$scope.world.id}`
                 $scope.world.updated = new Date()
 
                 if (!noversionupdate) {
@@ -629,7 +698,7 @@ angular.module("pocApp")
                 });
             }
 
-            //Import a DG from 'frozen' into a collection.
+            //Import a DG from 'frozen' into a collection. ie a component
             $scope.importDG = function (inx) {
                 let dg = $scope.importableDG[inx]
                 let name = dg.name
@@ -678,7 +747,10 @@ angular.module("pocApp")
             //clear everything out...
             resetLocalEnvironment = function () {
                 $localStorage.world = {compositions:{},dataGroups: {}}
+
                 $scope.world = $localStorage.world
+
+                $scope.world.saveTo = 'browser'
 
                 $scope.hashAllDG = $localStorage.world.dataGroups
                 $scope.hashAllCompositions = $localStorage.world.compositions
@@ -835,10 +907,9 @@ angular.module("pocApp")
                 let qName = `${$scope.world.name}-${$scope.selectedModel.name}`
                 qName = qName.replace(/\s+/g, "");
 
-
                 let host = `${$location.protocol()}:${$location.host()}:${$location.port()}/modelReview.html?q-${qName}`
                 $scope.localCopyToClipboard (host)
-                alert(`Link: ${host} \ncopied to clipBoard`);
+                alert(`A link to the Questionnaire viewer has been copied to clipBoard. \n\nMake sure to generate the Questionnaire before using it.`);
 
             }
 
@@ -905,10 +976,49 @@ angular.module("pocApp")
 
             }
 
-            //can an item be edited
+            //can an item be edited.
             $scope.canEdit = function (model) {
-                
-                model = model || $scope.selectedModel
+
+                //in general can edit unless the current collection has saveTo = 'library' and the current user
+                //is not the one the collection is locked to.
+
+                //the 'saveTo' attribute governs where the collection is saved to - browser or library
+
+                if (! $scope.world) {
+                    //if there's no current collection (world) then can edit - don't think this can happen... theres' always one even if empty
+                    return true
+                }
+
+                //If there's a lockedto, then the col was downloaded from the library. User must match
+                if ($scope.world.lockedTo) {
+                    if ($scope.user &&  $scope.user.email && $scope.world.lockedTo == $scope.user.email)   {
+                        //locked to me
+                        return true
+                    } else {
+                        //locked to someone else
+                        return false
+                    }
+                }
+
+                //this is a readonly col
+                if ($scope.world.saveTo == 'readonly' ) {
+                    return false
+                }
+
+                //this is to be saved to the library, but there's no lockedto. ie downloaded without locking
+                if ($scope.world.saveTo == 'library' ) {
+                    return false
+                }
+
+                //if saved to the browser, can always update
+                if ($scope.world.saveTo == 'browser') {
+                    return true
+                }
+
+
+
+
+                /*
 
                 if ($scope.userMode == 'playground') {
                     //in a playground (collection) locking is at the collection level, not the DG
@@ -920,6 +1030,7 @@ angular.module("pocApp")
                 } else if ($scope.user && model && model.checkedOut == $scope.user.email) {
                     return true
                 }
+                */
             }
 
             //create an FSH with all DG
@@ -981,8 +1092,8 @@ angular.module("pocApp")
             };
 
 
-            $scope.clearLocal = function () {
-                if (confirm("This will remove all DGs and create an empty environment. Are you sure")) {
+            $scope.clearCurrent = function () {
+                if (confirm("This will delete the currently active Collection and create an empty environment. Are you sure")) {
                     resetLocalEnvironment()
                     alert("Reset complete.")
                     $scope.init()
@@ -1476,11 +1587,7 @@ angular.module("pocApp")
                 Object.keys($scope.hashAllDG).forEach(function (key) {
 
                     let dg = $scope.hashAllDG[key]
-                    /*
-                    if (dg.parent == dgName) {
-                        arRejectMessage.push(`This DG is a parent to ${dg.name}`)
-                    }
-*/
+
                     dg.diff.forEach(function (ed) {
                         ed.type.forEach(function (typ) {
                             //if the diff is a deleted one, then don't worry about it
@@ -1508,6 +1615,13 @@ angular.module("pocApp")
                         $scope.makeAllDTList()
                         $scope.refreshUpdates()
                         sortDG()        //will update the list view
+
+                        //re-load the list of components that could be imported.
+                        playgroundsSvc.getImportableDG($scope.hashAllDG).then(
+                            function (data) {
+                                $scope.importableDG = data
+                            }
+                        )
 
                        // $scope.makeAllDTList()      //updated
                        // $scope.makeSnapshots()
@@ -2208,6 +2322,9 @@ angular.module("pocApp")
                             $scope.selectModel(newModel)
                             //   console.timeEnd("Select model")
                         }
+
+                        //re-create the forms preview using the lab
+                        $scope.previewQ()
 
                     }
 

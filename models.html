@@ -64,24 +64,6 @@
 
 
             </div>
-
-            <div class="col-md-1 col-sm-1">
-                <div class="navbar-text btn">
-                    <button class="btn btn-primary pull-right"
-                            ng-click="openPlaygrounds()">Collections</button>
-
-
-
-                </div>
-            </div>
-
-            <div class="col-md-1">
-                <div class="navbar-text btn" >
-                    <button
-                            class="btn btn-primary pull-right" ng-click="library()">Library</button>
-                </div>
-            </div>
-
             <div class="col-md-1">
                 <div class="navbar-text btn" >
                     <button
@@ -89,6 +71,26 @@
                 </div>
 
             </div>
+
+
+            <div class="col-md-1 col-sm-1">
+                <div class="navbar-text btn">
+                    <button class="btn btn-primary pull-right"
+                            ng-click="openPlaygrounds()">Collections library</button>
+
+
+
+                </div>
+            </div>
+
+            <div class="col-md-1">
+                <div ng-if="false" class="navbar-text btn" >
+                    <button
+                            class="btn btn-primary pull-right" ng-click="library()">Library</button>
+                </div>
+            </div>
+
+
 
             <div class="col-md-1">
                 <div class="navbar-text btn" >
@@ -163,19 +165,23 @@
 
     <div style="padding-top: 8px">
 
+
         <div class="btn btn-primary pull-right"
-             ng-if = "canEdit()"
+             ng-if = "world.saveTo == 'library' && world.lockedTo == user.email"
              ng-click="updatePlayground(true)">Update Repository</div>
 
+        <div class="btn btn-primary pull-right"
+             ng-if = "world.saveTo == 'browser' && ! world.lockedTo"
+             ng-click="updateBrowserCache()">Update Local Store</div>
 
-        <div  ng-if = "! canEdit() && userMode == 'playground'" class="btn btn-warning pull-right">
+        <div  ng-if = "world.lockedTo && (world.lockedTo !== user.email)" class="btn btn-warning pull-right">
             Read only mode
         </div>
 
 
         <button class="pull-right btn-link btn"
 
-                ng-click="clearLocal()">Clear local</button>
+                ng-click="clearCurrent()">Clear current collection</button>
 
         <button class="pull-right btn-link btn" ng-click="export()">Import / Export</button>
 
@@ -521,9 +527,15 @@
                             <td>
 
                                 <div class="row">
-                                    <div class="col-md-9">
-                                        <div ng-if="userMode == 'playground'">Collections</div>
-                                        <div ng-if="userMode == 'library'">Library</div>
+                                    <div class="col-md-7">
+                                        <div ng-if="world.saveTo=='browser'">Collection will be saved to the local browser store.</div>
+                                        <div ng-if="world.saveTo=='library'">Collection will be saved to the Library, provided you are logged in and
+                                            the collection has been locked to you.</div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button class="btn btn-link"
+                                                ng-click = "makeLocal()"
+                                                ng-if="world.saveTo == 'library'">Make local</button>
                                     </div>
                                     <div class="col-md-3">
                                         <div>{{world.id}}</div>
@@ -554,30 +566,7 @@
 
 
                         <tr><td>Description</td><td><textarea class="form-control" ng-model="world.description"></textarea></td></tr>
-                        <!--
-                        <tr ><td>Published version</td>
-                            <td>
-                                <div class="row">
-                                    <div class="col-md-9">
-                                        <div ng-if="world.publishedVersion > 0">
-                                            {{world.publishedVersion  }}
-                                        </div>
-                                        <div ng-hide = "world.publishedVersion > 0">
-                                            This model has not yet been published
-                                        </div>
 
-                                    </div>
-                                    <div class="col-md-3">
-
-                                        <button ng-if="userMode == 'playground' && canEdit()" class="pull-right btn-primary btn"
-                                                ng-click="savePGVersion()">Publish a version</button>
-                                    </div>
-                                </div>
-
-
-                            </td>
-                        </tr>
-                        -->
                         <tr>
                             <td>Container DGs</td>
                             <td>
@@ -602,6 +591,11 @@
                                 </div>
                             </td>
                         </tr>
+                        <tr>
+                            <td>Actions</td>
+                            <td>Todo - convert to a local collection (saveTo = browser)</td>
+                        </tr>
+
 
 
                     </table>
@@ -622,7 +616,7 @@
 
                 </uib-tab>
 
-                <uib-tab heading="Resource types">
+                <uib-tab ng-if="false" heading="Resource types">
                     <br/>
                     <em>List of DataGroups with resource types </em>
                     <br/>
@@ -649,7 +643,7 @@
 
                 </uib-tab>
 
-                <uib-tab ng-if="userMode == 'playground'" heading="Import Component">
+                <uib-tab heading="Components">
                     <br/>
                     <div class="row">
                         <div class="col-md-1">
@@ -658,11 +652,16 @@
                         <div class="col-md-2">
                             <input class="form-control" type="input" ng-model="input.filter"/>
                         </div>
-                        <div class="col-md-8">
+                        <div class="col-md-4">
                             <div style="margin-top:8px"><em>Filter on Title or name</em></div>
-
-
                         </div>
+                        <div class="col-md-5">
+                            <button
+                                class="btn btn-primary pull-right" ng-click="library()">Browse components library</button>
+                        </div>
+
+
+
                     </div>
                     <br/>
                     <table class="table table-bordered">
@@ -687,7 +686,7 @@
 
                 </uib-tab>
 
-                <uib-tab heading="Questionnaire defaults" >
+                <uib-tab ng-if="false" heading="Questionnaire defaults" >
 
                     <table class="table">
                         <tr><td style="width: 15%">Default Terminology server</td>
@@ -742,15 +741,19 @@
 
                 </uib-tab>
 
-                <uib-tab heading="Component Diff">
+                <uib-tab ng-if="false" heading="Component Diff">
                     <div ng-controller="componentDiffCtrl">
                         <ng-include src="'includes/componentDiff.html'"></ng-include>
                     </div>
 
                 </uib-tab>
 
-                <uib-tab ng-if="userMode == 'playground'"  heading="Collection history">
+                <uib-tab ng-if="false" heading="Collection history">
                     <pre>{{playGroundHistory | json}}</pre>
+                </uib-tab>
+
+                <uib-tab heading="Metadata Json">
+                    <pre>{{getWorldMeta() | json}}</pre>
                 </uib-tab>
 
 
@@ -816,7 +819,7 @@
 
     angular.module('pocApp').config(['$localForageProvider', function($localForageProvider){
             $localForageProvider.config({
-                name        : 'lf' // name of the database and prefix for your data, it is "lf" by default
+                name : 'lf' // name of the database and prefix for your data, it is "lf" by default
             });
         }]);
 
@@ -999,6 +1002,8 @@
 
     }
 </script>
+
+
 
 
 </body>

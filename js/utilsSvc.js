@@ -62,7 +62,53 @@ angular.module("pocApp")
 
         return {
 
-            checkVSUrl : function (url) {
+
+            cleanDG : function(dg) {
+            let elementsToRemove = ['otherAllowed','sourceModelName','sourceReference','rules','slicedFrom','definedOnDG','slicedFrom','originalType','insertAfter']
+            let newDiff = []
+
+            for (const ed of dg.diff) {
+                let newEd = {}
+                for (const key of Object.keys(ed)) {
+                    let canAdd = true
+                    let element = ed[key]
+
+                    if (elementsToRemove.indexOf(key) > -1) {
+                        canAdd = false
+                    }
+
+                    //empty strings
+                    if (typeof element === "string" && element === "") {
+                        canAdd = false
+                    }
+
+                    //boolean false values
+                    if (typeof element === "boolean" && element === false) {
+                        canAdd = false
+                    }
+
+                    //empty arrays
+                    if (Array.isArray(element) && element.length == 0) {
+                        canAdd = false
+                    }
+
+                    if (canAdd) {
+                        newEd[key] = ed[key]
+                    }
+
+                }
+                newDiff.push(newEd)
+            }
+            dg.diff = newDiff
+            return dg
+
+        },
+
+
+
+
+
+        checkVSUrl : function (url) {
                 if (url.indexOf('http') == -1) {
                     url = `${config.defaultVsPrefix}/${url}`
                 }

@@ -54,7 +54,7 @@
           <span ng-if = "false" class="clickable spacer"
               ng-click="cloneDG(selectedModel)">Make a copy</span>
 
-          <span class="clickable spacer"
+          <span ng-if="user && user.email" class="clickable spacer"
               ng-click="updateComponent('dg',selectedModel)">Update component</span>
 
 
@@ -69,7 +69,7 @@
       <div class="col-md-6">
 
         <div class="pull-right">
-          <button class="btn btn-link" ng-click="loadReview('dg')">Questionnaire</button>
+          <button class="btn btn-link" ng-click="loadReview('dg')">Generate questionnaire</button>
           <button class="btn btn-link" ng-click="showLink('dg')">Link to viewer</button>
           <button class="btn btn-link"
                   ng-if = canEdit(selectedModel)
@@ -166,6 +166,7 @@
               <!--
               <div class="clickable myIcon" ng-click="showSSLog(selectedModel.name)">Snapshot log</div>
 -->
+              <!--
               <div class="clickable myIcon"
                    ng-hide="selectedModel.ssOrder || userMode == 'playground'"
                    ng-click="setOrder()">Set order</div>
@@ -178,6 +179,7 @@
               <div class="clickable myIcon"
                    ng-if="selectedModel.ssOrder"
                    ng-click="removeOrder()">Remove order</div>
+              -->
 
             </div>
 

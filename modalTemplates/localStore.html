@@ -11,7 +11,7 @@
 
 
       <div class="col-md-4 col-sm-4">
-        <button class="btn btn-link pull-right" ng-click="$dismiss()">Cancel</button>
+        <button class="btn btn-link pull-right" ng-click="$dismiss()">Close</button>
           <!--
         <button ng-show = "input.name"
                 class="btn btn-primary pull-right" ng-click="save()">Close</button>
@@ -22,34 +22,109 @@
   </div>
   <div class="modal-body">
 
-    This table lists collections that have beed saved in the browsers local storage - you will only see them when using
-    this browser.
+    <uib-tabset active="input.mainTabActive">
+      <uib-tab heading="Collections list ">
+        <em>This table lists collections that have been saved in the browsers local storage - you will only see them when using
+          this browser.</em>
 
-    <table class="table table-bordered">
-      <tr><th>Name</th><th>Description</th><th># DG</th><th>Updated</th><th>Version</th></tr>
-      <tr ng-repeat="row in localStore">
-        <td>{{row.name}}</td>
-        <td>{{row.description}}</td>
+        <div class="row">
+          <div class="col-md-8">
+            <table class="table table-bordered">
+              <tr><th>Name</th><th>Description</th><th># DG</th><th>Updated</th><th>Version</th></tr>
+              <tr ng-repeat="row in localStore">
+                <td><div class="clickable" ng-click="selectCollection(row)">{{row.name}}</div> </td>
+                <td>{{row.description}}</td>
 
-        <td>{{row.dgCount}}</td>
-        <td>{{row.updated | ageSeconds}}</td>
-        <td>{{row.version}}</td>
-        <td><span class="clickable"  ng-click="load(row,'local')">Load</span>
-        </td>
-        <td><span style="padding-left: 20px" class="clickable"  ng-click="delete(row,'local')">Delete</span></td>
-      </tr>
-    </table>
+                <td>{{row.dgCount}}</td>
+                <td>{{row.updated | ageSeconds}}</td>
+                <td>{{row.version}}</td>
+                <td><span class="clickable"  ng-click="load(row,'local')">Load</span>
+                </td>
+                <td><span style="padding-left: 20px" class="clickable"  ng-click="delete(row,'local')">Delete</span></td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-4">
 
-      <pre>{{localStore | json}}</pre>
+
+            <div ng-repeat="item in lstDG">
+
+              <div ng-if="item.disabled" style="padding-left: 25px; color: grey"> {{item.name}}</div>
+
+              <div ng-if="! item.disabled">
+                <checkbox ng-model="input.selectedDG[item.name]"></checkbox> {{item.name}}
+              </div>
+
+            </div>
+
+            <button
+                    ng-if="showDGImportButton()"
+                    class="btn-link btn pull-right" ng-click="importDG()">Import selected DGs
+
+            </button>
+
+          </div>
+        </div>
 
 
-      <uib-tabset>
 
-      </uib-tabset>
+      </uib-tab>
+
+      <uib-tab heading="Import / Export">
+
+        <div class="row">
+          <div class="col-md-4">
+            <h4>Export Local store to Json file</h4>
+
+            <button class="btn-link btn" ng-click="downloadStore()">Download a copy of the Store</button>
+          </div>
+          <div class="col-md-8">
+            <h4>Import collections from an export file</h4>
+            <input type="file" id="fileUploadFileRef" accept="application/json" />
+            <button class="btn btn-link" ng-click="uploadJson()">Upload Json file</button>
+
+            <table class="table table-bordered">
+              <tr><th>Import</th><th>Name</th><th>Description</th><th>#DG</th><th>Comment</th></tr>
+              <tr ng-repeat="(key,item) in hashUploadedCollections">
+                <td>
+                  <div ng-if="! item.alreadyInStore">
+                    <checkbox ng-model="input.uploadedCol[item.id]"></checkbox>
+                  </div>
+                </td>
+                <td>{{item.col.name}}</td>
+                <td>{{item.col.descriptions}}</td>
+                <td>{{item.dgCount}}</td>
+                <td>
+                  <div ng-if=" item.alreadyInStore">
+                    Already in the Local Store
+                  </div>
+                </td>
+              </tr>
+            </table>
+            <button class="btn btn-link" ng-click="performImport()">Import selected Collections</button>
+          </div>
+        </div>
+
+
+
+
+
+
+
+      </uib-tab>
+
+    </uib-tabset>
+
+
+
+
+
 
 
   </div>
   <div class="modal-header">
+
+
 
   </div>
 </div>

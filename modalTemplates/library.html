@@ -388,7 +388,9 @@
                   <div ng-if="dg.nameExists">In collection</div>
                   <div ng-if="! dg.nameExists" class="clickable"
                        ng-click="importComponent(dg)">Import</div>
-                  <div class="clickable" ng-click="deleteComponent(dg)">Delete</div>
+                  <div class="clickable"
+                       ng-show="user.email"
+                       ng-click="deleteComponent(dg)">Delete</div>
 
                 </td>
               </tr>
