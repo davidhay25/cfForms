@@ -62,7 +62,15 @@ angular.module("pocApp")
 
         return {
 
+             getFullVsUrl : function (url) {
+                 if (url) {
+                     if (url.indexOf('http') == -1) {
+                         url = 'https://nzhts.digital.health.nz/fhir/ValueSet/'+url
+                     }
+                 }
 
+                 return url
+             },
             cleanDG : function(dg) {
             let elementsToRemove = ['otherAllowed','sourceModelName','sourceReference','rules','slicedFrom','definedOnDG','slicedFrom','originalType','insertAfter']
             let newDiff = []

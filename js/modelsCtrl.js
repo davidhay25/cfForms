@@ -35,9 +35,22 @@ angular.module("pocApp")
 
               //  $localStorage.world.Q = {}
             } else {
-                //$localStorage.world = $localStorage.world || {dataGroups:{},compositions:{},Q:{}}
-              //  $localStorage.world.Q =  $localStorage.world.Q || {}  //?? not using this now...
+                let name = $localStorage.world.name
+                if ($localStorage.world && $localStorage.world.dataGroups && Object.keys($localStorage.world.dataGroups).length > 200) {
+                    //must surely be the LIM ! it has 293 DGs...
+                    let msg = `There are ${Object.keys($localStorage.world.dataGroups).length} DataGroups in this collection. Is it the LIM? I can clear it out so you can re-load a Collection.`
+                    if (confirm(msg)) {
+                        $localStorage.world =  {type:'collection',dataGroups:{},compositions:{},Q:{}}
+                    }
+                }
             }
+
+
+
+
+
+
+
 
 
             //This is the browser cache object.
@@ -182,6 +195,7 @@ angular.module("pocApp")
                     if (playground) {       //a whole collection was selected to be made the working copt
                         console.log(playground)
                         playground.saveTo = "browser"       //will cause this to be saved in the browser cache
+                        delete playground.lockedTo          //can always save to the local store
 
                         $localStorage.world = playground
                         $scope.world = playground
@@ -323,21 +337,22 @@ angular.module("pocApp")
             $scope.updateComponent = function (type,model) {
 
 
-                let msg = "Copy the expanded version of this DG to the Component store. Can subsequently be imported into Collections."
-                if ($scope.userMode == 'playground') {
-                    msg = "Update in the  Component store"
-                }
+
+                let cName = $scope.world.name + '-' + model.name
+                let msg = `Copy this DG to the Component store with the name ${cName}. If there's already a Component with that name, it will be updated. `
 
                 if (confirm(msg)) {
                     let frozen = snapshotSvc.getFrozenDG(model.name)
                     frozen.source = $scope.userMode
                     frozen.sourceId = $scope.world.id
+                    frozen.name = cName         //the name includes the collection name
                     saveModel(frozen)
                 }
 
 
                 function saveModel(frozen) {
-                    $http.put(`frozen/${frozen.name}`,frozen).then(
+                    $http.put(`frozen/${cName}`,frozen).then(
+                        //$http.put(`frozen/${frozen.name}`,frozen).then(
                         function (data) {
                             alert("Component updated")
                         }, function (err) {
@@ -570,8 +585,8 @@ angular.module("pocApp")
             }
 
             $scope.makeLocal = function () {
-                let msg = "This will change the collection to a local one. It will then be saved in the" +
-                    "browser cache rather than to the Library."
+                let msg = "This will change the collection to a local one. It will then be saved to the " +
+                    "Local Store rather than to the Collections Library."
                 if (confirm(msg)) {
                     $scope.world.copiedFrom = $scope.world.id   //in case we want to know what it was a copy of
                     $scope.world.id = utilsSvc.getUUID()        //assign a new id
@@ -2388,20 +2403,16 @@ angular.module("pocApp")
 
 
                 let name = dg.name
-                /*
-                if ($scope.userMode == 'playground') {
-                    name = `${name}-${$scope.world.id}` //for collections, append the collection id to the saved name...
-                }
-*/
+
 
                 //get the current component version of this (if any) for the diff...
                 $http.get(`frozen/${name}`).then(
                     function (data) {
                         $scope.componentVersion = data.data
-                        console.log(data.data)
+                        //console.log(data.data)
 
                     }, function(err) {
-                        console.log(`${name} not found in component store (Not necessarily an error`)
+                        //console.log(`${name} not found in component store (Not necessarily an error`)
                     }
                 )
 
@@ -2417,16 +2428,31 @@ angular.module("pocApp")
                 $scope.hashFullElementsById = {}
                 $scope.fullElementHash = {}         //I seem to need this quite a lot. Though memory usage is getting high...
                 //create the list of all paths in the DG. Used by the 'ordering'
-                $scope.allPaths = []  //used for the manual re-ordering
+                //$scope.allPaths = []  //used for the manual re-ordering
+
+                $scope.dgErrors = []
+                let fhirDT = utilsSvc.fhirDataTypes()
 
                 $scope.fullElementList.forEach(function (item) {
                     if (item && item.ed) {
                         $scope.fullElementHash[item.ed.path] = item.ed
                         $scope.hashFullElementsById[item.ed.id] = item.ed
 
-                        if (item.ed.mult !== '0..0') {
-                            $scope.allPaths.push(item.ed.path)
+                        //check referenced paths
+                        let type = item.ed?.type?.[0] ?? 'string' //default to string if type missing
+
+                        if (fhirDT.indexOf(type) == -1) {
+                            //this is a reference to a DG
+                            if (! $scope.hashAllDG[type]) {
+                                let msg = `The element '${item.ed.title}' references a DG named ${type} that is missing from the collection`
+                                $scope.dgErrors.push({type:'Missing DG',msg:msg})
+                            }
                         }
+
+
+                        //if (item.ed.mult !== '0..0') {
+                           // $scope.allPaths.push(item.ed.path)
+                     //   }
                     }
 
                 })
@@ -2483,9 +2509,6 @@ angular.module("pocApp")
 
                     clearB4Select()
                     $scope.selectedModel = dg
-
-
-
 
                     $scope.fhirResourceType = igSvc.findResourceType(dg,$scope.hashAllDG)   //not sure if this is used wo fsh stuff
 

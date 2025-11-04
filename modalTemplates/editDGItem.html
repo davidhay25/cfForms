@@ -116,8 +116,8 @@
                   <input type="text" placeholder="Code" class="form-control" ng-model="input.itemCode.code"/>
                 </div>
 
-                <div class="col-md-1">
-                  <button class="btn btn-info" ng-click="lookupItemCode(input.itemCode.code)">?
+                <div class="col-md-2">
+                  <button class="btn btn-info" ng-click="lookupItemCode(input.itemCode.code)">Lookup
 
                   </button>
                 </div>
@@ -126,7 +126,7 @@
                 <div class="col-md-3">
                   <input type="text" placeholder="System" class="form-control" ng-model="input.itemCode.system"/>
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-4">
                   <input type="text" placeholder="Display" class="form-control" ng-model="input.itemCode.display"/>
                 </div>
               </div>
@@ -803,33 +803,6 @@
 
       </uib-tab>
 
-      <uib-tab ng-if="false" heading="Layout">
-        <br/>
-        <table class="table-bordered table table-condensed">
-          <tr>
-            <td>Insert after</td>
-
-            <td>
-
-              <div class="row">
-                <div class="col-md-11">
-                  <select class="form-control" ng-model="input.insertAfter"
-                          ng-options="path for path in allPaths"></select>
-                </div>
-                <div class="col-md-1">
-                  <i class="btn btn-link glyphicon glyphicon-remove clickable"
-                     ng-click="input.insertAfter = ''"></i>
-                </div>
-              </div>
-
-              </td>
-
-
-
-          </tr>
-        </table>
-
-      </uib-tab>
 
       <uib-tab heading="Json">
         <br/>

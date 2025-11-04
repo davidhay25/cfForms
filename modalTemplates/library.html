@@ -15,7 +15,7 @@
     <div class="row">
       <div class="col-md-8 col-sm-8">
         <h3 class="modal-title">
-          Library
+          Components
         </h3>
       </div>
 
@@ -29,7 +29,73 @@
   </div>
   <div class="modal-body">
 
-    <uib-tabset active="input.mainTabActive">
+
+    <div class="row">
+      <div class="col-md-8">
+
+
+        <div class="row" style="margin-top: 8px; margin-bottom: 8px">
+          <div class="col-md-5">
+            <input type="text" class="form-control" placeholder="Filter on title or description" ng-model="input.filter"/>
+          </div>
+        </div>
+
+        <table class="table table-bordered">
+          <tr><th>Title</th><th>DG Name</th><th>Description</th><th>Type</th><th>Cnt</th><th></th></tr>
+          <tr ng-repeat="dg in components"
+              ng-class="{listItemSelected:dg.name == clone.name}"
+              ng-if="canShow(input.filter,dg)" >
+            <td>
+              <div class="clickable" ng-click="selectFromComponent(dg)">
+                {{dg.title}}
+              </div>
+
+            </td>
+
+            <td>
+              {{dg.name}}
+            </td>
+
+            <td>{{dg.description}}
+              <div style="color: red" ng-if = "dg.lockedTo" >Locked to: {{dg.lockedTo}}</div>
+
+
+            </td>
+            <td>{{dg.type}}</td>
+
+            <td>{{dg.diff.length}}</td>
+
+            <td>
+              <div ng-if="dg.nameExists">In collection</div>
+              <div ng-if="! dg.nameExists" class="clickable"
+                   ng-click="importComponent(dg)">Import</div>
+              <div class="clickable"
+                   ng-show="user.email"
+                   ng-click="deleteComponent(dg)">Delete</div>
+
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div class="col-md-4">
+        <div>Id: {{clone.id | lastInUUID}}</div>
+
+        <div ng-show="dupsCount" class="alert alert-danger">
+          There are {{dupsCount}} elements with duplicate or missing ids which need to be fixed. This may
+          break conditionals which will need to be manually fixed (You can see them in the Dependencies tab).
+          The fix will be applied when the Component is imported. After fixing them in the Collection
+          copy, save the Component back to the library.
+
+
+        </div>
+
+        <br/>
+        <div id="componentTree"></div>
+      </div>
+    </div>
+
+
+    <uib-tabset ng-if = 'false' active="input.mainTabActive">
 
       <!--
 
@@ -349,69 +415,7 @@
       <uib-tab heading="Components">
         <br/>
 
-        <div class="row">
-          <div class="col-md-8">
 
-
-            <div class="row" style="margin-top: 8px; margin-bottom: 8px">
-              <div class="col-md-5">
-                <input type="text" class="form-control" placeholder="Filter on title or description" ng-model="input.filter"/>
-              </div>
-            </div>
-
-            <table class="table table-bordered">
-              <tr><th>Title</th><th>DG Name</th><th>Description</th><th>Type</th><th>Cnt</th><th></th></tr>
-              <tr ng-repeat="dg in components"
-                  ng-class="{listItemSelected:dg.name == clone.name}"
-                  ng-if="canShow(input.filter,dg)" >
-                <td>
-                  <div class="clickable" ng-click="selectFromComponent(dg)">
-                    {{dg.title}}
-                  </div>
-
-                </td>
-
-                <td>
-                  {{dg.name}}
-                </td>
-
-                <td>{{dg.description}}
-                  <div style="color: red" ng-if = "dg.lockedTo" >Locked to: {{dg.lockedTo}}</div>
-
-
-                </td>
-                <td>{{dg.type}}</td>
-
-                <td>{{dg.diff.length}}</td>
-
-                <td>
-                  <div ng-if="dg.nameExists">In collection</div>
-                  <div ng-if="! dg.nameExists" class="clickable"
-                       ng-click="importComponent(dg)">Import</div>
-                  <div class="clickable"
-                       ng-show="user.email"
-                       ng-click="deleteComponent(dg)">Delete</div>
-
-                </td>
-              </tr>
-            </table>
-          </div>
-          <div class="col-md-4">
-            <div>Id: {{clone.id | lastInUUID}}</div>
-
-            <div ng-show="dupsCount" class="alert alert-danger">
-              There are {{dupsCount}} elements with duplicate or missing ids which need to be fixed. This may
-              break conditionals which will need to be manually fixed (You can see them in the Dependencies tab).
-              The fix will be applied when the Component is imported. After fixing them in the Collection
-              copy, save the Component back to the library.
-
-
-            </div>
-
-            <br/>
-            <div id="componentTree"></div>
-          </div>
-        </div>
 
       </uib-tab>
 
@@ -429,7 +433,7 @@
         </table>
       </uib-tab>
 
-      <uib-tab heading="Named queries" >
+      <uib-tab ng-show="false" heading="Named queries" >
 
         <div class="myScroll">
           <table class="table-bordered table">

@@ -15,6 +15,10 @@
       background-color: mistyrose;
     }
 
+    .buildError {
+      color: red;
+    }
+
     .edIssue {
       background-color: mistyrose;
     }
@@ -72,12 +76,13 @@
           <button class="btn btn-link" ng-click="loadReview('dg')">Generate questionnaire</button>
           <button class="btn btn-link" ng-click="showLink('dg')">Link to viewer</button>
           <button class="btn btn-link"
-                  ng-if = canEdit(selectedModel)
+                  ng-if = "user.email"
                   ng-click="publishQ(selectedModel)">Publish</button>
         </div>
 
         <br/>
-         <div ng-if="snapshotSvc.getExtractResource(selectedModel.name)">
+
+         <div ng-if="false && snapshotSvc.getExtractResource(selectedModel.name)">
            <strong style="padding-left: 12px">FHIR resource:</strong>
            <a ng-href="{{fhirRoot}}{{snapshotSvc.getExtractResource(selectedModel.name) | lowercase}}.html" target="_blank">
            {{snapshotSvc.getExtractResource(selectedModel.name) }}
@@ -238,9 +243,7 @@
 
 
               <button class="btn btn-link pull-right"
-
                       ng-if="canSlice(selectedNode.data.ed) && canEdit(selectedModel)"
-
                       ng-click="slice(selectedNode.data.ed)">Slice</button>
             </div>
           </div>
@@ -248,17 +251,30 @@
 
             <div ng-if = "selectedNode.data.ed.kind == 'root'">
               <table class="table table-bordered table-condensed">
-                <tr><td>Name</td><td>{{selectedModel.name}}</td></tr>
-                <tr><td>Description</td><td>{{selectedModel.description}}</td></tr>
+                <tr><td class="detailName" >Name</td><td>{{selectedModel.name}}</td></tr>
+                <tr><td class="detailName" >Description</td><td>{{selectedModel.description}}</td></tr>
+
+
+                <tr ng-if="selectedModel.itemCode">
+                  <td class="detailName" style="width : 20%">Item code</td>
+                  <td>
+                    <span class="clickable" ng-click="lookup(selectedModel.itemCode.code,selectedModel.itemCode.system)">{{selectedModel.itemCode.code}}</span>  |
+                    {{selectedModel.itemCode.display}} |
+                    {{selectedModel.itemCode.system}}
+                  </td>
+                </tr>
+
+
+
 
                 <tr ng-if="selectedModel.linkedDG"><td>Linked DG</td><td>{{selectedModel.linkedDG}}</td></tr>
 
-                <tr ng-if="selectedModel.type"><td>Resource type</td><td>{{selectedModel.type}}</td></tr>
+                <tr ng-if="selectedModel.type"><td class="detailName" >Resource type</td><td>{{selectedModel.type}}</td></tr>
                 <tr ng-if="selectedModel.sourceReference"><td>Source reference</td><td>{{selectedModel.sourceReference}}</td></tr>
-                <tr ng-if="selectedModel.checkedOut"><td>Checked out</td>
+                <tr ng-if="false && selectedModel.checkedOut"><td>Checked out</td>
                   <td>{{selectedModel.checkedOut}}</td></tr>
 
-                <tr ng-if="dgNamedQueries.length > 0"><td>Named Queries</td>
+                <tr ng-if="dgNamedQueries.length > 0"><td class="detailName" >Named Queries</td>
                   <td>
 
                     <div ng-repeat = "nq in dgNamedQueries">
@@ -866,7 +882,12 @@
                     <tr ng-repeat="row in selectedNode.data.ed.conditionalVS">
                       <td>{{row.path}}</td>
                       <td>{{row.value.display}}</td>
-                      <td>{{row.valueSet}}</td>
+                      <td>
+                        <div class="clickable" ng-click="viewVS(row.valueSet)">
+                          {{row.valueSet}}
+                        </div>
+
+                      </td>
 
                     </tr>
                   </table>
@@ -1685,7 +1706,10 @@
       <ng-include src="'includes/qViewer.html'"></ng-include>
     </uib-tab>
 
-    <uib-tab ng-show="qErrorLog.length > 0" heading="Q generation errors">
+    <uib-tab ng-show="qErrorLog.length > 0" heading="">
+      <uib-tab-heading> <div class="buildError">Q generation errors <span class="badge">{{qErrorLog.length}}</span> </div> </uib-tab-heading>
+
+      <br/>
       <div class="list-group">
         <div class="list-group-item" ng-repeat="item in qErrorLog">
           {{item.msg}}
@@ -1693,6 +1717,20 @@
       </div>
 
     </uib-tab>
+
+    <uib-tab ng-show="dgErrors.length > 0">
+      <uib-tab-heading> <div class="buildError">DG errors <span class="badge">{{dgErrors.length}}</span> </div> </uib-tab-heading>
+      <br/>
+      <table class="table-bordered table">
+        <tr ng-repeat="item in dgErrors">
+          <td>{{item.type}}</td>
+          <td>{{item.msg}}</td>
+        </tr>
+      </table>
+
+    </uib-tab>
+
+
 
 
 

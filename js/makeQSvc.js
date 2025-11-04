@@ -229,7 +229,7 @@ angular.module("pocApp")
         }
 
         function addPublisher(Q) {
-            Q.publisher = "DEMO: David Hay"
+            Q.publisher = "David Hay"
         }
 
         //adds the named queries for a DG as variable extensions
@@ -238,7 +238,9 @@ angular.module("pocApp")
 
             let nq = namedQueries[name]
             if (! nq) {
-                alert(`Named Query: ${name} not found`)
+
+                console.error(`Named Query: ${name} not found when building Q`)
+
                 //todo - should there ba an error message or log?
                 return
             }
@@ -1033,7 +1035,15 @@ angular.module("pocApp")
 
                 let Q = {resourceType:'Questionnaire'}
 
-                Q.id = `canshare-${dg.name}`    //todo adjust for environment
+                Q.id = `canshare-${dg.name}`    //this is just a default. Overriden in the next step...
+
+                //make the id match the url. The url has the collection name and dg name to be unique
+                if (config.url) {
+                    let ar = config.url.split('/')
+                    Q.id = ar[ar.length-1]
+                }
+
+
 
                 Q.name = config.name || dg.name //firstElement.ed.path
                 Q.title = dg.title //firstElement.title

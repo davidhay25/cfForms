@@ -76,7 +76,7 @@
             <div class="col-md-1 col-sm-1">
                 <div class="navbar-text btn">
                     <button class="btn btn-primary pull-right"
-                            ng-click="openPlaygrounds()">Collections library</button>
+                            ng-click="openPlaygrounds()">Collections</button>
 
 
 
@@ -84,9 +84,9 @@
             </div>
 
             <div class="col-md-1">
-                <div ng-if="false" class="navbar-text btn" >
+                <div class="navbar-text btn" >
                     <button
-                            class="btn btn-primary pull-right" ng-click="library()">Library</button>
+                            class="btn btn-primary pull-right" ng-click="library()">Components</button>
                 </div>
             </div>
 
@@ -102,7 +102,7 @@
 
             <div class="col-md-1">
                 <div class="navbar-text">
-                    <div class="btn btn-link pull-right" ng-click="toggleLeftPanel()">Toggle list</div>
+                    <div class="btn btn-link pull-right" ng-click="toggleLeftPanel()">Toggle DG list</div>
                 </div>
             </div>
 
@@ -114,7 +114,7 @@
             </div>
 
             <div class="col-md-1">
-                <div class="navbar-text" >
+                <div ng-if="false" class="navbar-text" >
                     <div class="pull-right btn">{{version}}</div>
                 </div>
             </div>
@@ -168,10 +168,10 @@
 
         <div class="btn btn-primary pull-right"
              ng-if = "world.saveTo == 'library' && world.lockedTo == user.email"
-             ng-click="updatePlayground(true)">Update Repository</div>
+             ng-click="updatePlayground(true)">Update Collections Library</div>
 
         <div class="btn btn-primary pull-right"
-             ng-if = "world.saveTo == 'browser' && ! world.lockedTo"
+             ng-if = "world.saveTo == 'browser'"
              ng-click="updateBrowserCache()">Update Local Store</div>
 
         <div  ng-if = "world.lockedTo && (world.lockedTo !== user.email)" class="btn btn-warning pull-right">
@@ -181,7 +181,7 @@
 
         <button class="pull-right btn-link btn"
 
-                ng-click="clearCurrent()">Clear current collection</button>
+                ng-click="clearCurrent()">Clear working collection</button>
 
         <button class="pull-right btn-link btn" ng-click="export()">Import / Export</button>
 
@@ -529,7 +529,7 @@
                                 <div class="row">
                                     <div class="col-md-7">
                                         <div ng-if="world.saveTo=='browser'">Collection will be saved to the local browser store.</div>
-                                        <div ng-if="world.saveTo=='library'">Collection will be saved to the Library, provided you are logged in and
+                                        <div ng-if="world.saveTo=='library'">Collection will be saved to the Collection Library, provided you are logged in and
                                             the collection has been locked to you.</div>
                                     </div>
                                     <div class="col-md-2">
@@ -551,7 +551,7 @@
                                 </div>
 
                                 <div class="col-md-3">
-                                    Version: {{world.version}}
+                                    Collection version: {{world.version}}
                                     <div ng-if="world.lockedTo"
                                          style="color: red">
                                         Locked to: {{world.lockedTo}}
@@ -591,10 +591,7 @@
                                 </div>
                             </td>
                         </tr>
-                        <tr>
-                            <td>Actions</td>
-                            <td>Todo - convert to a local collection (saveTo = browser)</td>
-                        </tr>
+
 
 
 
@@ -657,6 +654,7 @@
                         </div>
                         <div class="col-md-5">
                             <button
+                                    ng-if="false"
                                 class="btn btn-primary pull-right" ng-click="library()">Browse components library</button>
                         </div>
 
@@ -866,7 +864,7 @@
 <script src="js/traceSvc.js"></script>
 
 
-<script src="js/fixValuesCtrl.js"></script>
+
 <script src="js/historyCtrl.js"></script>
 <script src="js/previewQCtrl.js"></script>
 <script src="js/getNameCtrl.js"></script>
@@ -887,6 +885,9 @@
 <script src="js/libraryCompCtrl.js"></script>
 
 -->
+
+<script src="js/fixValuesCtrl.js"></script>
+
 <script src="js/documentSvc.js"></script>
 
 <script src="js/vsSvc.js"></script>

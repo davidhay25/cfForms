@@ -187,7 +187,7 @@ angular.module("pocApp")
 
             $scope.load = function (playground,source) {
 
-                let msg = "This action will replace the current form. Are you sure you wish to load a new one (It is safe to do so as the current Collection has not been updated)?"
+                let msg = "This action will replace the current working collection. Are you sure you wish to load a new one (It is safe to do so as the current Collection has not been updated)?"
                 if (Object.keys($scope.differences).length > 0) {
                     msg = "Warning! There are changes in the current collection which will be lost. Are you sure you wish to load this one?"
                 }

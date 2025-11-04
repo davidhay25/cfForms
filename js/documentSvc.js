@@ -62,6 +62,7 @@ angular.module("pocApp")
                             //the assumption is tthat there will be a valueset OR optons OR a fixed code son only 1 will be generated
                             //if ther eare non then we need to add an empty one...
                             let addedValueDomain = false
+                            let textForValueDomain = ""
 
                             if (ed.valueSet) {
                                 let vs = ed.valueSet
@@ -69,14 +70,17 @@ angular.module("pocApp")
                                     vs = 'https://nzhts.digital.health.nz/fhir/ValueSet/'+vs
                                 }
 
-                                addRow(arDoc, 'Value domain', vs)
-                                addedValueDomain = true
+                                textForValueDomain = `${textForValueDomain}${vs}\n`
+
+                                //addRow(arDoc, 'Value domain', vs)
+                                //addedValueDomain = true
                             }
 
                             if (ed.fixedCoding) {
                                 let disp = `${ed.fixedCoding.code} |${ed.fixedCoding.display}| ${ed.fixedCoding.system}`
-                                addRow(arDoc, 'Value domain', disp)
-                                addedValueDomain = true
+                                textForValueDomain = `${textForValueDomain}${disp}\n`
+                                //addRow(arDoc, 'Value domain', disp)
+                                //addedValueDomain = true
                             }
 
                             if (ed.options && ed.options.length > 0) {
@@ -86,13 +90,35 @@ angular.module("pocApp")
                                     ar.push(lne)
                                 }
                                 let text = ar.join('\n')
-                                addRow(arDoc, 'Value domain', text)
-                                addedValueDomain = true
+                                textForValueDomain = `${textForValueDomain}${text}\n`
+                              //  addRow(arDoc, 'Value domain', text)
+                               // addedValueDomain = true
                             }
 
-                            if (!addedValueDomain) {
-                                addRow(arDoc, 'Value domain', "")
+                            //If [Data element] = [Code] |[Display]| [Code system] then value set = [A full resolvable URL]
+                            if (ed.conditionalVS && ed.conditionalVS.length > 0) {
+                                for (const cv of ed.conditionalVS) {
+
+                                    let source = hashEd[cv.path]
+                                    if (source) {
+                                        let vs = utilsSvc.getFullVsUrl(cv.valueSet)
+                                       // if (vs.indexOf('http') == -1) {
+                                        //    vs = 'https://nzhts.digital.health.nz/fhir/ValueSet/'+vs
+                                       /// }
+
+                                        let disp = `If ${source.title} = ${cv.value.code} | ${cv.value.display} | ${cv.value.system} then valueSet is ${vs}`
+                                        textForValueDomain = `${textForValueDomain}${disp}\n`
+                                    }
+
+                                }
+
                             }
+
+                            addRow(arDoc, 'Value domain', textForValueDomain)
+
+                         //   if (!addedValueDomain) {
+                        //        addRow(arDoc, 'Value domain', "")
+                        //    }
 
                             addRow(arDoc, 'Data type', type)
 
@@ -275,19 +301,19 @@ angular.module("pocApp")
 
                 function addRow(ar,description,data) {
 
-
-
-
-
-
                     let display = data || "";
+
+                    display = display.trimEnd()
 
                     if (display) { //if there's a display, then split into multiple lines if needed
                         let arData =  data.split('\n')
                         if (arData.length > 1)  {
                             display = ""
                             arData.forEach(function (lne) {
-                                display += "<div>" + lne + "</div><br/>"
+                                if (lne) {
+                                    display += "<div>" + lne + "</div>"
+                                }
+
                             })
                         }
                     }
