@@ -16,7 +16,7 @@
     <link rel="stylesheet" type="text/css" href="css/common.css"/>
 
     <script>
-        angular.module("pocApp",['ui.bootstrap','ngStorage']).config(function($locationProvider) {
+        angular.module("pocApp",['ui.bootstrap','ngStorage',"firebase"]).config(function($locationProvider) {
             $locationProvider.html5Mode(true);
             $locationProvider.hashPrefix('!');
         });
@@ -31,38 +31,55 @@
     </script>
 
     <script src="js/adminCtrl.js"></script>
+    <script src="js/libs/firebase.js"></script>
+    <script src="js/libs/angularfire.min.js"></script>
+
+
 
 <!--
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="js/qrVisualizerCtrl.js"></script>
     <script src="js/libs/angular-sanitize.js"></script>
     <script src="js/showParameters.js"></script>
-    <script src="js/filters.js"></script>
+
     <script src="js/viewVSCtrl.js"></script>
     <script src="js/qrVisualizerSvc.js"></script>
     <script src="js/viewItemCtrl.js"></script>
     <script src="js/makeQHelperSvc.js"></script>
     -->
     <script src="js/utilsSvc.js"></script>
-
+    <script src="js/filters.js"></script>
+    <script src="js/loginCtrl.js"></script>
     <style>
-        .fixed-span {
-            display: inline-block; /* or block */
-            width: 150px;          /* fixed width */
-            overflow: hidden;      /* optional, hides overflow */
-            white-space: nowrap;   /* optional, prevents wrapping */
-            text-overflow: ellipsis; /* optional, shows "..." if clipped */
-        }
 
-        .inVS {
-            background-color: lightgreen;
-        }
-
-        .missingAnswer {
+        .ignored {
             background-color: mistyrose;
         }
+
+
+        .deleted {
+            background-color: red;
+            color: white;
+        }
+
+
     </style>
 
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDG1ToLHycsMUX0CfX0OZVSRUUpFQeKE9o",
+            authDomain: "canshare-730e6.firebaseapp.com",
+            projectId: "canshare-730e6",
+            storageBucket: "canshare-730e6.appspot.com",
+            messagingSenderId: "12147821347",
+            appId: "1:12147821347:web:5963d577cb050259475a96"
+        };
+        if (firebase) {
+            console.log('init firebase')
+            firebase.initializeApp(firebaseConfig);
+
+        }
+    </script>
 
 </head>
 <body style="padding: 8px;padding-top: 80px">
@@ -86,11 +103,7 @@
                 </div>
             </div>
 
-
-
-
-
-            <div class="col-md-2">
+            <div class="col-md-4">
                 <div class="navbar-text">
 
 
@@ -98,16 +111,45 @@
 
             </div>
 
-            <div class="col-md-3">
-                <div class="navbar-text">
+            <div class="col-md-1 col-sm-1">
+                <form class="navbar-form navbar-left">
+                    <img ng-if="showWaiting" src="css/ajax_loader_blue_32.gif"/>
 
-
-                </div>
+                </form>
             </div>
 
             <div class="col-md-1">
+                <div class="navbar-text " ng-hide="user.email">
+                    <div style="padding: 8px">
+                        <span style="font-size:1.2em; cursor: pointer" uib-popover="Click to log in"
+                              class="pull-right"
+                              popover-placement="left"
+                              popover-trigger="'mouseenter'">
+                            <div ng-click="login()">
+                                <i class="glyphicon glyphicon-log-in"></i>
+                            </div>
+                        </span>
+                    </div>
+                </div>
 
+                <div class="navbar-text"  ng-show="user.email">
+                    <div style="padding: 8px">
+
+                        <span style="font-size:1.2em;  cursor: pointer" uib-popover="{{user.email}}"
+                              popover-placement="left"
+                              popover-trigger="'mouseenter'">
+                            <span ng-click="logout()">
+                                <i class="glyphicon glyphicon-log-out"></i>
+                            </span>
+                        </span>
+
+
+
+                    </div>
+                </div>
             </div>
+
+
 
             <div class="col-md-2">
                 <a href="https://teaho.govt.nz/" target="_blank">
@@ -119,86 +161,98 @@
         </div>
     </nav>
 
-    <uib-tabset>
+    <uib-tabset ng-show="user.email">
 
 
 
         <uib-tab heading="Backup / Restore">
             <br/>
+
+
             <div class="row">
-                <div class="col-md-1">
-                    <button class="btn-primary btn" ng-click="doBackup()">Backup</button>
-                </div>
-                <div class="col-md-3">
-                    Create an export file from the database and save to the local computer. The file can subsequently be used
-                    to resource or update a database on another server.
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <button class="btn-primary btn" ng-click="doExport()">Make export file</button>
+                        </div>
+                        <div class="col-md-8">
+                            Create an export file from the database and save to the local computer. The file can subsequently be used
+                            to resource or update a database on another server.
+                        </div>
+
+                    </div>
+
+                    <br/>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <button class="btn-primary btn" ng-click="backupFromProd()">Update from production</button>
+                        </div>
+                        <div class="col-md-8">
+                            Update the local database from the production database. Only shown if in the backup server
+                        </div>
+
+                    </div>
+
+                    <br/>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <button class="btn-danger btn" ng-click="restoreFromImport()">Restore from export</button>
+                        </div>
+                        <div class="col-md-8">
+                            Restore all or part of a database from a previously created export file. shown in both
+                            prod and backup. Need a secret. upload a previous export file and update from there.
+                        </div>
+
+                    </div>
+
                 </div>
                 <div class="col-md-6">
+                    <div ng-show="updateLog" class="tableFixHeadSmall">
 
-                </div>
-            </div>
+                        <h4>Update complete. Log of transactions:</h4>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr><th>Kind</th><th>Name</th><th>Inserted</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat = "row in updateLog"
+                                ng-class="{ignored:row.action=='Ignored'}">
+                                <td>{{row.kind}}</td>
+                                <td>{{row.display}}</td>
+                                <td>
+                                    {{row.action}}
 
-            <br/>
-            <div class="row">
-                <div class="col-md-1">
-                    <button class="btn-primary btn" ng-click="">Restore</button>
-                </div>
-                <div class="col-md-3">
-                    Restore all or part of a database from a previously created export file.
-                </div>
-                <div class="col-md-8">
-
-
-                </div>
-            </div>
-
-
-            <div ng-show = "false" class="row">
-                <div class="col-md-3">
-                    <br/>
+                                </td>
+                            </tr>
+                            </tbody>
 
 
-
-
-
-                    <div class="list-group">
-                        <div ng-class="{'list-group-item' : true,listItemSelected:command == input.selectedCommand}"
-                             style="cursor: pointer"
-                             ng-click = "input.selectedCommand = command"
-                             ng-repeat = "command in commands">
-                            {{command.display}}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-9">
-                    <div class="row">
-                        <div class="col-md-2">
-                            {{input.selectedCommand.display }}
-                        </div>
-                        <div class="col-md-9">
-                            {{input.selectedCommand.description }}
-                        </div>
-                        <div class="col-md-1">
-                            <button
-                                    ng-if="input.selectedCommand"
-                                    class="btn btn-primary" ng-click="execute(input.selectedCommand)">Execute</button>
-                        </div>
+                        </table>
                     </div>
 
-                    {{input.selectedCommand}}
 
 
-                    <pre>{{input.backup | json}}</pre>
                 </div>
             </div>
+
+
+
+
 
 
 
 
         </uib-tab>
-        <uib-tab heading="Browse databases">
+        <uib-tab heading="Browse active database">
             <br/>
+            <!--
+            <h4>
+                Database name: {{systemConfig.mongoDb}}
+            </h4>
+             <br/>
+            -->
+
+
             <strong>Table</strong>
             <div class="row">
                 <div class="col-md-3">
@@ -270,17 +324,100 @@
 
                 </div>
                 <div class="col-md-5">
-                    <div class="myScroll">
-                        <pre ng-show="selectedRecord">{{selectedRecord | json}}</pre>
-                    </div>
+                    <uib-tabset>
+                        <uib-tab heading="Json">
+                            <div class="myScroll">
+                                <pre ng-show="selectedRecord">{{selectedRecord | json}}</pre>
+                            </div>
+                        </uib-tab>
+                        <uib-tab ng-show="selectedTable.col == 'playground'" heading="Collection info">
+                            <h4>DataGroups in Collection</h4>
+                            <div class="myScroll">
+                                <table class="table table-bordered">
+                                    <tr><th>Name</th><th>Description</th><th># elements</th></tr>
+                                    <tr ng-repeat = "(k,v) in selectedRecord.dataGroups">
+                                        <td>{{k}}</td>
+                                        <td>{{v.description}}</td>
+                                        <td>{{v.diff.length}}</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                        </uib-tab>
+                        <uib-tab ng-show="selectedTable.col == 'frozenDG'" heading="Component info">
+
+                            <h5>Metadata</h5>
+                            <table class="table table-bordered">
+                                <tr><td>Title</td><td>{{selectedRecord.title}}</td></tr>
+                                <tr><td>Description</td><td>{{selectedRecord.description}}</td></tr>
+                                <tr><td>Key</td><td>{{selectedRecord.key}}</td></tr>
+                                <tr><td>Updated</td><td>{{selectedRecord.updated | date}}</td></tr>
+                                <tr ng-if="selectedRecord.deleted">
+                                    <td></td>
+                                    <td><div class="deleted">Component has been deleted</div> </td>
+                                </tr>
+                            </table>
+
+                            <h5>Elements <span class="badge">{{selectedRecord.diff.length}}</span> </h5>
+                            <div class="tableFixHead">
+                            <table class="table table-bordered">
+                                <thead>
+                                <tr><th>Title</th><th>Description</th><th>dataType</th></tr>
+                                </thead>
+                                <tbody>
+                                <tr ng-repeat="ed in selectedRecord.diff">
+                                    <td>
+                                        <div  ng-style="{ 'padding-left': (ed.path | pathindent) }">{{ed.title}}</div>
+                                    </td>
+                                    <td>{{ed.description}}</td>
+                                    <td>{{ed.type[0]}}</td>
+
+                                </tr>
+                                </tbody>
+
+                            </table>
+                            </div>
+
+                        </uib-tab>
+                        <uib-tab  ng-show="selectedTable.col == 'publishedQ'"heading="Published Q info">
+                            <h5>Metadata</h5>
+                            <table class="table table-bordered">
+                                <tr><td>Id</td><td>{{selectedRecord.id}}</td></tr>
+                                <tr><td>Name</td><td>{{selectedRecord.name}}</td></tr>
+                                <tr><td>Title</td><td>{{selectedRecord.title}}</td></tr>
+                                <tr><td>Description</td><td>{{selectedRecord.description}}</td></tr>
+                                <tr><td>Status</td><td>{{selectedRecord.status}}</td></tr>
+                                <tr><td>Url</td><td>{{selectedRecord.url}}</td></tr>
+                                <tr><td>Version</td><td>{{selectedRecord.version}}</td></tr>
+                            </table>
+                        </uib-tab>
+                    </uib-tabset>
+
 
 
                 </div>
 
             </div>
         </uib-tab>
-        <uib-tab heading="Collections">
-            restore a deleted collection
+        <uib-tab heading="System config">
+
+            <div class="row">
+                <div class="col-md-4">
+                    <h4>System config</h4>
+                    <pre>{{systemConfig | json}}</pre>
+                </div>
+                <div class="col-md-4">
+                    <h4>Database list</h4>
+                    <table class="table-bordered table">
+                        <tr ng-repeat="db in databases">
+                            <td>{{db.name}}</td>
+                        </tr>
+                    </table>
+
+                </div>
+            </div>
+
+
         </uib-tab>
 
     </uib-tabset>

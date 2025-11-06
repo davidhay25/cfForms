@@ -1,14 +1,16 @@
 //Administrative functions
 
 const { ObjectId } = require('mongodb');
+const axios = require("axios");
 
 let tables = []       //an array of tables (mongo collections) that can be queried
 tables.push({display:"Collections",col:'playground',summaryFields:['name','description','publishedVersion']})
+tables.push({display:"Components",col:'frozenDG',summaryFields:['name','updated']})
 //tables.push({display:"Generated Q",col:'questionnaire',summaryFields:['Q.name','Q.description']})
 tables.push({display:"Published Q",col:'publishedQ',
     sort: {name:1,version:-1},
     summaryFields:['name','title','version','date']})
-tables.push({display:"Components",col:'frozenDG',summaryFields:['name','updated']})
+
 
 
 //create a hash keyed on col
@@ -17,11 +19,21 @@ for (const table of tables) {
     hashTables[table.col] = table
 }
 
-const axios = require("axios");
 
 
-async function setup(app,database) {
+
+async function setup(app,database,client) {
     //return a list of the tables (mongo collections) than can be examined
+
+    app.get('/admin/databases', async function(req,res){
+        const adminDb = client.db().admin();
+        const result = await adminDb.listDatabases();
+        let lstDb = []
+
+        result.databases.forEach(db => lstDb.push({name:db.name}));
+        res.json(lstDb)
+    })
+
     app.get('/admin/tables' ,async function (req,res) {
 
         res.json(tables)
@@ -34,9 +46,10 @@ async function setup(app,database) {
         let collection = req.params.col
         let table = hashTables[collection]
         let filter = {}
-        let sort = {}
+        let sort = {"name":"1"} //default sort by name
+
         if (req.query.filter) {
-            console.log(req.query.filter)
+
             try {
                 filter = JSON.parse(decodeURIComponent(req.query.filter))
             } catch (ex) {
@@ -46,7 +59,7 @@ async function setup(app,database) {
         }
 
         if (req.query.sort) {
-            console.log(req.query.filter)
+
             try {
                 sort = JSON.parse(decodeURIComponent(req.query.sort))
             } catch (ex) {
@@ -54,6 +67,7 @@ async function setup(app,database) {
                 return
             }
         }
+
 
         if (table) {
 
@@ -79,7 +93,6 @@ async function setup(app,database) {
 
 
     })
-
 
     //return a single record
     app.get('/admin/record/:col/:id' ,async function (req,res) {
@@ -111,6 +124,74 @@ async function setup(app,database) {
 
 
     })
+
+    app.post('/admin/updateFromProd', async function (req,res) {
+        //let qry = `http://canshare.co.nz/admin/getBackup`
+        let qry = `http://localhost:9500/admin/getBackup`   //just for testing
+        try {
+            let result = await axios.get(qry)
+            //console.log(result.data)
+            let log = await updateFromExtract(result.data)
+            res.json({msg:"Update complete.",log:log})
+        } catch (ex) {
+            res.status(500).json({msg:ex.message})
+        }
+
+
+    })
+
+    //update the local database from an extract file
+    //await db.collection('users').createIndex({ id: 1 }, { unique: true }); - todo create the index
+    async function updateFromExtract(extract) {
+        let log = []
+        for (const table of tables) {
+            let collectionName = table.col      //the collection in the mongoDb to udpate
+            let docs = extract[collectionName]
+            if (docs && docs.length > 0) {
+                for (let doc of docs ) {
+                    delete doc['_id']
+                    let result = null
+                    let display = ""
+                    switch (collectionName) {
+                        case "frozenDG":
+                        case "playground":  //- deliberate -
+                            display = doc.name
+                             result = await database.collection(collectionName).replaceOne(
+                                { id: doc.id },  // filter based on your custom id
+                                doc,             // full replacement document
+                                { upsert: true } // insert if not found
+                            )
+                            break
+                        case "publishedQ" :
+                            display = `${doc.name} v${doc.version} `
+                            result = await database.collection(collectionName).replaceOne(
+                                { name: doc.name,version : doc.version },  // filter based on your custom id
+                                doc,             // full replacement document
+                                { upsert: true } // insert if not found
+                            )
+                            break
+                        default :
+                            display = doc.name
+                            log.push({kind:table.display,table:table.col,display:display,id:doc.id,action : "Ignored"})
+                            break
+
+
+                    }
+                    if (result) {
+                        //if there's no result, the no db activity occurred...
+                        let action = "Updated"
+                        if (result.upsertedCount > 0) {
+                            action = "Inserted"
+                        }
+                        log.push({kind:table.display,table:table.col,display:display,id:doc.id,action : action})
+                    }
+
+
+                }
+            }
+        }
+        return log
+    }
 
 }
 

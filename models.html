@@ -43,7 +43,37 @@
 
     </style>
 
-    <!-- Note that all scripts are at the bottom-->
+    <!-- Note that almost all scripts are at the bottom-->
+
+    <script>
+        //Alert if there are other copies of this page open.
+        (function() {
+            const tabId = Math.random().toString(36).slice(2);
+            const key = 'models';
+
+            // Read currently active tabs
+            const activeTabs = JSON.parse(localStorage.getItem(key) || '[]');
+
+            if (activeTabs.length > 0) {
+                alert('This page is already open in another tab, which will cause issues. You should close this page and use the other one.');
+            }
+
+            // Add this tab to the list
+            activeTabs.push(tabId);
+            localStorage.setItem(key, JSON.stringify(activeTabs));
+
+            // Remove this tab on unload
+            window.addEventListener('beforeunload', () => {
+                const tabs = JSON.parse(localStorage.getItem(key) || '[]');
+                const updatedTabs = tabs.filter(id => id !== tabId);
+                localStorage.setItem(key, JSON.stringify(updatedTabs));
+            });
+
+        })();
+    </script>
+
+
+
 
 </head>
 <body style="padding: 8px;padding-top: 80px" >

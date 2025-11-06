@@ -27,7 +27,7 @@ angular.module("pocApp")
             //todo - may need different logic if logged in (of course, won't know that at this point...
             if (! $localStorage.world ) {
 
-                $localStorage.world =  {dataGroups:{},compositions:{},Q:{}}
+                $localStorage.world =  {type:'collection',dataGroups:{},compositions:{},Q:{}}
                 $localStorage.world.saveTo = "browser"      //default to local models
 
                 $scope.input.showHelpScreen = true
@@ -36,21 +36,16 @@ angular.module("pocApp")
               //  $localStorage.world.Q = {}
             } else {
                 let name = $localStorage.world.name
-                if ($localStorage.world && $localStorage.world.dataGroups && Object.keys($localStorage.world.dataGroups).length > 200) {
+                if (($localStorage.world &&
+                    $localStorage.world.type == 'lim' ||
+                    ($localStorage.world.dataGroups && Object.keys($localStorage.world.dataGroups).length > 250))) {
                     //must surely be the LIM ! it has 293 DGs...
-                    let msg = `There are ${Object.keys($localStorage.world.dataGroups).length} DataGroups in this collection. Is it the LIM? I can clear it out so you can re-load a Collection.`
+                    let msg = `There are ${Object.keys($localStorage.world.dataGroups).length} DataGroups in this collection. Is it the LIM? I can clear it out so you can load a Collection.`
                     if (confirm(msg)) {
                         $localStorage.world =  {type:'collection',dataGroups:{},compositions:{},Q:{}}
                     }
                 }
             }
-
-
-
-
-
-
-
 
 
             //This is the browser cache object.

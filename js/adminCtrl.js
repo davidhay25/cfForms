@@ -1,15 +1,8 @@
 angular.module("pocApp")
     .controller('adminCtrl',
-        function ($scope,$http,utilsSvc,$window) {
+        function ($scope,$http,utilsSvc,$window,$uibModal,$timeout) {
 
             $scope.input = {}
-            //$scope.input.filter = '{"name":"Patient"}'
-
-            $scope.commands = []
-            $scope.commands.push({fnName:"makeDownload",display:'Make backup',description:"Create and display the backup file"})
-            $scope.commands.push({fnName:"executeDownload",display:'Download backup',description: "Download the backup to the local computer"})
-            $scope.commands.push({fnName:"selectBackup",display:'Upload backup',description:"Upload a previously created backup"})
-            $scope.commands.push({display:'Apply backup',description:"Apply an uploaded backup to the local server"})
 
 
             //$scope.input.sort = '{"name":1}'
@@ -17,6 +10,12 @@ angular.module("pocApp")
                 function (config) {
                     $scope.systemConfig = config
                     //console.log($scope.systemConfig)
+                }
+            )
+
+            $http.get('admin/databases').then(
+                function (data) {
+                    $scope.databases = data.data
                 }
             )
 
@@ -34,20 +33,23 @@ angular.module("pocApp")
             )
 
             //create a download file and save to the local computer
-            $scope.doBackup = function () {
-                if (!$window.confirm('Confirm that you wish to download a backup?')) {
+            $scope.doExport = function () {
+
+                if (!$window.confirm('Confirm that you wish to download an export?')) {
                     return;
                 }
 
+                $scope.showWaiting = true
                 $http.get('admin/getbackup').then(
                     function (data) {
-
                        // $scope.input.backupFile = data.data
                         $scope.executeDownload(data.data)
                     },function (err) {
                         alert(angular.toJson(err))
                     }
-                )
+                ).finally(function () {
+                    $scope.showWaiting = false
+                })
             }
 
             //save the file downloaded from the server to a local disk file
@@ -62,7 +64,9 @@ angular.module("pocApp")
 
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'data.json';
+                //a.download = 'data.json';
+
+                a.download = `fullBackup-${new Date().toDateString()}.json`
                 document.body.appendChild(a);
                 a.click();
 
@@ -71,18 +75,25 @@ angular.module("pocApp")
                 URL.revokeObjectURL(url);
 
             }
+            
+            $scope.backupFromProd = function () {
+               if (confirm("Are you sure you wish to update this Backup instance from Production?")) {
+                   $http.post("admin/updateFromProd",{}).then(
+                       function (data) {
+                           //alert(data.data.msg)
+                           console.log(data.data)
+                           $scope.updateLog = data.data.log
 
-            //retrieve the download json. Should be ok up to 10megs at least...
-            $scope.makeDownload = function(){
-                $http.get('admin/getbackup').then(
-                    function (data) {
-                        $scope.input.backupFile = data.data
-                    },function (err) {
-                        alert(angular.toJson(err))
-                    }
-                )
+                       }, function (err) {
+                           alert(err.data.msg)
+                       }
+                   )
+               }
+
+
             }
 
+            
 
             $scope.selectBackup = function() {
                 // Create a hidden file input dynamically
@@ -166,6 +177,20 @@ angular.module("pocApp")
                 $http.get(qry).then(
                     function (data) {
                         $scope.tableSummary = data.data
+
+                        if (! sort) {
+                            //sort by name by default. Do it here as it's easier than on the server!
+                            $scope.tableSummary.sort(function (a,b) {
+                                if (a?.name.toLowerCase() > b?.name.toLowerCase()) {
+                                    return 1
+                                } else {
+                                    return -1
+                                }
+
+                            })
+                        }
+
+
                     }
                 )
             }
@@ -182,6 +207,47 @@ angular.module("pocApp")
                 )
 
             }
+
+            //--------- login stuff
+            //called whenever the auth state changes - eg login/out, initial load, create user etc.
+            firebase.auth().onAuthStateChanged(function(user) {
+
+                if (user) {
+                    $scope.user = {email:user.email,displayName : user.displayName}
+
+                    // to allow the rest of the page to load on first rendering
+                    $timeout(function () {
+                        $scope.$digest()
+                    },1)
+
+                } else {
+                    delete $scope.user
+                    $scope.$digest()
+                }
+
+
+
+            });
+
+            $scope.login=function(){
+                $uibModal.open({
+                    backdrop: 'static',      //means can't close by clicking on the backdrop.
+                    keyboard: false,       //same as above.
+                    templateUrl: 'modalTemplates/login.html',
+                    controller: 'loginCtrl'
+                })
+            };
+
+            $scope.logout=function(){
+                firebase.auth().signOut().then(function() {
+                    delete $scope.user;
+                    alert('You have been logged out')
+
+                }, function(error) {
+                    alert('Sorry, there was an error logging out - please try again')
+                });
+
+            };
 
 
         }

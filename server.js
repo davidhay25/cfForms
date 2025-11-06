@@ -68,7 +68,7 @@ async function setup() {
     await client.connect()
     console.log(`Connected to database ${mongoUri} at ${mongoHostName}`)
 
-    adminModule.setup(app,database)
+    adminModule.setup(app,database,client)  //the admin uses the client object to get the full database list
     terminologyModule.setup(app,termServerUrl)
     modelModule.setup(app,database)      //pass in the mongo database name to use
     QModule.setup(app,database)
@@ -83,6 +83,7 @@ setup()
 
 app.get('/config', (req, res) => {
     res.json({
+        mongoDb: mongoDbName,
         logoUrl: process.env.APP_LOGO_URL || 'images/canshareLogo.png',
         termServerUrl : termServerUrl,
         qUrlPrefix : qUrlPrefix,
