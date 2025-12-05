@@ -13,6 +13,7 @@ angular.module("pocApp")
                 }
             )
 
+
             $http.get('admin/databases').then(
                 function (data) {
                     $scope.databases = data.data
@@ -25,12 +26,23 @@ angular.module("pocApp")
                 $scope[cmd.fnName]()
             }
 
+            function getTables() {
+                $http.get('admin/tables').then(
+                    function (data) {
+                        $scope.tables = data.data
 
-            $http.get('admin/tables').then(
-                function (data) {
-                    $scope.tables = data.data
-                }
-            )
+                        //can only update the db from an extract file if the db is empty. eg a new or wiped db
+                        $scope.canUpdateFromExport = false
+                        let cnt = $scope.tables.reduce((sum, item) => sum + item.length, 0)
+                        if (cnt == 0) {
+                            $scope.canUpdateFromExport = true
+                        }
+
+                    }
+                )
+            }
+            getTables()
+
 
             //create a download file and save to the local computer
             $scope.doExport = function () {
@@ -54,6 +66,9 @@ angular.module("pocApp")
 
             //save the file downloaded from the server to a local disk file
             $scope.executeDownload = function (data) {
+
+                //add metadata to the extract
+                data.meta = {date: new Date().toISOString()}
 
                 //const data = $scope.input.backupFile;
                 const json = JSON.stringify(data, null, 2);
@@ -95,7 +110,9 @@ angular.module("pocApp")
 
             
 
-            $scope.selectBackup = function() {
+            //restore the database from an export file
+            $scope.restoreFromExport = function() {
+                delete $scope.updateLog
                 // Create a hidden file input dynamically
                 const input = document.createElement('input');
                 input.type = 'file';
@@ -106,13 +123,12 @@ angular.module("pocApp")
                 input.onchange = function(event) {
                     const file = event.target.files[0];
                     if (file) {
-                        console.log('Selected file:', file);
-                        // Example: read file contents
                         const reader = new FileReader();
                         reader.onload = function(e) {
                             //const contents = e.target.result;
-                            $scope.input.backup = JSON.parse(e.target.result)
-                            console.log('File contents:', $scope.input.backup);
+                            $scope.uploadedExtract =  JSON.parse(e.target.result)
+                            console.log('File contents:', $scope.uploadedExtract);
+
 
                             $scope.$digest()
 
@@ -130,7 +146,21 @@ angular.module("pocApp")
                 input.remove();
             };
 
+            $scope.doRestore = function () {
+                if (confirm("Are you sure you wish to restore from this file")) {
+                    $http.post('/admin/restoreFromExtract',$scope.uploadedExtract).then(
+                        function (data) {
+                            alert("Database has been restored")
+                            delete $scope.uploadedExtract
+                            $scope.updateLog = data.data.log
+                            getTables()
+                        }, function (err) {
+                            alert(angular.toJson(err.data))
+                        }
+                    )
+                }
 
+            }
 
 
             $scope.downloadJSONDEP = function() {

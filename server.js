@@ -3,27 +3,24 @@
     start with ./localrun.sh which supplies the environment variables see below
 */
 
-//let fs = require('fs')
+
 let http = require('http');
 const axios = require("axios");
 
-//https://authoring.nzhts.digital.health.nz/fhir/
-//https://r4.ontoserver.csiro.au/fhir/
 const termServerUrl = process.env.TERM_SERVER_URL || 'https://r4.ontoserver.csiro.au/fhir/'
+const environment = process.env.ENVIRONMENT || 'canshare'       //allows for environment specific behaviours
+const setting = process.env.SETTING
 
 //the port that the POC server listens on for HTML & API calls
 let port = process.env.PORT || 9500
 
 //the Mongo database used by the models (and associated) apps
-//todo - not sure why we'd change this...
 const mongoDbName = process.env.MONGODB || "clinfhir"
+//nov7const bodyParser = require('body-parser')
 
-
-
-const bodyParser = require('body-parser')
-
-console.log(`Server: Mongo database name is ${mongoDbName}`)
 console.log("")
+console.log(`Server: Mongo database name is ${mongoDbName}`)
+
 
 
 //const commonModule = require("./serverModuleCommonUI.js")
@@ -38,7 +35,8 @@ const adminModule = require("./serverModuleAdmin")
 let express = require('express');
 const {MongoClient} = require("mongodb");
 let app = express();
-app.use(bodyParser.json({limit:'50mb',type:['application/json+fhir','application/fhir+json','application/json']}))
+//nov 7app.use(bodyParser.json({limit:'50mb',type:['application/json+fhir','application/fhir+json','application/json']}))
+
 app.use('/', express.static(__dirname,{index:'/formsFrontPage.html'}));
 
 //from chatGPT to allow call from elsewhere
@@ -49,7 +47,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '50mb' , type: ['application/json', 'application/fhir+json', 'application/json+fhir']}));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 let mongoHostName = process.env.MONGOHOSTNAME || "127.0.0.1"
@@ -60,6 +58,19 @@ console.log(`Mongo connection uri is ${mongoUri}`)
 
 console.log(`Default terminology server is ${termServerUrl}`)
 
+let systemConfig = {
+    setting : setting,
+    environment : environment,
+    mongoDb: mongoDbName,
+    logoUrl: process.env.APP_LOGO_URL || 'images/canshareLogo.png',
+    termServerUrl : termServerUrl,
+    qUrlPrefix : qUrlPrefix,
+    defaultVsPrefix : "https://nzhts.digital.health.nz/fhir/ValueSet"  //often the vs url is just the name...
+
+}
+
+console.log("Config:")
+console.log(systemConfig)
 
 
 async function setup() {
@@ -82,14 +93,7 @@ setup()
 //ontoserver -
 
 app.get('/config', (req, res) => {
-    res.json({
-        mongoDb: mongoDbName,
-        logoUrl: process.env.APP_LOGO_URL || 'images/canshareLogo.png',
-        termServerUrl : termServerUrl,
-        qUrlPrefix : qUrlPrefix,
-        defaultVsPrefix : "https://nzhts.digital.health.nz/fhir/ValueSet"  //often the vs url is just the name...
-
-    });
+    res.json(systemConfig);
 });
 
 /*

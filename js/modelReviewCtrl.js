@@ -405,6 +405,15 @@ angular.module("pocApp")
                     let qName = modelName.slice(2)
                     $scope.loadQ(qName)
 
+
+/*
+
+                    $timeout(function () {
+                        $scope.previewQ($scope.fullQ)
+                        $scope.input.mainTabActive = 2
+                    },2000)
+*/
+
                 } else if (modelName.startsWith('url-')) {
                     //a url was passed. This will be retrieved from the lab server
                     let qUrl = modelName.slice(4)

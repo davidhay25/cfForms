@@ -8,6 +8,22 @@ angular.module("pocApp")
 
         return {
 
+            checkAllIds : function (world) {
+                //check that allthe elements in the DG's have an id
+
+                if (world.dataGroups) {
+                    for (let dgName of Object.keys(world.dataGroups)) {
+                        let dg = world.dataGroups[dgName]
+                        for (let ed of dg.diff || []) {
+                            if (! ed.id) {
+                                ed.id = utilsSvc.getUUID()
+                            }
+                        }
+                    }
+                }
+
+
+            },
 
             copyDG : function (DG,vo) {
                 //create a copy of a DG - updating the ids and any ews...

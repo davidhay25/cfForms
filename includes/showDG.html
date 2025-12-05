@@ -60,23 +60,22 @@
 
           <span ng-if="user && user.email" class="clickable spacer"
               ng-click="updateComponent('dg',selectedModel)">Update component</span>
-
-
         </span>
 
         <span class="clickable spacer"
                 ng-if = canEdit(selectedModel)
                 ng-click="deleteDG(selectedModel.name)">Delete</span>
 
-
       </div>
       <div class="col-md-6">
 
         <div class="pull-right">
           <button class="btn btn-link" ng-click="loadReview('dg')">Generate questionnaire</button>
+          <!--
           <button class="btn btn-link" ng-click="showLink('dg')">Link to viewer</button>
+          -->
           <button class="btn btn-link"
-                  ng-if = "user.email"
+                  ng-if = "user.email && canEdit(selectedModel)"
                   ng-click="publishQ(selectedModel)">Publish</button>
         </div>
 
@@ -168,23 +167,7 @@
           <div class="background">
             <div class="pull-right">
               <div class="clickable myIcon" ng-click="expandDTTree()">Expand all ({{fullElementList.length -1}})</div>
-              <!--
-              <div class="clickable myIcon" ng-click="showSSLog(selectedModel.name)">Snapshot log</div>
--->
-              <!--
-              <div class="clickable myIcon"
-                   ng-hide="selectedModel.ssOrder || userMode == 'playground'"
-                   ng-click="setOrder()">Set order</div>
 
-              <div class="clickable myIcon"
-                   ng-if="selectedModel.ssOrder"
-                   ng-click="setOrder()">Update order</div>
-
-
-              <div class="clickable myIcon"
-                   ng-if="selectedModel.ssOrder"
-                   ng-click="removeOrder()">Remove order</div>
-              -->
 
             </div>
 
@@ -250,8 +233,10 @@
 
 
             <div ng-if = "selectedNode.data.ed.kind == 'root'">
+
               <table class="table table-bordered table-condensed">
                 <tr><td class="detailName" >Name</td><td>{{selectedModel.name}}</td></tr>
+                <tr><td class="detailName" >Title</td><td>{{selectedModel.title}}</td></tr>
                 <tr><td class="detailName" >Description</td><td>{{selectedModel.description}}</td></tr>
 
 
@@ -771,7 +756,7 @@
                     </td>
                   </tr>
 
-                  <tr>
+                  <tr ng-if="false">
                     <td class="detailName" style="width : 20%">Present in diff</td>
                     <td>
 

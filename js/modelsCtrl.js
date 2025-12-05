@@ -47,6 +47,9 @@ angular.module("pocApp")
                 }
             }
 
+            //check all the elements of all the models for an id
+            modelDGSvc.checkAllIds($localStorage.world)
+
 
             //This is the browser cache object.
 
@@ -114,7 +117,6 @@ angular.module("pocApp")
                 let Q = voQ.Q
 
                 $scope.qErrorLog = voQ.errorLog
-
 
                 $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:Q});
 
@@ -912,7 +914,7 @@ angular.module("pocApp")
                 }
             }
 
-            $scope.showLink = function (type) {
+            $scope.showLinkDEP = function (type) {
 
                 let qName = `${$scope.world.name}-${$scope.selectedModel.name}`
                 qName = qName.replace(/\s+/g, "");
@@ -1795,7 +1797,6 @@ angular.module("pocApp")
 
                             $scope.selectedModel.diff.push(ed)
                             displayPath = ed.path
-                           // traceSvc.addAction({action:'new-element',model:$scope.selectedModel,path:displayPath})
 
                         } else {
                             alert("There's a deleted element with this path. It cannot be added.")
@@ -2501,9 +2502,20 @@ angular.module("pocApp")
 
                     //ensure DG view selected
                     $scope.input.mainTabActive = $scope.ui.tabDG
-
+/*
+                    //ensure all elements in the diff have an id. This is now needed for proper Q linkId generation
+                    for (let ed of dg.diff || []) {
+                        if (! ed.id) {
+                            ed.id = utilsSvc.getUUID()
+                            console.log('missing')
+                        }
+                    }
+*/
                     clearB4Select()
                     $scope.selectedModel = dg
+
+
+
 
                     $scope.fhirResourceType = igSvc.findResourceType(dg,$scope.hashAllDG)   //not sure if this is used wo fsh stuff
 

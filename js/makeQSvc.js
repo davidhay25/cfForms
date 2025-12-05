@@ -1221,6 +1221,10 @@ angular.module("pocApp")
                         //this is the first item in the DG Q.
 
                         //temp oct22 - testing uuidscurrentItem = {linkId:`${pathPrefix}${path}`,type:'group',text:ed.title}
+                        if (!ed.id) {
+                            //actually, never has ia ID I think...
+                            ed.id = utilsSvc.getUUID()
+                        }
                         currentItem = {linkId:`${ed.id}`,type:'group',text:ed.title}
                         currentItem = {linkId:`${utilsSvc.getUUIDHash(ed.id)}`,type:'group',text:ed.title}
 
@@ -1803,7 +1807,12 @@ angular.module("pocApp")
                             }
                         }
                         if (! found) {
-                            errorLog.push({msg:`${ed.path} has a default value not in the answerOptions (It may be in the valueset)`})
+                            //Nov18 - set as initial value
+                            item.initial = item.initial || []  //= item.answerOption || []
+                            let concept = ed.defaultCoding
+                            delete concept.fsn
+                            item.initial.push({valueCoding:concept})
+
                         }
 
                     }

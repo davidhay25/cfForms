@@ -36,6 +36,13 @@ async function setup(app,database,client) {
 
     app.get('/admin/tables' ,async function (req,res) {
 
+
+        //  const exactCount = await collection.countDocuments({ active: true });
+        let ar = []
+        for (let tbl of tables) {
+            tbl.length = await database.collection(tbl.col).countDocuments()
+        }
+
         res.json(tables)
 
     })
@@ -127,7 +134,7 @@ async function setup(app,database,client) {
 
     app.post('/admin/updateFromProd', async function (req,res) {
         //let qry = `http://canshare.co.nz/admin/getBackup`
-        let qry = `http://localhost:9500/admin/getBackup`   //just for testing
+        let qry = `https://canshare.co.nz/forms/admin/getBackup`   //just for testing
         try {
             let result = await axios.get(qry)
             //console.log(result.data)
@@ -139,6 +146,18 @@ async function setup(app,database,client) {
 
 
     })
+
+    app.post('/admin/restoreFromExtract', async function (req,res) {
+        let data = req.body
+        try {
+            let log = await updateFromExtract(data)
+            res.json({msg:"Update complete.",log:log})
+        } catch (ex) {
+            res.status(500).json({msg:ex.message})
+        }
+
+    })
+
 
     //update the local database from an extract file
     //await db.collection('users').createIndex({ id: 1 }, { unique: true }); - todo create the index

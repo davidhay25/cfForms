@@ -47,8 +47,7 @@ angular.module("pocApp")
 
 
                         } else {
-                            //arDoc.push(addTaggedLine("h2", $filter('lastInPath')(ed.path)));
-                            //arDoc.push(`<a name="${hashLink[ed.path]}"></a>`)
+
                             arDoc.push(addTaggedLine("h3", ed.title));
 
                             arDoc.push("<table class='dTable'>");
@@ -72,15 +71,12 @@ angular.module("pocApp")
 
                                 textForValueDomain = `${textForValueDomain}${vs}\n`
 
-                                //addRow(arDoc, 'Value domain', vs)
-                                //addedValueDomain = true
                             }
 
                             if (ed.fixedCoding) {
                                 let disp = `${ed.fixedCoding.code} |${ed.fixedCoding.display}| ${ed.fixedCoding.system}`
                                 textForValueDomain = `${textForValueDomain}${disp}\n`
-                                //addRow(arDoc, 'Value domain', disp)
-                                //addedValueDomain = true
+
                             }
 
                             if (ed.options && ed.options.length > 0) {
@@ -91,8 +87,7 @@ angular.module("pocApp")
                                 }
                                 let text = ar.join('\n')
                                 textForValueDomain = `${textForValueDomain}${text}\n`
-                              //  addRow(arDoc, 'Value domain', text)
-                               // addedValueDomain = true
+
                             }
 
                             //If [Data element] = [Code] |[Display]| [Code system] then value set = [A full resolvable URL]
@@ -102,9 +97,7 @@ angular.module("pocApp")
                                     let source = hashEd[cv.path]
                                     if (source) {
                                         let vs = utilsSvc.getFullVsUrl(cv.valueSet)
-                                       // if (vs.indexOf('http') == -1) {
-                                        //    vs = 'https://nzhts.digital.health.nz/fhir/ValueSet/'+vs
-                                       /// }
+
 
                                         let disp = `If ${source.title} = ${cv.value.code} | ${cv.value.display} | ${cv.value.system} then valueSet is ${vs}`
                                         textForValueDomain = `${textForValueDomain}${disp}\n`
@@ -116,9 +109,7 @@ angular.module("pocApp")
 
                             addRow(arDoc, 'Value domain', textForValueDomain)
 
-                         //   if (!addedValueDomain) {
-                        //        addRow(arDoc, 'Value domain', "")
-                        //    }
+
 
                             addRow(arDoc, 'Data type', type)
 
@@ -126,9 +117,15 @@ angular.module("pocApp")
 
                             addRow(arDoc, 'Layout', stuff.hisoLayout)  //<<<todo
 
-                            if (ed.units && ed.units.length > 0) {
-                                addRow(arDoc, 'Unit of measure', ed.units.join(" "))
+                            if (type == 'Quantity') {
+                                let text = ""
+                                if (ed.units && ed.units.length > 0) {
+                                    text =  ed.units.join(" ")
+                                }
+                                addRow(arDoc, 'Unit of measure',text)
+
                             }
+
 
                             if (ed.itemCode) {
                                 let itemCode = `${ed.itemCode.code} |${ed.itemCode.display}| ${ed.itemCode.system} `
@@ -234,16 +231,11 @@ angular.module("pocApp")
                     switch (dt) {
                         case "string" :
                             meta.hisoDT = "String"
-                            meta.hisoLength = 100
-                            meta.hisoLayout = "X(100)"
+                            meta.hisoLength = 255
+                            meta.hisoLayout = "X(255)"
                             break
 
-                        case "text" :
-                            meta.hisoDT = "String"
-                            meta.hisoLength = 1000
-                            meta.hisoLayout = "X(1000)"
 
-                            break
 
                         case "integer" :
                             meta.hisoDT = "Integer"
@@ -261,7 +253,7 @@ angular.module("pocApp")
                         case "boolean" :
                             meta.hisoDT = "Boolean"
                             meta.hisoLength = 1
-                            meta.hisoLayout = "X(1)"
+                            meta.hisoLayout = "N(1)"
 
                             break
 
@@ -278,19 +270,14 @@ angular.module("pocApp")
                             meta.hisoLayout = "YYYYMMDD:[HH:MM]"
                             break
 
-                        case "date":
-                            meta.hisoDT = "Date"
-                            meta.hisoLength = 12
-                            meta.hisoLayout = "YYYY[MM[DD]]"
 
-                            break
-                        case "choice" :
-                        case "open-choice" :
-                            meta.hisoLength = 18
+
+                        case "Identifier" :
                             meta.hisoDT = "String"
-                            meta.hisoLayout = "X(18)"
-
+                            meta.hisoLength = 255
+                            meta.hisoLayout = "X(255)"
                             break
+
                     }
                     return meta
 

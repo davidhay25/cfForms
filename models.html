@@ -7,8 +7,13 @@
 
     <link rel="stylesheet" type="text/css" href="css/jsTreeStyle.css"/>
     <link rel="stylesheet" type="text/css" href="css/jsTreeThemes/proton/style.css"/>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="383f5688-7293-4ac2-9dd3-b82e032bcc81"></script>
 
     <style>
+
+        [ng-cloak], .ng-cloak {
+            display: none !important;
+        }
 
         #graph {
             width: 100%;
@@ -77,6 +82,7 @@
 
 </head>
 <body style="padding: 8px;padding-top: 80px" >
+
 <div ng-app="topApp" ng-controller="modelsCtrl" class="container-fluid" ng-cloak>
 
     <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -91,13 +97,13 @@
 
                 </a>
 
-
-
             </div>
             <div class="col-md-1">
                 <div class="navbar-text btn" >
                     <button
-                            class="btn btn-primary pull-right" ng-click="showLocalStore()">Local store</button>
+                            class="btn btn-primary pull-right"
+                            ng-if = "systemConfig.environment !== 'canshare'"
+                            ng-click="showLocalStore()">Local store</button>
                 </div>
 
             </div>
@@ -106,6 +112,7 @@
             <div class="col-md-1 col-sm-1">
                 <div class="navbar-text btn">
                     <button class="btn btn-primary pull-right"
+                            ng-hide = "systemConfig.environment == 'canshare' && ! user.email"
                             ng-click="openPlaygrounds()">Collections</button>
 
 
@@ -116,18 +123,14 @@
             <div class="col-md-1">
                 <div class="navbar-text btn" >
                     <button
+                            ng-hide = "systemConfig.environment == 'canshare' && ! user.email"
                             class="btn btn-primary pull-right" ng-click="library()">Components</button>
                 </div>
             </div>
 
 
 
-            <div class="col-md-1">
-                <div class="navbar-text btn" >
-                   <checkbox ng-model="input.showHelpScreen"></checkbox> Show Help
-                </div>
 
-            </div>
 
 
             <div class="col-md-1">
@@ -136,20 +139,27 @@
                 </div>
             </div>
 
-            <div class="col-md-1 col-sm-1">
+            <div class="col-md-1">
                 <form class="navbar-form navbar-left">
                     <img ng-if="showWaiting" src="css/ajax_loader_blue_32.gif"/>
 
                 </form>
             </div>
 
+
+
             <div class="col-md-1">
-                <div ng-if="false" class="navbar-text" >
-                    <div class="pull-right btn">{{version}}</div>
+                <div ng-show = "systemConfig.environment !== 'canshare'" class="navbar-text navbar-left" >
+
+                    <a style="font-size: 24px;padding-top: 8px"
+                       href="https://docs.google.com/document/d/10ofJeT80x0n6mov4NRBtyxNgEvHUuUjNcIJyOChPFDU"
+                       target="_blank" class="glyphicon glyphicon-info-sign"></a>
                 </div>
+
+
             </div>
 
-            <div class="col-md-1 col-sm-1">
+            <div class="col-md-1 ">
                 <div class="navbar-text " ng-hide="user">
                     <span style="font-size:1.2em; cursor: pointer" uib-popover="Click to log in"
                           popover-placement="left"
@@ -172,7 +182,8 @@
 
             </div>
 
-            <div class="col-md-1">
+
+            <div class="col-md-2">
 
                 <div ng-if = "systemConfig">
 
@@ -201,7 +212,7 @@
              ng-click="updatePlayground(true)">Update Collections Library</div>
 
         <div class="btn btn-primary pull-right"
-             ng-if = "world.saveTo == 'browser'"
+             ng-if = "world.saveTo == 'browser' && systemConfig.environment !== 'canshare'"
              ng-click="updateBrowserCache()">Update Local Store</div>
 
         <div  ng-if = "world.lockedTo && (world.lockedTo !== user.email)" class="btn btn-warning pull-right">
@@ -577,7 +588,10 @@
                         <tr><td>Name</td><td>
                             <div class="row">
                                 <div class="col-md-9">
-                                    <input class="form-control" type="text" ng-model="world.name"/>
+
+                                    <input ng-disabled="! canEdit()"
+                                            class="form-control" type="text" ng-model="world.name"/>
+
                                 </div>
 
                                 <div class="col-md-3">
@@ -595,7 +609,10 @@
 
 
 
-                        <tr><td>Description</td><td><textarea class="form-control" ng-model="world.description"></textarea></td></tr>
+                        <tr><td>Description</td><td><textarea
+                                ng-disabled="! canEdit()"
+                                class="form-control" ng-model="world.description"></textarea>
+                        </td></tr>
 
                         <tr>
                             <td>Container DGs</td>
@@ -794,6 +811,11 @@
               <ng-include src="'includes/terminology.html'"></ng-include>
 
           </uib-tab>
+
+        <uib-tab heading="System Config">
+            <pre>{{systemConfig | json}}</pre>
+
+        </uib-tab>
 
 
 

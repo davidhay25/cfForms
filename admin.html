@@ -62,7 +62,6 @@
             color: white;
         }
 
-
     </style>
 
     <script>
@@ -163,8 +162,6 @@
 
     <uib-tabset ng-show="user.email">
 
-
-
         <uib-tab heading="Backup / Restore">
             <br/>
 
@@ -177,13 +174,13 @@
                         </div>
                         <div class="col-md-8">
                             Create an export file from the database and save to the local computer. The file can subsequently be used
-                            to resource or update a database on another server.
+                            to restore a database on another server.
                         </div>
 
                     </div>
 
                     <br/>
-                    <div class="row">
+                    <div ng-show="systemConfig.setting == 'backup'" class="row">
                         <div class="col-md-4">
                             <button class="btn-primary btn" ng-click="backupFromProd()">Update from production</button>
                         </div>
@@ -196,23 +193,43 @@
                     <br/>
                     <div class="row">
                         <div class="col-md-4">
-                            <button class="btn-danger btn" ng-click="restoreFromImport()">Restore from export</button>
+                            <button ng-disabled="! canUpdateFromExport"
+
+                                    class="btn-danger btn" ng-click="restoreFromExport()">Restore from previous export</button>
                         </div>
                         <div class="col-md-8">
-                            Restore all or part of a database from a previously created export file. shown in both
-                            prod and backup. Need a secret. upload a previous export file and update from there.
+                            Restore a database from a previously created export file. Can only be executed if the database
+                            is empty.
+
+
                         </div>
 
                     </div>
 
                 </div>
                 <div class="col-md-6">
+
+                    <div ng-show="uploadedExtract">
+                        <h4>Contents of file selected for restore</h4>
+                        <table class="table table-bordered">
+                            <tr><td>Date of extract</td><td>{{uploadedExtract.meta.date | date}}</td></tr>
+                            <tr><td>Collections</td><td>{{uploadedExtract.playground.length}}</td></tr>
+                            <tr><td>Components</td><td>{{uploadedExtract.frozenDG.length}}</td></tr>
+                            <tr><td>Published Q</td><td>{{uploadedExtract.publishedQ.length}}</td></tr>
+                        </table>
+
+                        <button class="btn-danger btn" ng-click="doRestore()">Perform import</button>
+
+
+
+                    </div>
+
                     <div ng-show="updateLog" class="tableFixHeadSmall">
 
                         <h4>Update complete. Log of transactions:</h4>
                         <table class="table table-bordered">
                             <thead>
-                                <tr><th>Kind</th><th>Name</th><th>Inserted</th></tr>
+                                <tr><th>Kind</th><th>Name</th><th>Action</th></tr>
                             </thead>
                             <tbody>
                             <tr ng-repeat = "row in updateLog"
@@ -261,6 +278,7 @@
                              style="cursor: pointer"
                              ng-click = "selectTable(table)"
                              ng-repeat = "table in tables">
+                            <span class="pull-right badge">{{table.length}}</span>
                             {{table.display}}
                         </div>
                     </div>
