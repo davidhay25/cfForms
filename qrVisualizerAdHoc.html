@@ -124,6 +124,9 @@
     <div class="row">
         <div class="col-md-6">
 
+            <div class="btn btn-link pull-right" ng-click="parseAdHocQR(input.adHocQR)">Parse</div>
+            <div class="clearfix"></div>
+
 
             <textarea class="form-control" rows="20" ng-model="input.adHocQR">
 
@@ -139,14 +142,18 @@
                    <input type="text"
                           ng-change = "input.changingFormManager = true"
                           class="form-control" ng-model="formManager"/>
+                    <div>{{query}}</div>
                 </div>
+
                 <div class="col-md-3">
                     <div ng-show="input.changingFormManager" ng-click="setFormManager(formManager)"
                          class="btn btn-link">Save Form Manager</div>
                 </div>
 
                 <div class="col-md-1">
+                    <!--
                     <div class="btn btn-primary pull-right" ng-click="parseAdHocQR(input.adHocQR)">Parse</div>
+                    -->
                 </div>
             </div>
         </div>

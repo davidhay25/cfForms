@@ -162,10 +162,25 @@ angular.module("pocApp")
                 $scope.lstQRItem = []   //a list of items from the QR for the report
 
                 let qUrl = QR.questionnaire
+               if (! qUrl) {
+                   alert("The QR does not have a '.questionnaire' attribute with the url of the Questionnaire. I cannot parse it.")
+                   return
+               }
+
+               //strip off the version
+               let ar = qUrl.split('|')
+               qUrl = ar[0]
 
                let formManager = $scope.formManager.endsWith('/') ? $scope.formManager : $scope.formManager + '/';
 
                 let qry = `${formManager}Questionnaire?url=${qUrl}`
+               if (ar.length > 1) {
+                   qry += `&version=${ar[1]}`
+               }
+
+               $scope.query = qry   //so can show on the page
+
+
                 let config = {headers:{'content-type':'application/fhir+json'}}
 
                 $http.get(qry,config).then(
@@ -187,7 +202,7 @@ angular.module("pocApp")
 
 
                         } else {
-                            alert(`The Q with the url ${qUrl} was not found`)
+                            alert(`The Q with the url ${qUrl} was not found on the server at ${formManager}`)
                             //todo we could do a diminished report - that only had the info in the QR
                         }
 

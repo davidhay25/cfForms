@@ -83,8 +83,9 @@ async function setup() {
     terminologyModule.setup(app,termServerUrl)
     modelModule.setup(app,database)      //pass in the mongo database name to use
     QModule.setup(app,database)
-    libraryModule.setup(app)
+    libraryModule.setup(app,client)
     playgroundModule.setup(app,database)
+
 }
 setup()
 
@@ -95,43 +96,6 @@ setup()
 app.get('/config', (req, res) => {
     res.json(systemConfig);
 });
-
-/*
-
-app.get('/validatorHints',function (req,res) {
-    let fle = require("./validatorHints.json")
-    res.json(fle)
-})
-
-
-//validation.
-app.post('/validateBundle', async function (req,res) {
-    let bundle = req.body
-    if (! bundle || ! bundle.entry) {
-        res.status(400).json({msg:"Must contain a bundle. Is the content-type header set to 'application/json' "})
-    } else {
-        let validationEP = "http://localhost:9300/validateActNow"
-        try {
-            let response = await axios.post(validationEP,bundle)
-            res.json(response.data)
-        } catch (ex) {
-            res.status(500).json(ex)
-        }
-    }
-})
-
-
-app.get('/config', async function(req,res){
-
-    let config = {
-        "PORT":process.env.PORT,
-        "MONGODB":process.env.MONGODB
-    }
-
-    res.json(config)
-})
-
-*/
 
 
 

@@ -385,7 +385,7 @@
 
 
                     <ng-include
-                            ng-if="input.showHelpScreen"
+                            ng-if="input.showHelpScreen && ! selectedModel"
                             src="'includes/helpScreen.html?bust=x'">
 
                     </ng-include>
@@ -902,41 +902,6 @@
 
 </script>
 
-
-<!--
-
-<link rel="stylesheet" type="text/css" href="css/codemirror.css"/>
-<link rel="stylesheet" type="text/css" href="css/foldgutter.css"/>
-
-<script src="js/editCompositionCtrl.js"></script>
-
-<script src="js/modelCompCtrl.js"></script>
-
-<script src="js/traceCtrl.js"></script>
-<script src="js/traceSvc.js"></script>
-
-
-
-<script src="js/historyCtrl.js"></script>
-<script src="js/previewQCtrl.js"></script>
-<script src="js/getNameCtrl.js"></script>
-
-
-
-<script src="js/compVersionsCtrl.js"></script>
-<script src="js/compSectionsCtrl.js"></script>
-<script src="js/publishCompCtrl.js"></script>
-
-<script src="js/orderingSvc.js"></script>
-
-
-<script src="js/orderingCtrl.js"></script>
-<script src="js/modelCompSvc.js"></script>
-
-<script src="js/libraryDGCtrl.js"></script>
-<script src="js/libraryCompCtrl.js"></script>
-
--->
 
 <script src="js/fixValuesCtrl.js"></script>
 

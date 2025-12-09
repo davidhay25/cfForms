@@ -20,8 +20,6 @@
     <script src="js/libs/jstree.min.js"></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="383f5688-7293-4ac2-9dd3-b82e032bcc81"></script>
 
-
-
     <style>
 
         .inset {
@@ -126,7 +124,8 @@
 
     <script src="js/viewItemCtrl.js"></script>
     <script src="js/modelReviewSvc.js"></script>
-
+    <script src="js/qrVisualizerSvc.js"></script>
+    <script src="js/v2ToFhirSvc.js"></script>
 
 
 
@@ -371,7 +370,28 @@
 
 
         <uib-tab ng-show="fullQ"  heading="Rendered Form">
-            <ng-include src="'includes/qViewer.html'"></ng-include>
+
+            <div class="row">
+                <div class="col-md-7">
+                    <ng-include src="'includes/qViewer.html'"></ng-include>
+                </div>
+                <div class="col-md-5">
+
+
+                    <ng-include src="'includes/qrAnalysis.html'"></ng-include>
+
+
+
+
+
+
+
+                </div>
+            </div>
+
+
+
+
         </uib-tab>
 
         <uib-tab ng-show="false"  heading="Table view">
@@ -858,6 +878,11 @@
 
 
 </div>
+
+
+
+
+
 
 </body>
 </html>

@@ -76,10 +76,10 @@ function setup(app, termServerUrl) {
     //this is used for terminology queries from the fpLab to the NZHTS.
     //it always goes to NZHTS
     //note that in clinFhir, the TS will be ontoserver (unless there's a different TS) so this won't get called. It's likely only canshare
+
     app.get('/proxy/*path',async function(req,res){
 
         const targetPath = req.params.path
-
 
         let qry = `${nzhtsconfig.serverBaseAuthor}${targetPath}`
 
@@ -118,7 +118,80 @@ function setup(app, termServerUrl) {
 
     })
 
+/*
+    app.get("/XXXXproxy/:targetPath(.*)",async function(req,res){
+        //    app.get('/proxy/:targetPath(.*)',async function(req,res){
+        //const targetPath = req.params.path
+        const targetPath = req.params.targetPath;   // everything after /proxy/
+        //const targetPath = req.params[0];   // everything after /proxy/
+        let qry = `${nzhtsconfig.serverBaseAuthor}${targetPath}`
 
+        console.log(`proxying query: ${qry}`)
+
+        if (req.originalUrl.indexOf('$expand') > -1) {
+            qry += "&displayLanguage=en-x-sctlang-23162100-0210105"
+        }
+
+        let token = await getNZHTSAccessToken()
+        //console.log(`nzhts query: ${req.query.qry}`)
+        if (token) {
+
+            let config = {headers:{authorization:'Bearer ' + token}}
+            config['content-type'] = "application/fhir+json"
+            axios.get(qry,config).then(function(data) {
+                res.json(data.data)
+            }).catch(function(ex) {
+                if (ex.response) {
+                    //console.log("----- NOT found -----")
+                    res.status(ex.response.status).json(ex.response.data)
+                } else {
+                    res.status(500).json(ex)
+                }
+
+            })
+        } else {
+            res.status(500).json({msg:"Unable to get Access Token."})
+        }
+
+
+    })
+
+    */
+// Old-school Express 4 compatible
+
+    /*
+    app.get('/proxy/*', async function(req, res) {
+        const targetPath = req.url.replace(/^\/proxy\//, ''); // everything after /proxy/
+
+        let qry = `${nzhtsconfig.serverBaseAuthor}${targetPath}`;
+        const queryString = new URLSearchParams(req.query).toString();
+        if (queryString) qry += `?${queryString}`;
+
+        if (qry.includes('$expand') && !qry.includes('displayLanguage')) {
+            qry += qry.includes('?') ? '&' : '?';
+            qry += 'displayLanguage=en-x-sctlang-23162100-0210105';
+        }
+
+        try {
+            const token = await getNZHTSAccessToken();
+            if (!token) return res.status(500).json({ msg: "Unable to get Access Token." });
+
+            const config = {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/fhir+json'
+                }
+            };
+
+            const response = await axios.get(qry, config);
+            res.json(response.data);
+        } catch (err) {
+            if (err.response) res.status(err.response.status).json(err.response.data);
+            else res.status(500).json({ msg: "Proxy error", error: err.message });
+        }
+    });
+
+    */
 
     //general queries against the Terminology Server
     //even though it's NZHTS - it uses the configured terminology server

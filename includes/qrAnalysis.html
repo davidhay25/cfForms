@@ -1,0 +1,101 @@
+<div>
+
+  <style>
+
+    #resourceGraph {
+      width: 100%;
+      height: 550px;
+      border: 1px solid lightgray;
+    }
+
+  </style>
+
+  <uib-tabset>
+
+    <uib-tab heading="QR Report">
+
+      <div class="pull-right" style="padding:8px">
+        <checkbox  ng-model="input.hideEmptyRows"></checkbox> Hide empty rows
+      </div>
+      <div class="clearfix"></div>
+
+      <div class="myScroll">
+        <table ng-show="qBasedReport" class="table table-bordered">
+          <tr><th>LinkId</th><th>Text</th><th>Code</th><th>DataType</th><th>Value</th></tr>
+
+          <tr ng-repeat="entry in qBasedReport"
+              ng-show="! input.hideEmptyRows || (entry.answerDisplay.length > 0)"
+              ng-class="{background:entry.dt == 'Group',missingAnswer:entry.missingAnswer }">
+            <td>
+
+              <div class="clickable" ng-click="viewItem(entry.item)">{{entry.item.linkId}}</div>
+            </td>
+
+            <td>
+              <div ng-style="{ 'padding-left': (entry.level * 6) }">
+                {{entry.item.text}}</div>
+            </td>
+            <td>
+              <div ng-repeat="code in entry.item.code">
+                {{code.code}}
+              </div>
+
+            </td>
+            <td>
+              {{entry.dt}}
+            </td>
+            <td>
+              <div ng-repeat="ans in entry.answerDisplay">
+                {{ans}}
+              </div>
+
+            </td>
+          </tr>
+        </table>
+      </div>
+    </uib-tab>
+
+    <uib-tab heading="QR Json">
+      <div class="myScroll">
+        <pre>{{renderedQR | json}}</pre>
+      </div>
+    </uib-tab>
+
+    <uib-tab ng-show="extractBundle" heading="Extract resource graph" select="fitGraph()">
+      <div class="btn btn-link pull-right" ng-click="showInBV()">Load into Bundle Viewer</div>
+      <div class="clearfix"></div>
+
+      <div id="resourceGraph"></div>
+    </uib-tab>
+
+    <uib-tab ng-show="extractBundle" heading="Extract resource list">
+
+      <div class="row">
+        <div class="col-md-3">
+          <table class="table table-bordered">
+            <tr ng-repeat="entry in extractBundle.entry"
+                ng-class="{listItemSelected:input.selectedExtractResource == entry.resource}"
+                style="cursor: pointer"
+              ng-click="input.selectedExtractResource = entry.resource">
+              <td>{{entry.resource.resourceType}}</td>
+            </tr>
+          </table>
+        </div>
+        <div class="col-md-9">
+          <div class="myScroll">
+            <pre>{{input.selectedExtractResource | json}}</pre>
+          </div>
+
+        </div>
+      </div>
+
+
+    </uib-tab>
+
+
+
+
+  </uib-tabset>
+
+
+</div>

@@ -1,7 +1,8 @@
 angular.module("pocApp")
     .controller('modelReviewCtrl',
         function ($scope,$http,modelsSvc,modelCompSvc,$timeout, $uibModal,makeQSvc,utilsSvc,$window,$filter,
-                  snapshotSvc,vsSvc,qHelperSvc,$localStorage,makeQHelperSvc,modelReviewSvc) {
+                  snapshotSvc,vsSvc,qHelperSvc,$localStorage,makeQHelperSvc,modelReviewSvc,qrVisualizerSvc,
+                  v2ToFhirSvc) {
 
             $scope.input = {}
 
@@ -9,12 +10,12 @@ angular.module("pocApp")
 
             $scope.extensionUrls = makeQHelperSvc.getExtensionUrls()
 
-            //dietrich-blake-louis
-
             $scope.selectionOptions = []
             $scope.selectionOptions.push({display:"Select Published Questionnaire",code:'published'})
             $scope.selectionOptions.push({display:"Paste ad-hoc Questionnaire",code:'adhoc'})
             $scope.input.selectedInputOption = $scope.selectionOptions[0]
+
+            $scope.showRenderOptions = true //will display the prepop / extract options in the renderer
 
             $scope.serverbase = "https://fhir.forms-lab.com/"
 
@@ -24,8 +25,55 @@ angular.module("pocApp")
             })
 
 
-            //--------- setup the form viewer
+            //--------- setup the form viewer -------------------
+            // https://chat.fhir.org/#narrow/channel/179255-questionnaire/topic/smart.20web.20messaging/with/544100483
+            //https://github.com/brianpos/sdc-smart-web-messaging
+
+            $scope.input.hideEmptyRows = true
+
+            let setContext = function () {
+                $scope.sendMessage('sdc.configureContext', {
+                    context: {
+                        subject: { reference: 'Patient/45086382', display: 'Example Patient' },
+                        author: { reference: 'Practitioner/10652933', display: 'Example Practitioner' },
+                        launchContext: [
+                            {
+                                name: 'source',
+                                contentReference: { reference: 'Practitioner/10652933',
+                                    display: 'Example Practitioner' }
+                            }
+                        ]
+                    }
+                })
+
+                $scope.sendMessage('sdc.configure', {
+                    terminologyServer: 'https://tx.fhir.org/r4',
+                    dataServer: 'https://hapi.fhir.org/baseR4',
+                    formsServer: 'https://hapi.fhir.org/baseR4'
+                });
+            }
+
+            function setQR(QR) {
+                $scope.renderedQR = QR //for the display
+
+                let vo = qrVisualizerSvc.makeReport($scope.fullQ,QR)
+                //console.log(vo)
+
+                $scope.qBasedReport = vo.report
+                $scope.codedItems = vo.codedItems
+                $scope.textReport = vo.textReport
+
+                $scope.$digest()
+
+            }
+
             function formViewerSetup() {
+
+                //if the messagingHandle exists, the setuo has already been done.
+                if ($scope.messagingHandle) {
+                    return
+                }
+
                 $scope.messageCounter = 0
                 let url = "https://dev.fhirpath-lab.com/swm-csiro-smart-forms"
 
@@ -36,11 +84,110 @@ angular.module("pocApp")
                 //need to pass the messaging handle & origin when initializing the iFrame
                 let fullUrl = `${url}?messaging_handle=${encodeURIComponent($scope.messagingHandle)}&messaging_origin=${encodeURIComponent($scope.messagingOrigin)}`
                 iframe.src = fullUrl
+
+/*
+                //set the context
+                $timeout(function () {
+                    $scope.sendMessage('sdc.configureContext', {
+                        context: {
+                            subject: { reference: 'Patient/45086382', display: 'Example Patient' },
+                            author: { reference: 'Practitioner/10652933', display: 'Example Practitioner' },
+                            launchContext: [
+                                {
+                                    name: 'source',
+                                    contentReference: { reference: 'Practitioner/10652933',
+                                        display: 'Example Practitioner' }
+                                }
+                            ]
+                        }
+                    })
+
+                    $scope.sendMessage('sdc.configure', {
+                        terminologyServer: 'https://tx.fhir.org/r4',
+                        dataServer: 'https://hapi.fhir.org/baseR4',
+                        formsServer: 'https://hapi.fhir.org/baseR4'
+                    });
+
+
+                },1000)
+
+
+                */
+                window.addEventListener('message',function (data) {
+                    let msg = data.data
+                    let msgType = msg.messageType
+                    console.log(msgType)
+
+                    if (msg.responseToMessageId) {
+                        if (hashResponse[msg.responseToMessageId]) {
+                            hashResponse[msg.responseToMessageId]()
+                            delete hashResponse[msg.responseToMessageId]
+
+                        }
+                    }
+
+
+
+                    switch (msgType) {
+                        case "sdc.ui.changedFocus":
+                            console.log(msg.payload.linkId)
+                            break
+                        case 'sdc.ui.changedQuestionnaireResponse' :
+                            setQR(msg.payload?.questionnaireResponse)
+                         /*   $scope.renderedQR = msg.payload
+
+                            let vo = qrVisualizerSvc.makeReport($scope.fullQ,msg.payload.questionnaireResponse)
+                            //console.log(vo)
+
+                            $scope.qBasedReport = vo.report
+                            $scope.codedItems = vo.codedItems
+                            $scope.textReport = vo.textReport
+
+                            $scope.$digest()
+                            */
+                            break
+
+                        default :
+                            //this could be the response to an extract.
+                            //todo i should really track that message Id
+                            if (msg.payload?.extractedResources) {
+                                $scope.processExtractBundle(msg.payload.extractedResources)
+                                $scope.$digest()
+                            } else if (msg.payload?.questionnaireResponse) {
+                                setQR(msg.payload.questionnaireResponse)
+                            } else {
+                                console.log(angular.toJson(msg))
+                            }
+
+                            break
+
+                    }
+                })
+
             }
 
+            //set up the formViewer iFrame when the page loads.
+            function waitForIframe() {
+                $timeout(() => {
+                    const iframe = document.getElementById('formPreview');
+
+                    if (iframe) {
+                        formViewerSetup();
+                    } else {
+                        // Try again shortly
+                        waitForIframe();
+                    }
+                }, 50); // 50–100ms is typical
+            }
+            waitForIframe();
+/*
+            $timeout(function () {
+                formViewerSetup()
+            },500)
+*/
 
 
-            //display the current form. //todo - this could be made cleaner to avoid the timeouts...
+            //display the current form.
             $scope.previewQ = function (Q) {
                 Q = Q || $scope.fullQ   //when called from the rendering page, not included
                 console.log('Sending Q to renderer',Q)
@@ -52,24 +199,38 @@ angular.module("pocApp")
                         //then another delay
                         $timeout(function () {
                             $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:Q});
+                            setContext()
+
                         },1000)
 
                     },2000)
                 } else {
                     $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:Q});
+                    setContext()
+
                 }
             }
 
-            $scope.sendMessage = function(messageType, payload) {
+            //send a message to the iframe. Assume that formViewerSetup() has been called to create the messaging handle
+            //returns the message id
+            let hashResponse = {}
+            $scope.sendMessage = function(messageType, payload,fnResponse) {
                 let messagingHandle = $scope.messagingHandle
 
                 const iframe = document.getElementById('formPreview');
+
+                //should never happen...
                 if (!iframe || !iframe.contentWindow) {
                     alert('Iframe not loaded yet!');
                     return;
                 }
 
                 const messageId = `msg-${++$scope.messageCounter}`;
+
+                if (fnResponse) {
+                    hashResponse[messageId] = fnResponse
+                }
+
                 const message = {
                     messagingHandle,
                     messageId,
@@ -82,7 +243,105 @@ angular.module("pocApp")
 
                 console.log('Sending message:', message);
                 targetWindow.postMessage(message, targetOrigin);
+                return messageId
             };
+
+            $scope.fitGraph = function () {
+                $timeout(function () {
+                    $scope.resourceChart.fit()
+                },500)
+            }
+
+
+            //instruct the renderer to pre-pop
+            //parameters are set in the sdc.configureContext() and sdc.configure() calls
+            $scope.setPrepop = function () {
+                let responseFn = function () {
+                    $scope.sendMessage('sdc.requestCurrentQuestionnaireResponse',{})
+                }
+                $scope.sendMessage('sdc.requestPrepopulate',{},responseFn)
+
+                //$scope.sendMessage('sdc.requestCurrentQuestionnaireResponse',{})
+            }
+
+            //get the extract bundle from the currently rendered form
+            $scope.getExtractBundle = function () {
+                $scope.sendMessage('sdc.requestExtract', {});
+            }
+
+            $scope.processExtractBundle = function (bundle) {
+
+                $scope.extractBundle = bundle
+
+                let options = {bundle:bundle,
+                    hashErrors:{},
+                    serverRoot:""}
+
+
+                let vo = v2ToFhirSvc.makeGraph1(options);
+                console.log(vo)
+
+                let container = document.getElementById('resourceGraph');
+                let graphOptions = {
+                    physics: {
+                        enabled: true,
+                        barnesHut: {
+                            gravitationalConstant: -10000,
+                            centralGravity: 0.3,
+                            springLength: 120,
+                            springConstant: 0.04,
+                            damping: 0.09,
+                            avoidOverlap: 0.2
+                        },
+                        stabilization: {
+                            iterations: 200,   // try lowering from default (1000)
+                            updateInterval: 25
+                        }
+
+                    }
+                }
+
+                $scope.resourceChart = new vis.Network(container, vo.graphData, graphOptions);
+
+                // 🚀 Turn off physics after initial layout
+                $scope.resourceChart.once('stabilizationIterationsDone', function () {
+                    $scope.resourceChart.setOptions({ physics: false });
+                });
+
+
+
+            }
+
+            $scope.showInBV = function () {
+                const bvWindow = window.open('loadingBV.html', '_blank')
+                let id = `id${new Date().getTime()}`
+
+                let bundle = angular.copy($scope.extractBundle)
+                bundle.id = id
+
+                let qry = `saveBundle/${id}`
+                //todo likely want other metadata here
+                let vo = {bundle:bundle}
+                $http.put(qry,vo).then(
+                    function (data) {
+
+                        const base = `${location.protocol}//${location.host}`
+
+                        let qry = `bundleid=${id}`
+                        const url = `${base}/clinfhir/bundleViewer.html?${qry}`
+
+                        console.log(url)
+                        bvWindow.location.href = url;
+
+                    }, function (err) {
+                        alert(angular.toJson(err))
+                    }
+                )
+
+
+
+
+            }
 
             //----------------------------------
 
@@ -229,7 +488,7 @@ angular.module("pocApp")
             $scope.input.technical = true
 
             //in the table view, hide common DG like HCP as the details are not relevant to reviewers
-            $scope.input.hideSomeDG = true
+            //$scope.input.hideSomeDG = true
 
             let search = $window.location.search;
             let modelName = null    //this is used when a q name is passed on the url - from the editor
@@ -239,9 +498,6 @@ angular.module("pocApp")
 
                 modelName = search.substr(1)
 
-               // if ($window.location.hash) {
-               //     $scope.compVersion = $window.location.hash.substr(1)
-            //    }
 
 
             }
@@ -253,6 +509,10 @@ angular.module("pocApp")
                 $scope.loadQ(qName)
             }
 
+
+
+
+            //view the hierarchy of an item
             $scope.viewItem = function (item) {
 
                 makeQHelperSvc.showItemDetailsDlg(item,$scope.fullQ)
@@ -406,13 +666,7 @@ angular.module("pocApp")
                     $scope.loadQ(qName)
 
 
-/*
 
-                    $timeout(function () {
-                        $scope.previewQ($scope.fullQ)
-                        $scope.input.mainTabActive = 2
-                    },2000)
-*/
 
                 } else if (modelName.startsWith('url-')) {
                     //a url was passed. This will be retrieved from the lab server
