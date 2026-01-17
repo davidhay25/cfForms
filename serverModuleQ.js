@@ -8,6 +8,7 @@ const path = require('path');
 async function setup(app,database) {
 
 
+    //when a Q is published from the designer
     app.post('/q/publish',async function(req,res){
         let Q = req.body
         try {
@@ -18,8 +19,6 @@ async function setup(app,database) {
             res.status(500).json(ex.message)
             return
         }
-
-
 
     })
 
@@ -67,7 +66,7 @@ async function setup(app,database) {
         }
     })
 
-    //get a specific version of a Q
+    //get a specific version of a published Q
     app.get('/q/:name/v/:version', async function(req,res) {
 
         try {
@@ -103,6 +102,7 @@ async function setup(app,database) {
 
     })
 
+    //get all the versions of a published Q
     app.get('/q/:name/versions', async function(req,res) {
         let name = req.params.name
         let query={name:name}
@@ -124,10 +124,13 @@ async function setup(app,database) {
     })
 
 
+    //------ functions to interact with adHoc Q's in the Q viewer. ie not published ones.
+    //------- may wish to combine published & adhoc later, but for now keep them separate...
 
-    //QR functions
 
-    //return all QRs
+    //---- QR functions
+
+    //return all QRs - pathQ
     app.get('/qr/all', async function(req,res) {
         try {
             const cursor = await database.collection("pathQR").find().sort({runDate:-1}).toArray()

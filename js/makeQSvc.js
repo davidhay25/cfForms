@@ -945,6 +945,8 @@ angular.module("pocApp")
 
             },
 
+
+
             makeHierarchicalQFromDG : function  (dg,lstElements,config) {
                 config.getControlDetails = this.getControlDetails //need to use the function defined in the service object which is called externally...
                 //Used in the new Q renderer

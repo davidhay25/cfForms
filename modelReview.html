@@ -16,11 +16,34 @@
 
     <link rel="stylesheet" type="text/css" href="css/jsTreeStyle.css"/>
 
+
+    <script src="js/libs/fhirpath.min.js"></script>
+    <script src="js/libs/fhirpath.r4.min.js"></script>
+
+
+
+
     <link rel="stylesheet" type="text/css" href="css/jsTreeThemes/proton/style.css"/>
     <script src="js/libs/jstree.min.js"></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="383f5688-7293-4ac2-9dd3-b82e032bcc81"></script>
 
     <style>
+
+        .split-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .divider {
+            width: 6px;
+            cursor: col-resize;
+            background: #ddd;
+        }
+
+        .as-split-gutter {
+            background: red !important;
+            z-index: 9999;
+        }
 
         .inset {
             margin-left: 8px;
@@ -88,7 +111,6 @@
     <script src="js/modelReviewCtrl.js"></script>
     <script src="js/modelsSvc.js"></script>
 
-
     <script src="js/libs/ngStorage.min.js"></script>
     <script src="js/libs/angular-bootstrap-checkbox.js"></script>
 
@@ -101,7 +123,6 @@
     <script src="js/utilsSvc.js"></script>
     <script src="js/libs/vis.min.js"></script>
     <script src="js/showParameters.js"></script>
-
 
     <script src="js/vsSvc.js"></script>
     <script src="js/orderingSvc.js"></script>
@@ -127,7 +148,7 @@
     <script src="js/qrVisualizerSvc.js"></script>
     <script src="js/v2ToFhirSvc.js"></script>
 
-
+    <script src="js/validatorSvc.js"></script>
 
 </head>
 
@@ -188,7 +209,7 @@
 
             <div class="row">
                 <div class="col-md-3">
-                    <h4>Source of Questionnaire</h4>
+                    <h4>Questionnaire selection</h4>
                     <div class="list-group">
                         <div ng-repeat = "opt in selectionOptions"
                              style="cursor: pointer"
@@ -286,9 +307,6 @@
                                     </div>
 
 
-
-
-
                                     <br/>
 
 
@@ -304,15 +322,42 @@
 
                         <div class="row">
                             <div class="col-md-9">
-                                <textarea class="form-control" ng-model="input.pastedQ" rows="20"></textarea>
+                                <textarea class="form-control"
+                                          placeholder="Paste the contents of the Questionnaire here, or click the button to the right to upload a file"
+                                          ng-model="input.pastedQ" rows="20"></textarea>
                             </div>
                             <div class="col-md-3">
+
+
+                                <div ng-hide="input.pastedQ">
+                                    <input type="file"
+                                           onchange="angular.element(this).scope().fileSelected(this)"
+                                           id="fileUploadFileRef"
+                                           accept="application/json" />
+                                </div>
+
+
+
+<!--
+                                <button class="btn btn-link pull-right"
+                                        ng-click="uploadQ()"
+                                        ng-if="! input.pastedQ">Upload</button>
+-->
                                 <button class="btn btn-link pull-right"
                                         ng-click="pasteQ(input.pastedQ)"
                                         ng-if="input.pastedQ">Parse Questionnaire</button>
+
+                                <button class="btn btn-link pull-right"
+                                        ng-click="input.pastedQ = null"
+                                        ng-if="input.pastedQ">Clear</button>
+
                             </div>
                         </div>
 
+                    </div>
+
+                    <div ng-show="input.selectedInputOption.code == 'manager'">
+                        manager
                     </div>
                 </div>
             </div>
@@ -360,10 +405,16 @@
 
         </uib-tab>
 
-        <uib-tab ng-show="fullQ" heading="Tree view">
+        <uib-tab ng-show="fullQ" heading="Outline">
+
             <div class="alert alert-info">
                 {{fullQ.name}} {{fullQ.version}}
+                <span ng-show="input.selectedInputOption.code == 'adhoc'" class="pull-right">
+                    Save form in Form Manager
+                </span>
             </div>
+
+
 
             <renderform2 q="fullQ" hash-ed="hashEd" technicalview="input.technical" errors="errorLog"></renderform2>
         </uib-tab>
@@ -860,10 +911,75 @@
             </div>
         </uib-tab>
 
+
+        <uib-tab ng-show="fullQ"  heading="Validate">
+            <button class="btn btn-link pull-right"
+                    ng-hide="validationResult"
+                    ng-click="validate()">Perform validation</button>
+
+            <div class="clearfix"></div>
+
+            <div ng-show="validationInProgress">
+                Performing validation, please wait...
+            </div>
+
+            <div ng-show="validationResult">
+                <div>&nbsp;</div>
+            </div>
+
+
+            <div class="row">
+                <div class="col-md-4">
+                    <table class="table table-bordered">
+                        <tr ng-repeat="iss in validationResult.OO.issue"
+                            ng-class="{listItemSelected:input.selectedIssue == iss}"
+                            style="cursor: pointer"
+                            ng-click="input.selectedIssue = iss">
+                            <td>{{iss.severity}}</td>
+                            <td>{{iss.details.text}}</td>
+
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-8">
+
+                    <div ng-show = "input.selectedIssue">
+                        <table>
+                            <tr><td width="20%">Issue</td><td>{{input.selectedIssue.details.text}}</td></tr>
+                            <tr><td>Severity</td><td>{{input.selectedIssue.severity}}</td></tr>
+                            <tr><td>Expression</td><td>{{input.selectedIssue.expression[0]}}</td></tr>
+                            <tr><td>Value</td><td><pre>{{input.selectedIssue.issDetail | json}}</pre></td></tr>
+                        </table>
+
+                        <div ng-show="input.selectedIssue.item">
+
+                            <div class="pull-right clickable" ng-click="showItemHierarchy(input.selectedIssue.item)">Show item hierarchy</div>
+
+                            <h3>Item</h3>
+                            <pre>{{input.selectedIssue.item | json}}</pre>
+                            <em>Any child items have been removed</em>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+
+
+
+
+        </uib-tab>
+
         <uib-tab  ng-show="fullQ" heading="Questionnaire Json">
 
 
+            <div>
+                <div class="pull-right btn btn-link" ng-click="copyToClipboard()">Copy to Clipboard</div>
+                <div class="pull-right btn btn-link" ng-click="downloadQ()">Download Questionnaire</div>
+            </div>
 
+            <div class="clearfix"></div>
 
             <div class="myScroll">
                 <pre>{{fullQ | json}}</pre>

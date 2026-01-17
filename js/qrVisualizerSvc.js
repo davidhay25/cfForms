@@ -7,6 +7,99 @@ angular.module("pocApp")
 
 
         return {
+
+            makeReport1 : function (Q,QR) {
+                //generate a report based on the QR rather than the Q
+                let hashQ = {}  //generate a hash of item by linkId
+
+                //build the has of Q items by linkId
+                function processQItem(item) {
+                    hashQ[item.linkId] = item
+                    if (item.item) {
+                        for (const child of item.item) {
+                            processQItem(child)
+                        }
+                    }
+                }
+
+                for (const item of Q.item || []) {
+                    processQItem(item)
+                }
+
+
+                //now generate the report from the QR
+
+                let arReport = []
+
+                function processQRItem(qrItem,level) {
+
+
+                    for (let ans of qrItem.answer || []) {
+
+                        let lne = {item:qrItem,answerDisplay:[],level:level}
+                        let linkId = qrItem.linkId
+
+                        //ans will have a single property - valueCoding, valueString etc
+                        let keys = Object.keys(ans)
+                        for (const key of keys ) {
+                            let value = ans[key]
+                            lne.dt = key.replace("value","")
+
+                            //should only be 1
+                            switch (key) {
+                                case "valueCoding":
+                                    lne.answerDisplay.push(`${value.code} | ${value.display} | ${value.system}`)
+
+                                    lne.answerCoding = value
+                                   // codedItems.push(lne)
+
+                                    break
+                                case "valueQuantity":
+                                    lne.answerDisplay.push(`${value.value} ${value.code}`)
+                                    break
+                                /*     case "valueString" :
+                                         thing.dt = 'String'
+                                         thing.answerDisplay.push(value)
+                                         break
+                                     */
+                                default :
+                                    //todo - replace wirh code
+                                    //if (lne.item.linkId !== 'id-2') {
+                                    if (qrItem.text  !== 'text') {
+                                        lne.answerDisplay.push(value)
+                                    } else {
+                                        lne.answerDisplay.push("Text removed to improve report display")
+                                    }
+
+                            }
+                            arReport.push(lne)
+                        }
+
+
+
+
+
+                    }
+
+                    if (qrItem.item) {
+                        level++
+                        for (let child of qrItem.item) {
+                            processQRItem(child,level)
+                        }
+                    }
+
+
+                }
+
+
+                //now parse the QR building the report
+                for (const item of QR.item) {
+                    processQRItem(item,1)
+                }
+
+                return arReport
+
+            },
             makeReport: function (Q,QR) {
                 //create a hash of values from the QR
                 //parse over the Q to generate the report
@@ -20,7 +113,6 @@ angular.module("pocApp")
 
                     //looking for the textual report
                     if (item.text == 'text'  ) {
-                     //   if (item.linkId == "id-2"  ) {         //todo add a code to the Q.item and use that
                         if (item.answer) {
                             let report = item.answer[0].valueString
                             report = report.replace(/\n/g, '<br>')
@@ -42,9 +134,6 @@ angular.module("pocApp")
                 }
 
 
-
-
-                //lne = {
                 function processQItem(lst,item,level) {
                     let lne = {item:item,answerDisplay:[],level:level}
                     let linkId = item.linkId

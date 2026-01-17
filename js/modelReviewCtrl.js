@@ -2,7 +2,7 @@ angular.module("pocApp")
     .controller('modelReviewCtrl',
         function ($scope,$http,modelsSvc,modelCompSvc,$timeout, $uibModal,makeQSvc,utilsSvc,$window,$filter,
                   snapshotSvc,vsSvc,qHelperSvc,$localStorage,makeQHelperSvc,modelReviewSvc,qrVisualizerSvc,
-                  v2ToFhirSvc) {
+                  v2ToFhirSvc,validatorSvc) {
 
             $scope.input = {}
 
@@ -12,6 +12,7 @@ angular.module("pocApp")
 
             $scope.selectionOptions = []
             $scope.selectionOptions.push({display:"Select Published Questionnaire",code:'published'})
+            $scope.selectionOptions.push({display:"Retrieve from Form Manager",code:'manager'})
             $scope.selectionOptions.push({display:"Paste ad-hoc Questionnaire",code:'adhoc'})
             $scope.input.selectedInputOption = $scope.selectionOptions[0]
 
@@ -25,6 +26,69 @@ angular.module("pocApp")
             })
 
 
+
+            $scope.validate = function () {
+
+                $scope.validationInProgress = true
+                validatorSvc.validate($scope.fullQ).then(
+                    function (data) {
+                        $scope.validationResult = data
+
+                    }
+                ).finally(() => $scope.validationInProgress = false)
+            }
+
+            $scope.showItemHierarchy = function (item) {
+                $scope.viewItem(item)
+
+            }
+
+            //called when a file is selected in the input selector
+            $scope.fileSelected = function (input) {
+                $scope.$apply(function () {
+                    if (input.files && input.files.length > 0) {
+                        //$scope.jsonFileSelected = true;
+
+                        // Get the first file's name
+                        $scope.selectedFileName = input.files[0].name;
+
+                        // Optionally, auto-upload
+                        $scope.uploadJson();
+                    }
+                });
+            };
+
+
+            $scope.uploadJson = function() {
+                let id = "#fileUploadFileRef"    //in qMetadata
+                let file = $(id)
+                let fileList = file[0].files
+                if (fileList.length == 0) {
+                    alert("Please select a file first")
+                    return;
+                }
+
+                let fileObject = fileList[0]  //is a complex object
+
+                let r = new FileReader();
+
+                //called when the upload completes
+                r.onloadend = function (e) {
+                    let data = e.target.result;
+
+                    $scope.input.pastedQ = data
+                    console.log(data)
+
+                    $scope.$digest()
+
+
+                }
+
+                //perform the read...
+                r.readAsText(fileObject);
+            }
+
+
             //--------- setup the form viewer -------------------
             // https://chat.fhir.org/#narrow/channel/179255-questionnaire/topic/smart.20web.20messaging/with/544100483
             //https://github.com/brianpos/sdc-smart-web-messaging
@@ -32,6 +96,7 @@ angular.module("pocApp")
             $scope.input.hideEmptyRows = true
 
             let setContext = function () {
+
                 $scope.sendMessage('sdc.configureContext', {
                     context: {
                         subject: { reference: 'Patient/45086382', display: 'Example Patient' },
@@ -63,6 +128,10 @@ angular.module("pocApp")
                 $scope.codedItems = vo.codedItems
                 $scope.textReport = vo.textReport
 
+                //alternative QR focussed report
+                let vo1 = qrVisualizerSvc.makeReport1($scope.fullQ,QR)
+                $scope.qBasedReport1 = vo.report
+
                 $scope.$digest()
 
             }
@@ -76,14 +145,12 @@ angular.module("pocApp")
 
                 $scope.messageCounter = 0
                 let url = "https://dev.fhirpath-lab.com/swm-csiro-smart-forms"
-
                 const iframe = document.getElementById('formPreview');
-                $scope.messagingHandle = 'cf-forms-' + Date.now(); // Unique handle for this session
-                $scope.messagingOrigin = window.location.origin; // Origin for message validation
+                $scope.messagingHandle = 'cf-forms-' + Date.now() // Unique handle for this session
+                $scope.messagingOrigin = window.location.origin // Origin for message validation
 
                 //need to pass the messaging handle & origin when initializing the iFrame
-                let fullUrl = `${url}?messaging_handle=${encodeURIComponent($scope.messagingHandle)}&messaging_origin=${encodeURIComponent($scope.messagingOrigin)}`
-                iframe.src = fullUrl
+                iframe.src = `${url}?messaging_handle=${encodeURIComponent($scope.messagingHandle)}&messaging_origin=${encodeURIComponent($scope.messagingOrigin)}`
 
 /*
                 //set the context
@@ -126,25 +193,12 @@ angular.module("pocApp")
                         }
                     }
 
-
-
                     switch (msgType) {
                         case "sdc.ui.changedFocus":
                             console.log(msg.payload.linkId)
                             break
                         case 'sdc.ui.changedQuestionnaireResponse' :
                             setQR(msg.payload?.questionnaireResponse)
-                         /*   $scope.renderedQR = msg.payload
-
-                            let vo = qrVisualizerSvc.makeReport($scope.fullQ,msg.payload.questionnaireResponse)
-                            //console.log(vo)
-
-                            $scope.qBasedReport = vo.report
-                            $scope.codedItems = vo.codedItems
-                            $scope.textReport = vo.textReport
-
-                            $scope.$digest()
-                            */
                             break
 
                         default :
@@ -180,11 +234,8 @@ angular.module("pocApp")
                 }, 50); // 50–100ms is typical
             }
             waitForIframe();
-/*
-            $timeout(function () {
-                formViewerSetup()
-            },500)
-*/
+
+
 
 
             //display the current form.
@@ -194,17 +245,15 @@ angular.module("pocApp")
                 //this needs to be called once per session
                 if (! $scope.messagingHandle) {
                     //we wait a couple of seconds to make sure the iframe has loaded
+
                     $timeout(function () {
-                        formViewerSetup()
-                        //then another delay
-                        $timeout(function () {
-                            $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:Q});
-                            setContext()
+                        console.log("messagingHandle not set. Waiting a second...")
+                        $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:Q});
+                        setContext()
 
-                        },1000)
+                    },1000)
 
-                    },2000)
-                } else {
+                } else {console.log("messagingHandle was set. Initializing iFrame...")
                     $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:Q});
                     setContext()
 
@@ -346,133 +395,9 @@ angular.module("pocApp")
             //----------------------------------
 
             $scope.input.QR =  $localStorage.QR //dev
-            $scope.parseQRDEP = function (text) {
-                let QR
-
-                $scope.hashLinkId = {}
-                $scope.lstQRItem = []
-
-                try {
-                    QR = angular.fromJson(text)
-                    $localStorage.QR = text //dev
-                } catch (e) {
-                    alert("Invalid Json")
-                    return
-                }
-
-                let qUrl = QR.questionnaire
-
-                let qry = `${$scope.serverbase}Questionnaire?url=${qUrl}`
-                let config = {headers:{'content-type':'application/fhir+json'}}
-
-                $http.get(qry,config).then(
-                    function (data) {
-                        console.log(data.data)
-                        if (data.data.entry && data.data.entry.length > 0) {
-
-                            //get the definition of the items from the Q
-                            let Q = data.data.entry[0].resource
-                            //build a hash of Q items by linkId
-                            for (const item of Q.item) {
-                                processQItem(item)
-                            }
-
-                            //get the answers from the QR
-                            for (const item of QR.item) {
-                                processQRItem(item,0)
-                            }
-
-                        } else {
-                            alert(`The Q with the url ${qUrl} was not found`)
-                        }
-
-                    },function (err) {
-                        alert(angular.toJson(err.data))
-                    }
-                )
-
-                function processQItem(item) {
-                    $scope.hashLinkId[item.linkId] = item
-
-                    if (item.item) {
-                        for (const child of item.item) {
-                            processQItem(child)
-                        }
-                    }
-                }
-
-
-                function processQRItem(item,level) {
-                    console.log(item.linkId)
-
-                    let def = angular.copy($scope.hashLinkId[item.linkId])
-                    delete def.item
-                    if (item.answer) {
-                       // let def = angular.copy($scope.hashLinkId[item.linkId])
-                      //  delete def.item
-                        //answer[] is the answer from the QR (an array), answerDisplay[] is a display form
-                        let thing = {item:def,answer:item.answer,answerDisplay:[]}
-                        thing.level = level
-                        //a simplified answer for display
-                        for (let ans of item.answer) {
-                            //ans will have a single property - valueCoding, valueString etc
-                            let keys = Object.keys(ans)
-                            for (const key of keys ) {
-                                let value = ans[key]
-                                thing.dt = key.replace("value","")
-
-                                //should only be 1
-                                switch (key) {
-                                    case "valueCoding":
-                                        thing.answerDisplay.push(`${value.code} | ${value.display} | ${value.system}`)
-                                        break
-                                    case "valueQuantity":
-                                        thing.answerDisplay.push(`${value.value} ${value.code}`)
-                                        break
-                               /*     case "valueString" :
-                                        thing.dt = 'String'
-                                        thing.answerDisplay.push(value)
-                                        break
-                                    */
-                                    default :
-                                        thing.answerDisplay.push(value)
-                                }
-
-                            }
-                            $scope.lstQRItem.push(thing)
 
 
 
-                        }
-
-
-
-                    } else {
-                        //there is no answer, but add as a 'section'
-
-
-                        let thing = {item:def,answer:item.answer,answerDisplay:[]}
-
-                        if (item.item) {
-                            thing.dt = "Group"
-                        }
-
-                        thing.level = level
-                        $scope.lstQRItem.push(thing)
-                    }
-
-
-                    if (item.item) {
-                        level++
-                        for (const child of item.item) {
-                            processQRItem(child,level)
-                        }
-                    }
-                }
-
-
-
-            }
 
             $scope.popoverItem = function (item) {
                 if (item) {
@@ -535,8 +460,6 @@ angular.module("pocApp")
                 if (arExt.length > 0) {
                     $scope.versionReleaseNotes =  arExt[0].valueMarkdown
                 }
-
-
             }
 
 
@@ -544,8 +467,11 @@ angular.module("pocApp")
                 $scope.input.mainTabActive = 1
                 $scope.fullQ = Q
 
-                processQ($scope.fullQ)
+                if (window.umami) {
+                    window.umami.track('selectQ',{type:'published',name:Q.name});
+                }
 
+                processQ($scope.fullQ)
 
             }
 
@@ -566,6 +492,7 @@ angular.module("pocApp")
                     function (data) {
                         //returns an array of fullQ versions
                         console.log(data.data)
+
 
 
                         $scope.ddVersions = []
@@ -639,6 +566,7 @@ angular.module("pocApp")
                         $scope.input.mainTabActive = 1
                         $scope.fullQ = data.data.Q
                         $scope.errorLog = data.data.errorLog
+
                         processQ($scope.fullQ)
 
                     }, function (err) {
@@ -658,6 +586,7 @@ angular.module("pocApp")
 
             // process any request that was passed in the call.
             //I *think* it's only from models
+
             if (modelName) {
                 if (modelName.startsWith('q-')) {
                     //a Q reference was passed. The Q will be retrieved from the questionnaire database
@@ -731,18 +660,14 @@ angular.module("pocApp")
                         })
 
                     } catch (ex) {
-
+                        console.error(ex)
                     }
-                    console.log($scope.lstQ)
+                    //console.log($scope.lstQ)
 
                 }, function (err) {
                     alert(angular.toJson(err.data))
                 }
             )
-
-
-
-
 
             //paste in a Q
             $scope.pasteQ = function (Qstring) {
@@ -752,17 +677,15 @@ angular.module("pocApp")
                 let testQ = {}
                 try {
 
+                    //convert any R5/6 attributes to R4
                     let vo = modelReviewSvc.convertICCR(JSON.parse(Qstring),$scope.input.parseMakeGroup)
                     testQ = vo.Q
-                    console.log(vo.log)
-/*
-                    let vo1 = modelReviewSvc.makeDG(testQ)
-                    //>>>>>>>> temp!!
-                    let key = vo1.dg.name
-                    $localStorage.world.dataGroups = {}
-                    $localStorage.world.dataGroups[key] = vo1.dg
-                    */
-                   // console.log(vo1.dg)
+                    //console.log(vo.log)
+
+                    if (window.umami) {
+                        window.umami.track('selectQ',{type:'dhhoc',name:Q.name || 'noname'});
+                    }
+
 
                 } catch (ex) {
                     console.log(ex)
@@ -772,8 +695,6 @@ angular.module("pocApp")
 
                 try {
                     $scope.hashEd = {}
-                    //A report focussed on pre-popupation & extraction
-
 
                     let voReport =  makeQSvc.makeReport(testQ)
                     $scope.qReport =voReport.report
@@ -1204,5 +1125,45 @@ angular.module("pocApp")
 
 
             }
+
+            $scope.downloadQ = function () {
+                const json = angular.toJson($scope.fullQ, true);
+                let suggestedName = $scope.fullQ.name || "No name"
+                const blob = new Blob([json], { type: 'application/json' });
+
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = suggestedName; // user can change it
+                a.click();
+
+                URL.revokeObjectURL(url);
+            };
+
+
+            $scope.copyToClipboard = function(){
+                if ($scope.fullQ) {
+                    //https://stackoverflow.com/questions/29267589/angularjs-copy-to-clipboard
+                    var copyElement = document.createElement("span");
+                    copyElement.appendChild(document.createTextNode(angular.toJson($scope.fullQ),2));
+                    copyElement.id = 'tempCopyToClipboard';
+                    angular.element(document.body.append(copyElement));
+
+                    // select the text
+                    var range = document.createRange();
+                    range.selectNode(copyElement);
+                    window.getSelection().removeAllRanges();
+                    window.getSelection().addRange(range);
+
+                    // copy & cleanup
+                    document.execCommand('copy');
+                    window.getSelection().removeAllRanges();
+                    copyElement.remove();
+
+                    alert("The Questionnaire has been copied to the clipboard.")
+                }
+
+            };
 
         })
