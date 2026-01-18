@@ -149,6 +149,7 @@
     <script src="js/v2ToFhirSvc.js"></script>
 
     <script src="js/validatorSvc.js"></script>
+    <script src="js/saveAdHocQCtrl.js"></script>
 
 </head>
 
@@ -355,9 +356,56 @@
                         </div>
 
                     </div>
-
                     <div ng-show="input.selectedInputOption.code == 'manager'">
-                        manager
+                        <div class="row">
+                            <div class="col-md-2">
+                                Form Server
+                            </div>
+                            <div class="col-md-4">
+                                <select class="form-control" ng-model="input.formServer"
+                                        ng-options="svr.display for svr in formServers"></select>
+                            </div>
+                            <div class="col-md-2">
+
+                            </div>
+
+                        </div>
+
+
+
+
+                    </div>
+
+
+
+
+                    <div ng-show="input.selectedInputOption.code == 'library'">
+
+
+
+                        <table class="table table-bordered">
+                            <tr><th>Title</th><th>Name</th><th>Version</th><th>Publisher</th><th>Description</th><th></th></tr>
+                            <tr ng-repeat="miniQ in allAdHoc">
+                                <td>
+
+                                    <div    class="clickableDotted"
+                                    uib-popover-html="miniQ.url"
+                                    popover-placement="right"
+                                    popover-class="custom-popover-big"
+                                    popover-trigger="'mouseenter'">
+                                    {{miniQ.title}}
+                                    </div>
+
+
+                                </td>
+                                <td>{{miniQ.name}}</td>
+                                <td>{{miniQ.version}}</td>
+                                <td>{{miniQ.publisher}}</td>
+                                <td>{{miniQ.description}}</td>
+                                <td><div class="clickable" ng-click="loadFromManager(miniQ)">Load</div> </td>
+                            </tr>
+                        </table>
+
                     </div>
                 </div>
             </div>
@@ -410,10 +458,10 @@
             <div class="alert alert-info">
                 {{fullQ.name}} {{fullQ.version}}
                 <span ng-show="input.selectedInputOption.code == 'adhoc'" class="pull-right">
-                    Save form in Form Manager
+                    <div class = 'clickable' ng-click="saveAdHocQ()">Publish Questionnaire to Form Manager</div>
+
                 </span>
             </div>
-
 
 
             <renderform2 q="fullQ" hash-ed="hashEd" technicalview="input.technical" errors="errorLog"></renderform2>

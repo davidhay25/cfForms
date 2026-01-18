@@ -30,6 +30,7 @@ const QModule = require("./serverModuleQ")
 const libraryModule = require("./serverModuleLibrary")
 const playgroundModule = require("./serverModulePlayground")
 const adminModule = require("./serverModuleAdmin")
+const serverManagerModule = require("./serverModuleFormsManager")
 
 
 let express = require('express');
@@ -85,7 +86,7 @@ async function setup() {
     QModule.setup(app,database)
     libraryModule.setup(app,client)
     playgroundModule.setup(app,database)
-
+    serverManagerModule.setup(app)
 }
 setup()
 

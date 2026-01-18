@@ -12,9 +12,21 @@ angular.module("pocApp")
 
             $scope.selectionOptions = []
             $scope.selectionOptions.push({display:"Select Published Questionnaire",code:'published'})
-            $scope.selectionOptions.push({display:"Retrieve from Form Manager",code:'manager'})
+            $scope.selectionOptions.push({display:"Retrieve from Library",code:'library'})
+            $scope.selectionOptions.push({display:"Retrieve from external Form Manager",code:'manager'})
             $scope.selectionOptions.push({display:"Paste ad-hoc Questionnaire",code:'adhoc'})
             $scope.input.selectedInputOption = $scope.selectionOptions[0]
+
+            //todo - UI for adding forms servers. Store in db. Only I can remove
+
+            $scope.formServers = []
+            $scope.formServers.push({display:"Australian Sparked Server",url:"https://smartforms.csiro.au/api/fhir"})
+            $scope.formServers.push({display:"Fhirpath Lab",url:"https://fhir.forms-lab.com"})
+            $scope.input.formServer = $scope.formServers[0]
+
+
+            //https://fhir.forms-lab.com/
+
 
             $scope.showRenderOptions = true //will display the prepop / extract options in the renderer
 
@@ -26,6 +38,69 @@ angular.module("pocApp")
             })
 
 
+            $http.get(
+                'https://smartforms.csiro.au/api/fhir/Questionnaire',
+                {
+                    headers: {
+                        'Accept': 'application/fhir+json'
+                    }
+                }
+            ).then(
+                (response) => console.log(response.data),
+                (err) => console.error(err)
+            )
+
+            //forms manager functions
+
+            //retrieve all adHoc Q - latest version of each
+            function getAllAdHoc() {
+                $http.get('adhocq/all').then(
+                    function (data) {
+                        $scope.allAdHoc = data.data
+                    }
+                )
+            }
+            getAllAdHoc()
+
+            $scope.saveAdHocQ = function () {
+                //Add a Q to the Form Manager
+                $uibModal.open({
+                    backdrop: 'static',      //means can't close by clicking on the backdrop.
+                    keyboard: false,       //same as above.
+                    //size : 'xlg',
+                    templateUrl: 'modalTemplates/saveAdHocQ.html',
+
+                    controller: 'saveAdHocQCtrl',
+
+                    resolve: {
+                        Q: function () {
+                            return $scope.fullQ
+                        }
+                    }
+
+                }).result.then(function () {
+
+
+                })
+            }
+
+            $scope.loadFromManager = function(miniQ) {
+                let qry = `adhocq?url=${miniQ.url}&version=${miniQ.version}`
+                $http.get(qry).then(
+                    function (data) {
+                        $scope.fullQ = data.data
+                        $scope.input.mainTabActive = 1
+                        processQ($scope.fullQ)
+
+                    }, function (err) {
+
+                    }
+                )
+            }
+
+
+
+            // --------- validation functions
 
             $scope.validate = function () {
 
@@ -43,6 +118,8 @@ angular.module("pocApp")
 
             }
 
+
+            //------- file upload functions
             //called when a file is selected in the input selector
             $scope.fileSelected = function (input) {
                 $scope.$apply(function () {
@@ -412,8 +489,8 @@ angular.module("pocApp")
             //display the technical items
             $scope.input.technical = true
 
-            //in the table view, hide common DG like HCP as the details are not relevant to reviewers
-            //$scope.input.hideSomeDG = true
+
+            // ========== direct access functions - ap called with the name of a published Q
 
             let search = $window.location.search;
             let modelName = null    //this is used when a q name is passed on the url - from the editor
@@ -422,8 +499,6 @@ angular.module("pocApp")
             if (search) {
 
                 modelName = search.substr(1)
-
-
 
             }
 
@@ -693,6 +768,11 @@ angular.module("pocApp")
                     return
                 }
 
+                if (! testQ.resourceType || testQ.resourceType !== 'Questionnaire') {
+                    alert("This is not a Questionnaire")
+                    return
+                }
+
                 try {
                     $scope.hashEd = {}
 
@@ -705,10 +785,9 @@ angular.module("pocApp")
 
                 } catch (ex) {
                     console.log(ex)
-                    alert("This is a valid Json string, but there were errors parsing it.")
+                    alert("This is a Questionnaire, but there were errors parsing it.")
 
                 }
-
             }
 
 
@@ -754,22 +833,6 @@ angular.module("pocApp")
 
 
 
-            //the equivalent of the cardinality
-            $scope.getObligation = function (ed) {
-                if (ed) {
-                    if (ed.mult.startsWith('1')) {
-                        return "Mandatory"
-                    }
-
-                    if (ed.enableWhen && ed.enableWhen.length > 0) {
-                        return "Conditional"
-                    }
-
-                    return "Optional"
-                }
-
-
-            }
 
             //show a comment line in one of the 'allcomments' displays
             $scope.showCommentLine = function (comment) {
@@ -794,92 +857,8 @@ angular.module("pocApp")
 
             $scope.version = utilsSvc.getVersion()
 
-            $scope.getPathSegments = function (path) {
-                if (path) {
-                    return path.split('.')
-                }
-
-            }
 
 
-
-            //when an element is selected in a form
-            $scope.$on('elementSelected',function(event,vo) {
-
-
-                console.log('ignoring selection - hash does not align with id')
-                return
-
-
-                let linkId = vo.cell.item.linkId
-
-                //need to get the selectedED (to add to the comment)
-                $scope.currentLinkId = linkId
-                //todo - what if this is an ED?
-                $scope.selectedED = $scope.hashCompElements[linkId].ed
-
-
-
-                $scope.commentsThisPath = $scope.commentsThisComp[linkId]
-
-                console.log(linkId)
-
-                //this is just making up a node to match the tree
-                $scope.selectedCompositionNode = {data:{}}
-                if ($scope.hashCompElements[linkId]) {
-                    $scope.selectedCompositionNode.data.ed = $scope.hashCompElements[linkId].ed
-                }
-
-                console.log(vo)
-            })
-
-
-
-
-            //add a comment to the current comp
-            $scope.addComment = function (note) {
-                //let path = $scope.selectedCompositionNode.data.ed.path
-
-                let path = $scope.currentLinkId
-
-
-                //let ed = $scope.selectedCompositionNode.data.ed
-
-                let compName = $scope.selectedComp.name
-
-                let comment = {path:path,compName:compName, compVersion: $scope.compVersion,comment:note}   //will need to add path when saving to db
-                comment.id = 'id-'+ new Date().getTime()
-                comment.author = $scope.input.author
-                comment.ed = $scope.selectedED
-
-
-
-
-                let url = "review"
-                $http.post(url,comment).then(
-                    function (data) {
-
-                        $scope.setCommentsThisModel(function(){
-                            $scope.commentsThisPath = $scope.commentsThisComp[path]
-                        })
-
-
-
-                    }, function (err) {
-                        alert (angular.toJson(err))
-                    }
-                )
-
-
-               // temp[path].push(comment)
-
-                //$localStorage.world.comments[compName].push(comment)
-                delete $scope.input.comment
-
-
-
-
-            }
 
 
 
@@ -977,91 +956,6 @@ angular.module("pocApp")
                 })
             }
 
-            //get all the comments for the given model (comp or dg)
-            $scope.setCommentsThisModel = function(vo) {
-                let compName = $scope.selectedComp.name     //todo - modelName / selectedModel would be better names
-                delete $scope.allComments
-                $scope.commentsThisComp = {}
-
-                let url = `review/${compName}`
-                $http.get(url).then(
-                    function (data) {
-                        console.log(data)
-                        //what gets returned is an array of comments for this composition (based on name)
-                        //the array may be empty
-                        //convert it to a hash keyed on path with the contents as an array of comments
-
-                        $scope.allComments = data.data
-                        if (data.data && data.data.length > 0) {
-
-                            data.data.forEach(function (comment) {
-                                let path = comment.path
-                                $scope.commentsThisComp[path] = $scope.commentsThisComp[path] || []
-                                $scope.commentsThisComp[path].push(comment)
-                            })
-                        }
-
-                        //console.log($scope.commentsThisComp)
-
-                        //now construct a summary of comments by section. Really only makes sense for compositions
-                        //todo  - this needs work as there is an incorect assumption - see note re ar.slice(3) below
-                        $scope.commentsBySection = {}
-                        $scope.allComments.forEach(function (comment) {
-                            if (comment.path) {
-                                let ar = comment.path.split('.')
-                                let section = ar[1]     //section is always the 2nd element
-                                let control = ar[ar.length-1]   //the name of the element. May be an issue if there is a duplaicted name - like status
-
-                                $scope.commentsBySection[section] = $scope.commentsBySection[section] || []
-                                let item = {control:control,comment:comment}
-                                item.path = comment.path
-                                item.shortPath = ar.slice(3).join('.')      //todo - this isn't always true -
-                                $scope.commentsBySection[section].push(item)
-                            }
-
-
-                        })
-
-                        //now sort by control name
-                        Object.keys($scope.commentsBySection).forEach(function (key) {
-                            let obj = $scope.commentsBySection[key]
-                            obj.sort(function (a,b) {
-                                if (a.control > b.control) {
-                                    return 1
-                                } else {
-                                    return -1
-                                }
-                            })
-                        })
-
-                        if (vo) {
-                            vo()
-                        }
-
-                    }, function (err) {
-                        alert(angular.toJson(err.data))
-                    }
-                )
-
-            }
-
-
-
-            $scope.getRowColour = function (ed) {
-                let colour
-                switch (ed.kind) {
-                    case 'section' :
-                        colour = "#eee"
-                        break
-
-                }
-
-                if (ed.type && ed.type[0] == 'Group') {
-                    colour = "#eee"
-                }
-
-                return colour
-            }
 
 
             $scope.showReportLine = function (SDCOnly,entry) {
@@ -1165,5 +1059,202 @@ angular.module("pocApp")
                 }
 
             };
+
+
+            // ========= deprecated and unused
+
+
+
+            //when an element is selected in a form
+            $scope.$on('elementSelectedDEP',function(event,vo) {
+
+
+                console.log('ignoring selection - hash does not align with id')
+                return
+
+
+                let linkId = vo.cell.item.linkId
+
+                //need to get the selectedED (to add to the comment)
+                $scope.currentLinkId = linkId
+                //todo - what if this is an ED?
+                $scope.selectedED = $scope.hashCompElements[linkId].ed
+
+
+
+                $scope.commentsThisPath = $scope.commentsThisComp[linkId]
+
+                console.log(linkId)
+
+                //this is just making up a node to match the tree
+                $scope.selectedCompositionNode = {data:{}}
+                if ($scope.hashCompElements[linkId]) {
+                    $scope.selectedCompositionNode.data.ed = $scope.hashCompElements[linkId].ed
+                }
+
+                console.log(vo)
+            })
+
+
+
+
+            //add a comment to the current comp
+            $scope.addComment = function (note) {
+                //let path = $scope.selectedCompositionNode.data.ed.path
+
+                let path = $scope.currentLinkId
+
+
+                //let ed = $scope.selectedCompositionNode.data.ed
+
+                let compName = $scope.selectedComp.name
+
+                let comment = {path:path,compName:compName, compVersion: $scope.compVersion,comment:note}   //will need to add path when saving to db
+                comment.id = 'id-'+ new Date().getTime()
+                comment.author = $scope.input.author
+                comment.ed = $scope.selectedED
+
+
+
+
+                let url = "review"
+                $http.post(url,comment).then(
+                    function (data) {
+
+                        $scope.setCommentsThisModel(function(){
+                            $scope.commentsThisPath = $scope.commentsThisComp[path]
+                        })
+
+
+
+                    }, function (err) {
+                        alert (angular.toJson(err))
+                    }
+                )
+
+
+                // temp[path].push(comment)
+
+                //$localStorage.world.comments[compName].push(comment)
+                delete $scope.input.comment
+
+
+
+
+            }
+
+
+
+            //get all the comments for the given model (comp or dg)
+            $scope.setCommentsThisModel = function(vo) {
+                let compName = $scope.selectedComp.name     //todo - modelName / selectedModel would be better names
+                delete $scope.allComments
+                $scope.commentsThisComp = {}
+
+                let url = `review/${compName}`
+                $http.get(url).then(
+                    function (data) {
+                        console.log(data)
+                        //what gets returned is an array of comments for this composition (based on name)
+                        //the array may be empty
+                        //convert it to a hash keyed on path with the contents as an array of comments
+
+                        $scope.allComments = data.data
+                        if (data.data && data.data.length > 0) {
+
+                            data.data.forEach(function (comment) {
+                                let path = comment.path
+                                $scope.commentsThisComp[path] = $scope.commentsThisComp[path] || []
+                                $scope.commentsThisComp[path].push(comment)
+                            })
+                        }
+
+                        //console.log($scope.commentsThisComp)
+
+                        //now construct a summary of comments by section. Really only makes sense for compositions
+                        //todo  - this needs work as there is an incorect assumption - see note re ar.slice(3) below
+                        $scope.commentsBySection = {}
+                        $scope.allComments.forEach(function (comment) {
+                            if (comment.path) {
+                                let ar = comment.path.split('.')
+                                let section = ar[1]     //section is always the 2nd element
+                                let control = ar[ar.length-1]   //the name of the element. May be an issue if there is a duplaicted name - like status
+
+                                $scope.commentsBySection[section] = $scope.commentsBySection[section] || []
+                                let item = {control:control,comment:comment}
+                                item.path = comment.path
+                                item.shortPath = ar.slice(3).join('.')      //todo - this isn't always true -
+                                $scope.commentsBySection[section].push(item)
+                            }
+
+
+                        })
+
+                        //now sort by control name
+                        Object.keys($scope.commentsBySection).forEach(function (key) {
+                            let obj = $scope.commentsBySection[key]
+                            obj.sort(function (a,b) {
+                                if (a.control > b.control) {
+                                    return 1
+                                } else {
+                                    return -1
+                                }
+                            })
+                        })
+
+                        if (vo) {
+                            vo()
+                        }
+
+                    }, function (err) {
+                        alert(angular.toJson(err.data))
+                    }
+                )
+
+            }
+
+
+
+            $scope.getRowColourDEP = function (ed) {
+                let colour
+                switch (ed.kind) {
+                    case 'section' :
+                        colour = "#eee"
+                        break
+
+                }
+
+                if (ed.type && ed.type[0] == 'Group') {
+                    colour = "#eee"
+                }
+
+                return colour
+            }
+
+
+            $scope.getPathSegments = function (path) {
+                if (path) {
+                    return path.split('.')
+                }
+
+            }
+
+            //the equivalent of the cardinality
+            $scope.getObligation = function (ed) {
+                if (ed) {
+                    if (ed.mult.startsWith('1')) {
+                        return "Mandatory"
+                    }
+
+                    if (ed.enableWhen && ed.enableWhen.length > 0) {
+                        return "Conditional"
+                    }
+
+                    return "Optional"
+                }
+
+
+            }
+
 
         })

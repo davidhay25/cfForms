@@ -1,0 +1,59 @@
+<div>
+  <!--<div ng-controller="newResourceCtrl">-->
+
+  <div class="modal-header">
+    <div class="row">
+      <div class="col-md-8 col-sm-8">
+        <h3 class="modal-title">
+          Save Q to Form Manager
+        </h3>
+      </div>
+
+
+      <div class="col-md-4 col-sm-4">
+
+
+        <button ng-show = "input.url && input.version && input.publisher && input.title"
+                class="btn btn-primary pull-right" ng-click="publish()">Publish</button>
+
+        <button class="btn btn-link pull-right" ng-click="$dismiss()">Cancel</button>
+
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-body">
+
+    <uib-tabset>
+      <uib-tab heading="Q details">
+        <table class="table">
+          <tr><td>Title</td><td><input type="text" class="form-control" ng-model="input.title"/> </td></tr>
+          <tr><td>Name</td><td><input type="text" class="form-control" ng-model="input.name"/> </td></tr>
+          <tr><td>Url</td><td><input type="text" class="form-control" ng-model="input.url"/> </td></tr>
+          <tr><td>Version</td><td><input type="text" class="form-control" ng-model="input.version"/> </td></tr>
+          <tr><td>Publisher</td><td><input type="text" class="form-control" ng-model="input.publisher"/> </td></tr>
+          <tr><td>Description</td><td>
+            <textarea class="form-control" ng-model="input.description"> </textarea>
+          </td></tr>
+        </table>
+
+        <br/>
+        <div class="alert alert-danger" ng-show="errorMsg">
+          The following error was returned by the Form Manager: {{errorMsg}}. You can correct the errors
+          and retry if you want.
+        </div>
+      </uib-tab>
+      <uib-tab heading="Q Json">
+        <pre>{{Q | json}}</pre>
+
+      </uib-tab>
+    </uib-tabset>
+
+
+  </div>
+  <div class="modal-header">
+    Url, version, title and publisher are mandatory. It's OK to change these on this screen. The Url should be globally
+    unique (but the title doesn't need to be). The Url and version combination must also be unique on the server.
+
+  </div>
+</div>
