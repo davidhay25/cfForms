@@ -26,6 +26,8 @@ angular.module("pocApp")
                     processQItem(item)
                 }
 
+                //these are the answer datatypes that have an initial capital
+                let arCapitalDT = ['attachment','coding','quantity','reference']
 
                 //now generate the report from the QR
 
@@ -34,50 +36,56 @@ angular.module("pocApp")
                 function processQRItem(qrItem,level) {
 
 
+
                     for (let ans of qrItem.answer || []) {
-
                         let lne = {item:qrItem,answerDisplay:[],level:level}
-                        let linkId = qrItem.linkId
-
-                        //ans will have a single property - valueCoding, valueString etc
+                        //ans can have up to 2 children - a value that starts with 'value' and an item
                         let keys = Object.keys(ans)
                         for (const key of keys ) {
-                            let value = ans[key]
-                            lne.dt = key.replace("value","")
+                            if (key.startsWith('value')) {
+                                //this is the value
+                                let dt = key.substring(5).toLowerCase()   //primitive DTs will still be capitilized...
+                                if (arCapitalDT.indexOf(dt) > -1) {
+                                    dt = dt.charAt(0).toUpperCase() + dt.slice(1);
+                                }
 
-                            //should only be 1
-                            switch (key) {
-                                case "valueCoding":
-                                    lne.answerDisplay.push(`${value.code} | ${value.display} | ${value.system}`)
+                                lne.dt = dt
 
-                                    lne.answerCoding = value
-                                   // codedItems.push(lne)
+                                let value = ans[key]
+                                switch (key) {
 
-                                    break
-                                case "valueQuantity":
-                                    lne.answerDisplay.push(`${value.value} ${value.code}`)
-                                    break
-                                /*     case "valueString" :
-                                         thing.dt = 'String'
-                                         thing.answerDisplay.push(value)
-                                         break
-                                     */
-                                default :
-                                    //todo - replace wirh code
-                                    //if (lne.item.linkId !== 'id-2') {
-                                    if (qrItem.text  !== 'text') {
-                                        lne.answerDisplay.push(value)
-                                    } else {
-                                        lne.answerDisplay.push("Text removed to improve report display")
-                                    }
+                                    case "valueCoding":
+                                        lne.answerDisplay.push(`${value.code} | ${value.display} | ${value.system}`)
 
+                                        lne.answerCoding = value
+                                        // codedItems.push(lne)
+
+                                        break
+                                    case "valueQuantity":
+                                        lne.answerDisplay.push(`${value.value} ${value.code}`)
+                                        break
+
+                                    default :
+                                        //todo - replace wirh code
+                                        //if (lne.item.linkId !== 'id-2') {
+                                        if (qrItem.text  !== 'text') {
+                                            lne.answerDisplay.push(value)
+                                        } else {
+                                            lne.answerDisplay.push("Text removed to improve report display")
+                                        }
+
+                                }
+                                arReport.push(lne)
                             }
-                            arReport.push(lne)
                         }
 
-
-
-
+                        //Jan20
+                        if (ans.item) {
+                            level++
+                            for (let child of ans.item) {
+                                processQRItem(child,level)
+                            }
+                        }
 
                     }
 
@@ -97,7 +105,7 @@ angular.module("pocApp")
                     processQRItem(item,1)
                 }
 
-                return arReport
+                return {report : arReport}
 
             },
             makeReport: function (Q,QR) {

@@ -44,9 +44,6 @@ angular.module("pocApp")
 
             $scope.hx = []  //history of item selections
 
-
-
-
             let tree = {linkId:'root',item:Q.item}
             tree.extension = Q.extension
 
@@ -61,6 +58,7 @@ angular.module("pocApp")
 
                 delete vo.summary
                 delete vo.item
+                delete vo.children
                 return vo
             }
 

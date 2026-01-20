@@ -671,7 +671,7 @@ angular.module("pocApp")
 
                         switch (child.url) {
                             case "name" :
-                                item.name = child.valueCoding.code
+                                item.name = child.valueCoding?.code
                                 break
                             case "type" :
                                 item.type = child.valueCode

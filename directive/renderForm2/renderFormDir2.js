@@ -277,9 +277,10 @@ angular.module('formsApp')
                             $scope.selectedItem = data.node.data.item
 
                             $scope.selectedItemNoChild = angular.copy(data.node.data.item)
-                            if ($scope.selectedItemNoChild.item) {
-                                $scope.selectedItemNoChild.item = []
-                            }
+                            delete $scope.selectedItemNoChild.item
+                          //  if ($scope.selectedItemNoChild.item) {
+                           //     $scope.selectedItemNoChild.item = []
+                          //  }
 
 
                             $scope.selectedEd = $scope.hashEd[$scope.selectedItem.linkId]

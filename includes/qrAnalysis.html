@@ -11,7 +11,7 @@
   </style>
 
   <uib-tabset>
-
+<!--
     <uib-tab heading="QR Report">
 
       <div class="pull-right" style="padding:8px">
@@ -54,18 +54,25 @@
         </table>
       </div>
     </uib-tab>
+    -->
 
-    <uib-tab heading="QR Report (alt)">
+    <uib-tab heading="QR Data">
 
-
+<!--
+      <div class="pull-right" style="padding:8px">
+        <checkbox  ng-model="input.hideEmptyRows1"></checkbox> Hide empty rows
+      </div>
+      <div class="clearfix"></div>
+      -->
 
       <div class="myScroll">
         <table ng-show="qBasedReport" class="table table-bordered">
-          <tr><th>LinkId</th><th>Text</th><th>Code</th><th>DataType</th><th>Value</th></tr>
+          <tr><th>LinkId</th><th>Text</th><th>DataType</th><th>Value</th></tr>
 
           <tr ng-repeat="entry in qBasedReport1"
-
+              ng-show="! input.hideEmptyRows1 || (entry.answerDisplay.length > 0)"
               ng-class="{background:entry.dt == 'Group',missingAnswer:entry.missingAnswer }">
+
             <td>
 
               <div class="clickable" ng-click="viewItem(entry.item)">{{entry.item.linkId}}</div>
@@ -75,12 +82,7 @@
               <div ng-style="{ 'padding-left': (entry.level * 6) }">
                 {{entry.item.text}}</div>
             </td>
-            <td>
-              <div ng-repeat="code in entry.item.code">
-                {{code.code}}
-              </div>
 
-            </td>
             <td>
               {{entry.dt}}
             </td>

@@ -12,7 +12,7 @@ const axios = require("axios");
  * @param {object} axiosConfig - Optional Axios config (headers, auth)
  * @returns {Promise<Array>} - Array of all matching resources
  */
-async function fetchAllFHIR(baseUrl,searchParams = {}, elements = [], axiosConfig = {}) {
+async function fetchAllFHIR(baseUrl,searchParams = {}, elements = [],axiosConfig,maxResults) {
     let allResources = [];
 
 
@@ -31,27 +31,32 @@ async function fetchAllFHIR(baseUrl,searchParams = {}, elements = [], axiosConfi
     };
 
     let nextUrl = buildUrl(baseUrl, searchParams, elements);
-
-
-
-console.log(nextUrl)
-
+    let msg
 
     try {
         while (nextUrl) {
-            const response = await axios.get(nextUrl, axiosConfig);
+            console.log(nextUrl)
+            const response = await axios.get(nextUrl);
             const bundle = response.data;
 
             if (!bundle || !bundle.entry) break;
 
             allResources.push(...bundle.entry.map(e => e.resource));
 
+
             // Get the next page URL if available
             const nextLink = bundle.link?.find(l => l.relation === "next");
+
+
             nextUrl = nextLink?.url || null;
+            if (allResources.length > maxResults) {
+                msg = `Maximum of ${maxResults} met or exceeded.`
+                nextUrl = null
+            }
+
         }
 
-        return allResources;
+        return {allResources:allResources,msg:msg}
     } catch (err) {
         //console.error("Error fetching FHIR data:", err);
         throw err;
@@ -64,27 +69,35 @@ console.log(nextUrl)
 async function setup(app) {
 
     //retrieve a single Q from a forms server by url & version
-    //params server, url & version arere quired
+    //if an id id supplied then it s retrieved directly
+    //otherwise params server, url & version are required
     app.get('/formManager', async function(req,res) {
         let server = req.query['server']
         let url = req.query['url']
         let version = req.query['version']
-        if (! server || !url || ! version) {
-            res.status(400).json({msg:"server, url & version are required"})
-            return
+        let id = req.query['id']
+        if (id) {
+            let query = `${server}/Questionnaire/${id}`
+            const response = await axios.get(query)
+            res.json(response.data)
+        } else {
+            if (! server || !url || ! version) {
+                res.status(400).json({msg:"server, url & version are required"})
+                return
+            }
+
+            let query = `${server}/Questionnaire?url=${url}&version=${version}`
+            console.log(query)
+
+            const response = await axios.get(query)
+            let bundle = response.data
+            let resource = bundle.entry?.[0].resource
+
+            res.json(resource)
+
         }
 
 
-
-
-        let query = `${server}/Questionnaire?url=${url}&version=${version}`
-        console.log(query)
-
-        const response = await axios.get(query)
-        let bundle = response.data
-        let resource = bundle.entry?.[0].resource
-
-        res.json(resource)
 
 
 
@@ -113,10 +126,13 @@ async function setup(app) {
         }
 
 
-        const elements = [] //["id", "title", "status"]; // Only fetch these fields
+        const elements = [] //"id", "title", "url"]; // Only fetch these fields
 
         const headers = { Accept: "application/fhir+json" };
-        const results = await fetchAllFHIR(baseUrl,newParams, elements, { headers });
+
+        //
+        const results = await fetchAllFHIR(baseUrl,newParams, elements, { headers },100);
+
         res.json(results)
 
     })

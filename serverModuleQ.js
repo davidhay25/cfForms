@@ -7,7 +7,6 @@ const path = require('path');
 //async function setup(app,mongoDbName,uri) {
 async function setup(app,database) {
 
-
     //when a Q is published from the designer
     app.post('/q/publish',async function(req,res){
         let Q = req.body
@@ -129,6 +128,7 @@ async function setup(app,database) {
 
     //get a summary of Q by url for the selection display. No items
     //get the most recent version of all adHoc Q
+    //this is now the library...
 
 
     app.get('/adhocq/all', async function(req,res) {

@@ -60,7 +60,7 @@
     </div>
     <div ng-class="rightPane">
 
-      <div class="rounded-box">
+      <div ng-if="false" class="rounded-box">
         <div class="pull-right"><img ng-if="savingQ" src="css/ajax_loader_blue_32.gif"/></div>
         <div class="btn btn-link pull-right"
              ng-hide="savingQ || ! technicalview" ng-click="saveToServer(true)">Save and open in Lab</div>
@@ -78,10 +78,10 @@
         <i ng-if="middlePane !== 'hidden'" class="clickable icon glyphicon glyphicon-arrow-left" ng-click="toggleUI()"></i>
         <i ng-if="middlePane == 'hidden'" class="clickable icon glyphicon glyphicon-arrow-right" ng-click="toggleUI()"></i>
       </div>
-      <uib-tabset>
+      <uib-tabset ng-show="selectedItem">
 
 
-        <uib-tab heading="Details">
+        <uib-tab heading="Item Details">
 
           <br/>
           <table class="table table-bordered table-condensed">
@@ -566,7 +566,7 @@
 
         </uib-tab>
 
-        <uib-tab >
+        <uib-tab ng-if="false">
           <uib-tab-heading>
             Notes <span ng-if="hashNotes[selectedEd.path].length > 0" class="badge">{{hashNotes[selectedEd.path].length}}</span>
           </uib-tab-heading>
@@ -598,7 +598,7 @@
           </div>
         </uib-tab>
 
-        <uib-tab heading="Data">
+        <uib-tab ng-if="false" heading="Data">
 
 
           <div ng-repeat="item in treeData">
@@ -621,8 +621,19 @@
 
         </uib-tab>
 
-        <uib-tab  ng-if="technicalview" heading="Model">
-          <uib-tabset>
+        <uib-tab  heading="Item Json">
+          <div class="myScrollSmall">
+            <pre>{{selectedItem | json}}</pre>
+          </div>
+
+        </uib-tab>
+
+        <uib-tab ng-if="technicalview" heading="Item Json (no children)">
+
+          <pre>{{selectedItemNoChild | json}}</pre>
+          <em>Any child items have been removed</em>
+
+          <uib-tabset ng-if="false">
 
             <uib-tab  heading="Item (no children)">
               <pre>{{selectedItemNoChild | json}}</pre>
@@ -652,12 +663,7 @@
         </uib-tab>
 
 
-
-
-
-
-
-        <uib-tab ng-if="technicalview" heading="Q">
+        <uib-tab ng-if=" false && technicalview" heading="Q">
 
           <span class="btn btn-link" ng-click="validate(q)">Validate</span>
 

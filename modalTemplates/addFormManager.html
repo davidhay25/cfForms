@@ -1,0 +1,61 @@
+
+<div>
+    <!--<div ng-controller="newResourceCtrl">-->
+    <div class="modal-header">
+
+        <div class="row">
+            <div class="col-md-6 col-sm-6 col-xs-6">
+                <h3 class="modal-title">Additional Form Managers</h3>
+
+            </div>
+            <div class="col-md-6 col-sm-6 col-xs-6">
+                <div class="pull-right navbar-form" ng-show="waiting">
+                    <img src="css/ajax_loader_blue_32.gif"/>
+                </div>
+                <button class="btn btn-primary pull-right" ng-click="close()">Close</button>
+
+            </div>
+        </div>
+
+    </div>
+    <div class="modal-body">
+
+        <table class="table table-bordered">
+            <tr ng-repeat="server in fmServers">
+                <td>{{server.url}}</td>
+                <td>{{server.display}}</td>
+                <td><div class="btn btn-link" ng-click="deleteServer($index)">Remove</div> </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <input type="text" class="form-control"
+                           placeholder="Url to Form Server eg http://hapi.fhir.org/baseR4"
+                           ng-model="input.url"/>
+                </td>
+                <td>
+                    <input type="text" class="form-control"
+                           placeholder="Display in UI"
+                           ng-model="input.display"/>
+                </td>
+                <td>
+                    <div class="btn btn-link"
+                         ng-show="input.url && input.display"
+                         ng-click="addServer()">Add</div>
+                </td>
+            </tr>
+        </table>
+
+    </div>
+
+    <div class="modal-header">
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <em>These are additional Form Managers (for this app they just need to be FHIR servers that support Questionnaire
+                resources). They are stored in the browser cache so are available only in this Browser on this machine.</em>
+
+
+            </div>
+        </div>
+    </div>
+</div>

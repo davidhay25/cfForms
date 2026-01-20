@@ -1,6 +1,107 @@
 <div>
+
     <div class="row">
         <div class="col-md-2">
+            Form Server
+        </div>
+        <div class="col-md-4">
+            <select class="form-control" ng-model="input.formServer"
+                    ng-change = "formServerChanged()"
+                    ng-options="svr.display for svr in formServers"></select>
+        </div>
+        <div class="col-md-6">
+            <div class="clickable pull-right" ng-click="addFMServer()">Add new server</div>
+
+        </div>
+
+    </div>
+
+    <div class="row">
+        <div class="col-md-10">
+
+            <div class="rounded-box" style="background-color: whitesmoke">
+                <h5>Filter</h5>
+                <div class="row">
+                    <div class="col-md-6" ng-repeat = "param in params">
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                {{param.display}}
+                            </div>
+                            <div class="col-md-9">
+                                <input class="form-control" type="text" ng-model="input[param.key]"/>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div ng-show="query">
+                    <strong>Query: {{query}}</strong>
+                </div>
+            </div>
+
+
+
+<!--
+            <table >
+                <tr ng-repeat="param in params">
+                    <td>{{param.display}}</td>
+                    <td><input class="form-control" type="text" ng-model="input[param.key]"/> </td>
+                </tr>
+            </table>
+            -->
+
+
+        </div>
+        <div class="col-md-2">
+            <button class="btn-primary btn pull-right" ng-click="executeQuery()">Execute query</button>
+        </div>
+    </div>
+
+
+
+
+    <div ng-show="queryingFS">
+        Performing query, please wait...
+    </div>
+
+
+    <div>{{msg}}</div>
+
+    <div class="myScrollSmallest">
+
+        <div class="tableFixHead">
+        <table ng-show="allQ" class="table-bordered table">
+            <thead>
+                <tr><th>Title</th><th>Version</th><th>Date</th><th>Publisher</th></tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="Q in allQ">
+                    <td>
+                        <div class="clickable" ng-click="loadFromExternalFormManager(Q)">{{Q.title || "No title"}}</div>
+
+                    </td>
+                    <td>{{Q.version}}</td>
+                    <td>{{Q.date | date}}</td>
+                    <td>{{Q.publisher}}</td>
+
+
+                </tr>
+            </tbody>
+
+        </table>
+        </div>
+
+
+    </div>
+
+
+    <div class="row">
+        <div class="col-md-2">
+
+
+
 
         </div>
         <div class="col-md-10">

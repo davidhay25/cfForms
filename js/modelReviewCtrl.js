@@ -11,19 +11,34 @@ angular.module("pocApp")
             $scope.extensionUrls = makeQHelperSvc.getExtensionUrls()
 
             $scope.selectionOptions = []
-            $scope.selectionOptions.push({display:"Select Published Questionnaire",code:'published'})
-            $scope.selectionOptions.push({display:"Retrieve from Library",code:'library'})
-            $scope.selectionOptions.push({display:"Retrieve from external Form Manager",code:'manager'})
-            $scope.selectionOptions.push({display:"Paste ad-hoc Questionnaire",code:'adhoc'})
-            $scope.input.selectedInputOption = $scope.selectionOptions[0]
+
+
 
             //todo - UI for adding forms servers. Store in db. Only I can remove
 
-            $scope.formServers = []
-            $scope.formServers.push({display:"Australian Sparked Server",url:"https://smartforms.csiro.au/api/fhir"})
-            $scope.formServers.push({display:"Fhirpath Lab",url:"https://fhir.forms-lab.com"})
-            $scope.input.formServer = $scope.formServers[0]
 
+         //   $timeout(function () {
+                utilsSvc.getConfig().then(
+                    function (config) {
+                        $scope.systemConfig = config
+                        console.log($scope.systemConfig)
+                        if (config.environment == 'canshare') {
+                            $scope.selectionOptions.push({display:"Select Published Questionnaire",code:'published'})
+                            $scope.selectionOptions.push({display:"Upload Questionnaire",code:'adhoc'})
+                        } else {
+                            //clinfhir
+                            $scope.selectionOptions.push({display:"Retrieve from External Form Manager",code:'manager'})
+                            $scope.selectionOptions.push({display:"Upload Questionnaire",code:'adhoc'})
+                            $scope.selectionOptions.push({display:"Retrieve from Library",code:'library'})
+
+                        }
+
+
+                        $scope.input.selectedInputOption = $scope.selectionOptions[0]
+
+                    }
+                )
+         //   },500)
 
             //https://fhir.forms-lab.com/
 
@@ -38,29 +53,40 @@ angular.module("pocApp")
             })
 
 
-            $http.get(
-                'https://smartforms.csiro.au/api/fhir/Questionnaire',
-                {
-                    headers: {
-                        'Accept': 'application/fhir+json'
-                    }
-                }
-            ).then(
-                (response) => console.log(response.data),
-                (err) => console.error(err)
-            )
 
             //forms manager functions
 
-            //retrieve all adHoc Q - latest version of each
+            //retrieve all adHoc Q - latest version of each. metadata only
+            //actually the library...
             function getAllAdHoc() {
                 $http.get('adhocq/all').then(
                     function (data) {
                         $scope.allAdHoc = data.data
+                        $scope.allAdHoc.sort(function (a,b) {
+                            if (a.title?.toLowerCase() > b.title?.toLowerCase()) {
+                                return 1
+                            } else {
+                                return -1
+                            }
+                        })
                     }
                 )
             }
             getAllAdHoc()
+
+            $scope.showLibraryLine = function (miniQ) {
+                if (! $scope.input.libraryTitleFilter) {
+                    return true
+                }
+
+                let filter = $scope.input.libraryTitleFilter?.toLowerCase() || ""
+                let title = miniQ?.title?.toLowerCase() || ""
+
+                if (title.indexOf($scope.input.libraryTitleFilter) > -1) {
+                    return true
+                } else {return false}
+
+            }
 
             $scope.saveAdHocQ = function () {
                 //Add a Q to the Form Manager
@@ -79,11 +105,20 @@ angular.module("pocApp")
                     }
 
                 }).result.then(function () {
-
+                    getAllAdHoc()   //update the list
 
                 })
             }
 
+
+            //used by external Form Manager component
+            $scope.$on("QLoaded",function (event,data) {
+                $scope.fullQ = data
+                $scope.input.mainTabActive = 1
+                processQ(data)
+            })
+
+            //this is actually the library - load a single version
             $scope.loadFromManager = function(miniQ) {
                 let qry = `adhocq?url=${miniQ.url}&version=${miniQ.version}`
                 $http.get(qry).then(
@@ -199,6 +234,8 @@ angular.module("pocApp")
                 $scope.renderedQR = QR //for the display
 
                 let vo = qrVisualizerSvc.makeReport($scope.fullQ,QR)
+
+
                 //console.log(vo)
 
                 $scope.qBasedReport = vo.report
@@ -207,7 +244,8 @@ angular.module("pocApp")
 
                 //alternative QR focussed report
                 let vo1 = qrVisualizerSvc.makeReport1($scope.fullQ,QR)
-                $scope.qBasedReport1 = vo.report
+                $scope.qBasedReport1 = vo1.report
+
 
                 $scope.$digest()
 
@@ -663,6 +701,7 @@ angular.module("pocApp")
             //I *think* it's only from models
 
             if (modelName) {
+
                 if (modelName.startsWith('q-')) {
                     //a Q reference was passed. The Q will be retrieved from the questionnaire database
                     //this is the da created by the Q designer and is NOT the same as the published Q
@@ -727,7 +766,7 @@ angular.module("pocApp")
                     //$scope.allQ = data.data
                     try {
                         $scope.lstQ.sort(function (a,b) {
-                            if (a.name.toLowerCase() > b.name.toLowerCase()) {
+                            if (a.name?.toLowerCase() > b.name?.toLowerCase()) {
                                 return 1
                             } else {
                                 return -1

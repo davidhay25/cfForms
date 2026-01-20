@@ -12,8 +12,6 @@ angular.module("pocApp")
             $scope.input.title = Q.title || ""
             $scope.input.name = Q.name || ""
 
-
-
             $scope.publish = function () {
 
                 //update any fields that may have been altered
@@ -29,7 +27,7 @@ angular.module("pocApp")
                         $scope.$close()
                     }, function (err) {
                         if (err.status == 422) {
-
+                            alert("There is already a Questionnaire with this name and version on this Server. The combination or Url & version must be unique.")
                         } else {
                             alert(err)
                             console.log(err)
