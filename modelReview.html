@@ -119,6 +119,10 @@
     <script src="js/modelCompSvc.js"></script>
     <script src="js/filters.js"></script>
     <script src="js/makeQSvc.js"></script>
+
+    <script src="js/makeQSvc2.js"></script>
+
+
     <script src="js/codedOptionsSvc.js"></script>
     <script src="js/utilsSvc.js"></script>
     <script src="js/libs/vis.min.js"></script>
@@ -152,6 +156,8 @@
     <script src="js/saveAdHocQCtrl.js"></script>
     <script src="js/formManagerQueryCtrl.js"></script>
     <script src="js/addFormManager.js"></script>
+
+
 </head>
 
 <body style="padding: 8px;padding-top: 80px">
@@ -184,7 +190,7 @@
 
             <div class="col-md-2">
                 <div class="navbar-text">
-                    <checkbox ng-model="showHelp"></checkbox> Show Help
+                  <!--  <checkbox ng-model="showHelp"></checkbox> Show Help -->
                 </div>
             </div>
 
@@ -202,11 +208,13 @@
 
 
             <div class="col-md-2">
-                <a href="https://teaho.govt.nz/" target="_blank">
-                    <img width="150" height="auto" class="pull-right"
-                         style="padding: 3px"
-                         src="images/canshareLogo.png"/>
-                </a>
+                <div ng-if = "systemConfig.environment == 'canshare'">
+                    <a href="https://teaho.govt.nz/" target="_blank">
+                        <img width="150" height="auto" class="pull-right"
+                             style="padding: 3px"
+                             src="images/canshareLogo.png"/>
+                    </a>
+                </div>
             </div>
 
         </div>

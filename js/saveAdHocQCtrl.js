@@ -27,7 +27,7 @@ angular.module("pocApp")
                         $scope.$close()
                     }, function (err) {
                         if (err.status == 422) {
-                            alert("There is already a Questionnaire with this name and version on this Server. The combination or Url & version must be unique.")
+                            alert("There is already a Questionnaire with this name and version in the Library. The combination or Url & version must be unique.")
                         } else {
                             alert(err)
                             console.log(err)

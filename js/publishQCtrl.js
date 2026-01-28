@@ -1,10 +1,17 @@
 angular.module("pocApp")
     .controller('publishQCtrl',
-        function ($scope,Q,$http,makeQHelperSvc) {
+        function ($scope,Q,$http,makeQHelperSvc,utilsSvc) {
             $scope.Q = Q
 
             $scope.input = {}
             let extensionUrls = makeQHelperSvc.getExtensionUrls()
+
+            utilsSvc.getConfig().then(
+                function (config) {
+                    $scope.systemConfig = config
+                    //console.log($scope.systemConfig)
+                }
+            )
 
 
             $scope.publish = function () {
@@ -23,7 +30,32 @@ angular.module("pocApp")
                     $http.post(`q/publish`,Q).then(
                         function () {
                             alert(`Questionnaire published with version ${Q.version}`)
-                            $scope.$close(Q)
+
+                            if ($scope.systemConfig.environment == 'clinfhir') {
+                                let qry = `adhocq/publish`
+                                $http.post(qry,Q).then(
+                                    function (data) {
+                                        alert("Questionnaire was also saved in the Library")
+                                        $scope.$close(Q)
+                                    }, function (err) {
+                                        if (err.status == 422) {
+                                            alert("There is already a Questionnaire with this name and version in the Library. The combination or Url & version must be unique.")
+                                        } else {
+                                            alert(`Unable to save to the Library. ${angular.toJson(err.data)}`)
+                                            console.log(err)
+                                        }
+
+                                        $scope.$close(Q)
+
+                                    }
+                                )
+
+                            } else {
+                                $scope.$close(Q)
+                            }
+
+
+
                         },function (err) {
                             $scope.$dismiss()
                             alert(angular.toJson(err.data))

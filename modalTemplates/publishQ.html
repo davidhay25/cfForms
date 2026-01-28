@@ -42,6 +42,12 @@
         <br/>
         <div class="banner">Note that the containing Collection will be updated to the Repository after the Questionnaire has been published.</div>
 
+
+        <div ng-show="systemConfig.environment == 'clinfhir'">
+          <br/>
+          The Questionnaire will also be published to the clinFHIR Library.
+        </div>
+
       </uib-tab>
 
       <uib-tab heading="Q Json">

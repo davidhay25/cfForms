@@ -60,7 +60,7 @@
             const activeTabs = JSON.parse(localStorage.getItem(key) || '[]');
 
             if (activeTabs.length > 0) {
-                alert('This page is already open in another tab, which will cause issues. You should close this page and use the other one.');
+              //todo - not quite working  alert('This page is already open in another tab, which may cause issues. You should close this page and use the other one.');
             }
 
             // Add this tab to the list
@@ -186,7 +186,7 @@
 
             <div class="col-md-2">
 
-                <div ng-if = "systemConfig">
+                <div ng-if = "systemConfig.environment == 'canshare'">
 
                     <a href="https://teaho.govt.nz/" target="_blank">
 
@@ -994,6 +994,9 @@
 <script src="js/reportSvc.js"></script>
 
 <script src="js/publishQCtrl.js"></script>
+
+
+<script src="js/makeQSvc2.js"></script>
 
 
 <script src="js/libs/fhirpath.min.js"></script>

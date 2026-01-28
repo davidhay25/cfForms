@@ -325,15 +325,10 @@ angular.module("pocApp")
                     }
                 })
 
-
-
-
             }
 
 
             $scope.updateComponent = function (type,model) {
-
-
 
                 let cName = $scope.world.name + '-' + model.name
                 let msg = `Copy this DG to the Component store with the name ${cName}. If there's already a Component with that name, it will be updated. `

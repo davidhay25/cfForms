@@ -3,7 +3,7 @@
 angular.module("pocApp")
 
     .service('makeQSvc', function($http,codedOptionsSvc,QutilitiesSvc,snapshotSvc,$filter,vsSvc,
-                                  utilsSvc,makeQHelperSvc) {
+                                  utilsSvc,makeQHelperSvc,makeQSvc2) {
 
 
 
@@ -948,6 +948,21 @@ angular.module("pocApp")
 
 
             makeHierarchicalQFromDG : function  (dg,lstElements,config) {
+
+
+                //a replacement Q generator
+                let vo2 = makeQSvc2.buildQuestionnaireFromFlat(lstElements,dg,config)
+                console.log('------------')
+                console.log(vo2)
+                console.log('------------')
+
+
+
+                return {Q:vo2.questionnaire,hashEd:{},hashVS:{},errorLog:vo2.warnings}
+
+                //==============  replacing code below with updated code =====================
+
+
                 config.getControlDetails = this.getControlDetails //need to use the function defined in the service object which is called externally...
                 //Used in the new Q renderer
                 //config.enableWhen (boolean) will cause the enableWhens to be set. It's a debugging flag...
@@ -1622,6 +1637,13 @@ angular.module("pocApp")
 
                             } else {
                                 //the fixedValueExtension needs to be added to the parent
+                                //what??? why???  jan28
+
+                                addFixedValue(item,canonical,'Coding',concept)
+
+                                //let item
+
+                                /* Jan 28
                                 let ar1 = ed.path.split('.')
                                 ar1.pop()
                                 let p1 = ar1.join('.')
@@ -1632,6 +1654,7 @@ angular.module("pocApp")
                                 } else {
                                     errorLog.push(`Path ${p1} empty setting fixed value`)
                                 }
+                                */
                             }
 
 
