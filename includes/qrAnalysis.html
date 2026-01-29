@@ -118,7 +118,7 @@
             <tr ng-repeat="entry in extractBundle.entry"
                 ng-class="{listItemSelected:input.selectedExtractResource == entry.resource}"
                 style="cursor: pointer"
-              ng-click="input.selectedExtractResource = entry.resource">
+              ng-click="input.selectedExtractResource = entry">
               <td>{{entry.resource.resourceType}}</td>
             </tr>
           </table>

@@ -144,6 +144,7 @@ angular.module("pocApp")
             //
             let ext = {url:extDefinitionExtract,extension:[]}
             ext.extension.push({url:"definition",valueCanonical:vo.definition})       //the canonical url of the resource to extract - must be present
+
             if (vo.fullUrl) {
                 ext.extension.push({url:"fullUrl",valueString:`%${vo.fullUrl}`})
             }
@@ -613,7 +614,7 @@ angular.module("pocApp")
                 if (ar1.length > 0) {
                     //the whole extension is returned
                     let ext = ar1[0]
-                    if (ext.extension > 0) {
+                    if (ext && ext.extension > 0) {
                         for (const child of ext.extension) {
                             if (child.url == 'definition')
 

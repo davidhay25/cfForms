@@ -32,7 +32,10 @@ angular.module("pocApp")
                                     let arItem = fhirpath.evaluate(resource, itemExpression,null,fhirpath_r4_model);
                                     if (arItem) {
                                         let item = arItem[0]
-                                        delete item.item        //don't want child items in the view
+                                        if (item) {
+                                            delete item.item        //don't want child items in the view
+                                        }
+
 
                                         //copy the item to the issue for easier rendering...
                                         iss.item = item

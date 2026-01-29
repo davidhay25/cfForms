@@ -1694,11 +1694,15 @@
       <uib-tab-heading> <div class="buildError">Q generation errors <span class="badge">{{qErrorLog.length}}</span> </div> </uib-tab-heading>
 
       <br/>
-      <div class="list-group">
-        <div class="list-group-item" ng-repeat="item in qErrorLog">
-          {{item}}
-        </div>
-      </div>
+
+        <table class="table">
+          <tr ng-repeat="item in qErrorLog">
+            <td>{{item.lvl}}</td>
+            <td>{{item.msg}}</td>
+          </tr>
+        </table>
+
+
 
 
     </uib-tab>
