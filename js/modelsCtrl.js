@@ -36,6 +36,10 @@ angular.module("pocApp")
               //  $localStorage.world.Q = {}
             } else {
                 let name = $localStorage.world.name
+
+               // $localStorage.world.dataGroups[].diff=[]
+
+
                 if (($localStorage.world &&
                     $localStorage.world.type == 'lim' ||
                     ($localStorage.world.dataGroups && Object.keys($localStorage.world.dataGroups).length > 250))) {
@@ -46,6 +50,9 @@ angular.module("pocApp")
                     }
                 }
             }
+
+
+
 
             //check all the elements of all the models for an id
             modelDGSvc.checkAllIds($localStorage.world)
@@ -2595,6 +2602,8 @@ angular.module("pocApp")
                     plugins:['dnd','state'],
                     dnd: {
                         'is_draggable' : function(nodes,e) {
+                            //there's a bug that inserts a null entry if you drag above the top
+                            return false
 
                             return $scope.canEdit($scope.selectedModel)
                             //return true

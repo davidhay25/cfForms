@@ -211,7 +211,7 @@ angular.module("pocApp")
 
                 $scope.sendMessage('sdc.configureContext', {
                     context: {
-                        subject: { reference: 'Patient/45086382', display: 'Example Patient' },
+                        subject: { reference: 'Patient/59604221', display: 'Example Patient' },
                         author: { reference: 'Practitioner/10652933', display: 'Example Practitioner' },
                         launchContext: [
                             {
@@ -346,7 +346,7 @@ angular.module("pocApp")
                         // Try again shortly
                         waitForIframe();
                     }
-                }, 50); // 50–100ms is typical
+                }, 100); // 50–100ms is typical
             }
             waitForIframe();
 
@@ -425,7 +425,7 @@ angular.module("pocApp")
                 }
                 $scope.sendMessage('sdc.requestPrepopulate',{},responseFn)
 
-                //$scope.sendMessage('sdc.requestCurrentQuestionnaireResponse',{})
+
             }
 
             //get the extract bundle from the currently rendered form

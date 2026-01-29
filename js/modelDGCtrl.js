@@ -802,8 +802,9 @@ angular.module("pocApp")
 
 
                     //don't delete any more - set the mult.
-                    //$scope.selectedModel.diff.splice(inx,1)
-                    $scope.selectedModel.diff[inx].mult = '0..0'
+                    //Jan30 - changed back to delete - we don't have override any more
+                    $scope.selectedModel.diff.splice(inx,1)
+                    //$scope.selectedModel.diff[inx].mult = '0..0'
 
 
                 } else {

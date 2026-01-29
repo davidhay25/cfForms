@@ -1,5 +1,5 @@
 angular.module('pocApp')
-    .service('makeQSvc2', function (utilsSvc,snapshotSvc) {
+    .service('makeQSvc2', function (utilsSvc,snapshotSvc,makeQSvc2Helper) {
 
         /* ================================================================
          * Public API
@@ -10,6 +10,7 @@ angular.module('pocApp')
         let extLaunchContextUrl = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-launchContext"
         let extDefinitionExtract = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-definitionExtract"
         let extAllocateIdUrl = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-extractAllocateId"
+        let extHidden = "http://hl7.org/fhir/StructureDefinition/questionnaire-hidden"
 
         //these are resources that we will automatically add references to patient for
         let resourcesForPatientReference = {}
@@ -42,14 +43,6 @@ angular.module('pocApp')
                 items.push(ed)
 
             })
-
-
-
-
-
-
-             //items.splice(0,1)
-
 
             // 1. Build hierarchy + index
             items.forEach(src => insertItem(questionnaire.item, src, pathIndex, idIndex, warnings));
@@ -114,7 +107,7 @@ angular.module('pocApp')
 
         function applySourceToItem(item, ed,warnings) {
 
-            console.log('apply',ed)
+            //console.log('apply',ed)
 
             //extensions go at the top
             if (ed.adHocExtension) {
@@ -131,24 +124,52 @@ angular.module('pocApp')
 
 
             if (vo.dg) {
-                //this item is the 'header' for a DG. There may be other DG level elements we want to get
+                //this item is the 'header' group for a DG. There may be other DG level elements we want to get
                 processDG(vo.dg,item,warnings)
+/*
+                if (vo.dg.itemCode) {
+                    //this is an itemCode on the DG. It's really only used for observations to set
+                    //the Observation.code value. Currently we ignore it otherwise
+                    if (vo.dg.type == 'Observation') {
+                        //use the addFixedValue routine to set the value of Observation.code
+                        let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.code`
+                        addFixedValue(item,definition,'CodeableConcept',{coding:[vo.dg.itemCode]})
+                    }
+                }
+*/
+
+               
+
+
+
+            } else {
+                //there's a bug in the modeller where valueset can accidentally be added to a group (when a type is changed from cc to a DT)
+                addIfNotEmpty(item,'answerValueSet',ed.valueSet)
             }
 
             if (ed._isMainDG) {
-                //the first entry in the flat list represents the DG. However, it dowsn't have all the DG attributes
-                //(as the list is actually the contents). When the items list is created when the builder is
+                //the first entry in the flat list represents the DG. However, it doesn't have all the DG attributes
+                //(as the list is actually the snapshot contents). When the items list is created when the builder is
                 //invoked, the DG is added to the item so that we can pull them out here. As it starts with '_'
                 //it will be removed when the Q is cleaned at the end.
                 item.type = 'group'
                 processDG(ed._isMainDG,item,warnings)
             }
 
+            if (ed.mult) {
+                if (ed.mult.indexOf('..*') > -1) {
+                    item.repeats = true
+                }
 
-           // item.required = src.required;
-          //  item.repeats = src.repeats;
+                if (ed.mult.indexOf('1..') > -1) {
+                    item.required = true
+                }
 
-            addIfNotEmpty(item,'answerValueSet',ed.valueSet)
+            }
+
+
+
+
 
 
             //for the definition we need to add the full url. Right now this is always to a core type - could easily
@@ -170,7 +191,13 @@ angular.module('pocApp')
 
             }
 
-            // Stash original source for later resolution
+            //specific item processing for each type - like fixed or default values
+            makeQSvc2Helper.typeSpecificProcessing(item,ed)
+
+            //other processing for this item - unrelated to the type - like helptext or displaytext
+            makeQSvc2Helper.miscProcessing(item,ed)
+
+            // Stash original source for later resolution - used for enableWhen
             item._source = ed;
         }
 
@@ -319,7 +346,6 @@ angular.module('pocApp')
                 containedDG = snapshotSvc.getDG(ed.type[0])
                 if (containedDG) {
                     //this is a contained DG
-//console.log(containedDG)
                     controlHint = "group"
                     controlType = "group"
                 } else {
@@ -378,7 +404,6 @@ angular.module('pocApp')
                             break
                         case 'Group' :
                         case 'group' :
-                            //sep18controlHint = "display"
 
                             controlHint = "group"
                             controlType = "group"
@@ -402,6 +427,7 @@ angular.module('pocApp')
 
         function addIfNotEmpty(item,eleName,obj) {
             if (obj) {
+               // console.log(item,obj)
                 item[eleName] = obj
             }
         }
@@ -471,6 +497,7 @@ angular.module('pocApp')
         function processDG(dg,item,warnings) {
             //set the preferrred terminology server
             warnings.push({lvl:'info',msg: `Processing DG: ${dg.name}, type: ${dg.type}`});
+
             if (dg.termSvr) {
                 let ext = {url:extensionUrls.peferredTerminologyServer,valueUrl:dg.termSvr}
                 addExtension(item,ext)
@@ -493,6 +520,32 @@ angular.module('pocApp')
 
                 addExtension(item,ext)
                 warnings.push({lvl:'info',msg: `Setting Extraction type (${dg.type}) for  DG: ${dg.name}`});
+
+
+
+                //specific processing for an Observation
+                if (dg.type == 'Observation') {
+                    //set the status to 'final'
+                    let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.status`
+                    makeQSvc2Helper.addFixedValue(item,definition,'code','final')
+
+
+
+                    if (dg.itemCode) {
+                    //this is an itemCode on the DG. It's really only used for observations to set
+                    //the Observation.code value. Currently we ignore it otherwise
+
+                        //use the addFixedValue routine to set the value of Observation.code
+                        let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.code`
+
+                        makeQSvc2Helper.addFixedValue(item,definition,'CodeableConcept',{coding:[dg.itemCode]})
+
+                      //  hideItem(item) //hide the
+
+                    }
+                }
+
+
             }
 
             //sets the reference to the Patient
@@ -503,11 +556,15 @@ angular.module('pocApp')
                 let expression = "%patientID"
 
                 let fixedValue = null
-                addFixedValue(item,definition,null,null,expression)
+                makeQSvc2Helper.addFixedValue(item,definition,null,null,expression)
             }
 
+        }
 
-
+        function hideItem(item) {
+            //create a hidden extension and add to the item
+            let ext = {url:extHidden,valueBoolean:true}
+            addExtension(item,ext)
 
         }
 
@@ -515,11 +572,10 @@ angular.module('pocApp')
         function addExtension(item,ext) {
             item.extension = item.extension || []
             item.extension.push(ext)
-
         }
 
         //add a fixed value expression to the item (or Q)
-        function addFixedValue(item,definition,type,value,expression) {
+        function addFixedValueDEP(item,definition,type,value,expression) {
             //add a fixed value extension. Can either be a value or an expression
             //definition is the path in the resource (added to the 'item.definition' value
 
@@ -529,7 +585,6 @@ angular.module('pocApp')
             ext.extension.push({url:"definition",valueUri:definition})
 
             if (value) {
-                // console.log(value)
                 let child = {url:'fixed-value'}
                 child[`value${type}`] = value
 
@@ -537,7 +592,6 @@ angular.module('pocApp')
             } else if (expression){
                 let child = {url:'expression'}
                 child.valueExpression = {language:"text/fhirpath",expression:expression}
-                //child[`value${type}`] = expression
                 ext.extension.push(child)
             } else {
                 return  //todo shoul add error...

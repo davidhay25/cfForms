@@ -15,7 +15,12 @@ angular.module("pocApp")
                     for (let dgName of Object.keys(world.dataGroups)) {
                         let dg = world.dataGroups[dgName]
                         for (let ed of dg.diff || []) {
-                            if (! ed.id) {
+                            if (!ed) {
+                                ed = {text:"Invalid ED",type:['display']}
+                             //   world.dataGroups[dgName].diff.splice(0,1)
+                            }
+
+                            if (ed && ! ed.id) {
                                 ed.id = utilsSvc.getUUID()
                             }
                         }

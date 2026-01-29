@@ -157,6 +157,8 @@
     <script src="js/formManagerQueryCtrl.js"></script>
     <script src="js/addFormManager.js"></script>
 
+    <script src="js/makeQSvc2Helper.js"></script>
+
 
 </head>
 
@@ -647,7 +649,7 @@
 
                                     <div
                                             style="background-color: #f2dede"
-                                            ng-repeat="ext in entry.unknownExtension">
+                                            ng-repeat="ext in entry.unknownExtension track by $index">
 
                                         <strong>Unknown: </strong> {{ext.url}}
 
