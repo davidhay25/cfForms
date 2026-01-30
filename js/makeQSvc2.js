@@ -11,6 +11,7 @@ angular.module('pocApp')
         let extDefinitionExtract = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-definitionExtract"
         let extAllocateIdUrl = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-extractAllocateId"
         let extHidden = "http://hl7.org/fhir/StructureDefinition/questionnaire-hidden"
+        let extCollapsibleUrl = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-collapsible"
 
         //these are resources that we will automatically add references to patient for
         let resourcesForPatientReference = {}
@@ -126,21 +127,6 @@ angular.module('pocApp')
             if (vo.dg) {
                 //this item is the 'header' group for a DG. There may be other DG level elements we want to get
                 processDG(vo.dg,item,warnings)
-/*
-                if (vo.dg.itemCode) {
-                    //this is an itemCode on the DG. It's really only used for observations to set
-                    //the Observation.code value. Currently we ignore it otherwise
-                    if (vo.dg.type == 'Observation') {
-                        //use the addFixedValue routine to set the value of Observation.code
-                        let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.code`
-                        addFixedValue(item,definition,'CodeableConcept',{coding:[vo.dg.itemCode]})
-                    }
-                }
-*/
-
-               
-
-
 
             } else {
                 //there's a bug in the modeller where valueset can accidentally be added to a group (when a type is changed from cc to a DT)
@@ -168,17 +154,51 @@ angular.module('pocApp')
             }
 
 
+            //collabsible can be on any group
+            if (ed.collapsible) {
+                let ext = {url:extCollapsibleUrl}
+                ext.valueCode = ed.collapsible
+                makeQSvc2Helper.addExtension(item,ext)
+            }
 
+            if (ed.options && ed.options.length > 0) {
+                let options = []
+                for (const opt of ed.options) {
+                    options.push({valueCoding:opt})
+                }
+
+                item.answerOption = options
+            }
 
 
 
             //for the definition we need to add the full url. Right now this is always to a core type - could easily
             //add support for profiles by having the canonical in the ed, and looking for 'http' to see if it's a profile or core
             if (ed.definition) {
+                //let originalDefinition = ed.definition
                 let ar = ed.definition.split('.')
                 let type = ar[0]        //the expression always starts with the type - eg Patient.name.given
+
                 let canonical = `http://hl7.org/fhir/StructureDefinition/${type}#${ed.definition}`
                 item.definition = canonical
+
+                if (ed.extractExtensionUrl) {
+                    //the definition will be something like Specimen.collection.extension.value
+                    let ar1 = item.definition.split('.')
+                    ar1[ar1.length-1] = "url"
+
+                  //  if (ar.length > 2) {
+                       // ar.splice(-2,2)    //remove the 2 on the end
+
+                       // let url = `${canonical}#${ar.join('.')}.extension.url`
+
+
+                         makeQSvc2Helper.addFixedValue(item,ar1.join('.'),"String",ed.extractExtensionUrl)
+                  //  } else {
+                        //errorLog.push({msg:`${ed.path} has an incorrect definition`})
+                  //  }
+
+                }
 
             }
 
