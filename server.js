@@ -21,8 +21,6 @@ const mongoDbName = process.env.MONGODB || "clinfhir"
 console.log("")
 console.log(`Server: Mongo database name is ${mongoDbName}`)
 
-
-
 //const commonModule = require("./serverModuleCommonUI.js")
 const terminologyModule = require("./serverModuleTerminologyForms")
 const modelModule = require("./serverModuleModel")

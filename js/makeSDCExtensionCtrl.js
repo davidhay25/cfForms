@@ -138,6 +138,7 @@ angular.module("pocApp")
                     case "defextract":
                         ext.url = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-definitionExtract"
                         ext.extension = []
+
                         ext.extension.push({url:'definition',valueCanonical:$scope.input.deCanonical.replace(/\s+/g, "")})
                         ext.extension.push({url:'fullUrl',valueString:$scope.input.deVariable})
 

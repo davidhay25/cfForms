@@ -1,0 +1,7 @@
+{
+  "SDCExtensions" : {
+    "extractAllocateId" : {
+      "purpose": "Creates a variable to be used as an Id. Commonly "
+    }
+  }
+}

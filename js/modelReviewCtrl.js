@@ -1,7 +1,7 @@
 angular.module("pocApp")
     .controller('modelReviewCtrl',
         function ($scope,$http,modelsSvc,modelCompSvc,$timeout, $uibModal,makeQSvc,utilsSvc,$window,$filter,
-                  snapshotSvc,vsSvc,qHelperSvc,$localStorage,makeQHelperSvc,modelReviewSvc,qrVisualizerSvc,
+                  snapshotSvc,vsSvc,qHelperSvc,$sce,$localStorage,makeQHelperSvc,modelReviewSvc,qrVisualizerSvc,
                   v2ToFhirSvc,validatorSvc) {
 
             $scope.input = {}
@@ -203,12 +203,16 @@ angular.module("pocApp")
 
             //--------- setup the form viewer -------------------
             // https://chat.fhir.org/#narrow/channel/179255-questionnaire/topic/smart.20web.20messaging/with/544100483
+            //
             //https://github.com/brianpos/sdc-smart-web-messaging
 
             $scope.input.hideEmptyRows = true
 
             let setContext = function () {
 
+                let testResource = {resourceType:'Observation',valueString:"test data"}
+
+                //tod can the context be a resource
                 $scope.sendMessage('sdc.configureContext', {
                     context: {
                         subject: { reference: 'Patient/59604221', display: 'Example Patient' },
@@ -218,6 +222,9 @@ angular.module("pocApp")
                                 name: 'source',
                                 contentReference: { reference: 'Practitioner/10652933',
                                     display: 'Example Practitioner' }
+                            },{
+                                name: 'testObservation',
+                                contentResource: testResource
                             }
                         ]
                     }

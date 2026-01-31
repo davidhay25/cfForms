@@ -2,6 +2,17 @@
 <div>
   <!--<div ng-controller="newResourceCtrl">-->
 
+    <style>
+        .popover {
+            max-width: none;
+        }
+
+        .multiline-popover .popover-content {
+            white-space: pre-line;
+        }
+
+    </style>
+
   <div class="modal-header">
     <div class="row">
       <div class="col-md-10">
@@ -137,6 +148,48 @@
                     </tr>
                 </table>
 
+
+
+            </uib-tab>
+
+            <uib-tab heading="Extensions ancestory">
+
+
+
+                <div ng-repeat="node in extSummary">
+                    <div class="banner">
+                        <div><strong>{{node.text }}</strong> <em class="pull-right">{{node.linkId}}</em></div>
+                    </div>
+
+                    <div>
+                        <table class="table table-bordered">
+                            <tr ng-repeat="ext in node.extensions">
+                                <td>
+                                    <div class="clickableDotted"
+                                            uib-popover-html="ext._popoverHtml"
+                                         popover-placement="top"
+                                         popover-class="multiline-popover"
+                                         popover-trigger="'mouseenter'">
+                                    {{ext.url | sdcExtensionName}}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div ng-repeat="lne in ext.extensionProps">
+                                        <strong>{{lne.key}}</strong> <em>{{lne.valueKey}}</em> {{lne.value}}
+                                    </div>
+                                </td>
+
+                            </tr>
+                        </table>
+
+                    </div>
+
+                </div>
+                <em>Displays the extensions defined by all the ancestor items to this one. Useful
+                as many of the SDC extensions create a variable that can be used by descendants to its
+                useful to know where (or if) they are defined in the ancestory.</em>
+
+                <!--  <pre>{{extSummary | json}}</pre> -->
 
 
             </uib-tab>

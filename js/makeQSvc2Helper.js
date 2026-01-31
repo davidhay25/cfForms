@@ -2,6 +2,18 @@ angular.module('pocApp')
     .service('makeQSvc2Helper', function () {
 
 
+        let extDefinitionExtractValue = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-definitionExtractValue"
+
+        function makeDisplayItemDEP(display,extHTMLRender) {
+            if (display) {
+                let item = {type:'display',text:display}
+                item.linkId = utilsSvc.getUUID()
+                let disp = `<em style='padding-left:8px'>${display}</em>`
+                item.extension = [{url:extHTMLRender,valueString:disp}]
+                return item
+            }
+
+        }
 
         function addFixedValue(item,definition,type,value,expression) {
             //add a fixed value extension. Can either be a value or an expression

@@ -158,7 +158,7 @@
     <script src="js/addFormManager.js"></script>
 
     <script src="js/makeQSvc2Helper.js"></script>
-
+    <script src="js/libs/angular-sanitize.js"></script>
 
 </head>
 
@@ -967,6 +967,10 @@
                                 <tr ng-if="selectedNodeFromItemGraph.item.definition">
                                     <td>Definition</td><td>{{selectedNodeFromItemGraph.item.definition}}</td>
                                 </tr>
+                                <tr>
+                                    <td>Prepop</td><td>todo </td>
+                                </tr>
+
 
 
                             </table>
@@ -978,6 +982,8 @@
                             <pre>{{selectedNodeFromItemGraph | json}}</pre>
                         </uib-tab>
                     </uib-tabset>
+
+                    <div>Currently active extensions - plus where each is defined (or overridden)</div>
 
                 </div>
             </div>

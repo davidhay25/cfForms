@@ -255,33 +255,7 @@
 
                     <uib-tabset  active="input.selectTabActive">
 
-                        <uib-tab heading = "Tree"  select="setSelectTab(0)">
-                            <div>
-
-
-
-
-                                <div class="pull-right clickable spacer"
-                                     ng-if = "(userMode == 'library' && user.email) || canEdit()"
-                                     ng-click="newModel('dg')">New DG</div>
-
-                                <div class="pull-right clickable spacer"
-                                     ng-if = "user.email && userMode == 'library' && selectedModel"
-                                     ng-click="newModel('dg',selectedModel)">New child</div>
-
-
-                            </div>
-
-                            <div class="clearfix"></div>
-
-                            <div class="myScrollSmall background">
-                                <div id="allDGTree"></div>
-                            </div>
-
-                        </uib-tab>
-
-
-                        <uib-tab heading="List" select="setSelectTab(1)">
+                        <uib-tab heading="List" select="setSelectTab(0)">
 
                             <div style="padding: 8px">
                                 <div class="row">
@@ -317,6 +291,34 @@
                             </div>
 
                         </uib-tab>
+
+                        <uib-tab heading = "Tree"  select="setSelectTab(1)">
+                            <div>
+
+
+
+
+                                <div class="pull-right clickable spacer"
+                                     ng-if = "(userMode == 'library' && user.email) || canEdit()"
+                                     ng-click="newModel('dg')">New DG</div>
+
+                                <div class="pull-right clickable spacer"
+                                     ng-if = "user.email && userMode == 'library' && selectedModel"
+                                     ng-click="newModel('dg',selectedModel)">New child</div>
+
+
+                            </div>
+
+                            <div class="clearfix"></div>
+
+                            <div class="myScrollSmall background">
+                                <div id="allDGTree"></div>
+                            </div>
+
+                        </uib-tab>
+
+
+
 
                         <uib-tab ng-if="userMode !== 'playground'" select="setSelectTab(2)" heading="Tagged">
                             <div class="row" style="padding: 8px">

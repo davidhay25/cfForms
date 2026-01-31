@@ -12,6 +12,10 @@ angular.module('pocApp')
         let extAllocateIdUrl = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-extractAllocateId"
         let extHidden = "http://hl7.org/fhir/StructureDefinition/questionnaire-hidden"
         let extCollapsibleUrl = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-collapsible"
+        let extEntryFormat = "http://hl7.org/fhir/StructureDefinition/entryFormat"
+        let extFhirSDBaseUrl = "http://hl7.org/fhir/StructureDefinition"
+        //let extHTMLRender = "http://hl7.org/fhir/StructureDefinition/rendering-xhtml"
+
 
         //these are resources that we will automatically add references to patient for
         let resourcesForPatientReference = {}
@@ -20,6 +24,7 @@ angular.module('pocApp')
         resourcesForPatientReference['Condition'] = {path:'subject'}
         resourcesForPatientReference['MedicationStatement'] = {path:'subject'}
         resourcesForPatientReference['Specimen'] = {path:'subject'}
+        resourcesForPatientReference['DiagnosticReport'] = {path:'subject'}
         resourcesForPatientReference['ServiceRequest'] = {path:'subject'}
         resourcesForPatientReference['Procedure'] = {path:'subject'}
         resourcesForPatientReference['Task'] = {path:'for'}
@@ -209,6 +214,11 @@ angular.module('pocApp')
                 item.extension = item.extension || []
                 item.extension.push(ext)
 
+            }
+
+            if (ed.placeHolder) {
+                let ext = {url:extEntryFormat,valueString:ed.placeHolder}
+                makeQSvc2Helper.addExtension(item,ext)
             }
 
             //specific item processing for each type - like fixed or default values
@@ -568,20 +578,43 @@ angular.module('pocApp')
 
             }
 
+            let resourceType = dg.type
+            if (dg.adHocExtension) {
+                item.extension = item.extension || []
+                item.extension.push(...dg.adHocExtension)
+                //there is a wrinkle - if definitionExtract is used to set the context - and maybe a fullUrl
+                //to use when referencing, then dg.type *should* be blank (to avoid the extension being added above)
+                //in that case the patient reference won't be set. So we'll need to check the adHoc extensions and set the resource type
+                for (const ext of dg.adHocExtension){
+                    if (ext.url == extDefinitionExtract) {
+                        for (const childExt of ext.extension || []) {
+                            if (childExt.url == 'definition') {
+                                if (childExt.valueCanonical) {
+                                    let ar = childExt.valueCanonical.split('/')
+                                    if (ar.length > 0) {
+                                        resourceType = ar[ar.length-1]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             //sets the reference to the Patient
-            if (resourcesForPatientReference[dg.type]) {
-                warnings.push({lvl:'info',msg: `Setting patient reference for DG: ${dg.name}, type: ${dg.type}`});
-                let elementName = resourcesForPatientReference[dg.type].path
-                let definition = `http://hl7.org/fhir/StructureDefinition/${dg.type}#${dg.type}.${elementName}.reference`
+            if (resourcesForPatientReference[resourceType]) {
+                warnings.push({lvl:'info',msg: `Setting patient reference for DG: ${dg.name}, type: ${resourceType}`});
+                let elementName = resourcesForPatientReference[resourceType].path
+                let definition = `http://hl7.org/fhir/StructureDefinition/${resourceType}#${resourceType}.${elementName}.reference`
                 let expression = "%patientID"
 
-                let fixedValue = null
+                //let fixedValue = null
                 makeQSvc2Helper.addFixedValue(item,definition,null,null,expression)
             }
 
         }
 
-        function hideItem(item) {
+        function hideItemDEP(item) {
             //create a hidden extension and add to the item
             let ext = {url:extHidden,valueBoolean:true}
             addExtension(item,ext)
@@ -593,7 +626,7 @@ angular.module('pocApp')
             item.extension = item.extension || []
             item.extension.push(ext)
         }
-
+/*
         //add a fixed value expression to the item (or Q)
         function addFixedValueDEP(item,definition,type,value,expression) {
             //add a fixed value extension. Can either be a value or an expression
@@ -622,5 +655,6 @@ angular.module('pocApp')
             item.extension.push(ext)
 
         }
+        */
 
     });
