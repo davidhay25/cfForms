@@ -7,6 +7,26 @@ angular.module("pocApp")
             $scope.selectedItem = item
 
 
+            //this is the minimal help for the popover in the extensions ansectry. todo Should move to a separate
+            //todo config file, but need to think of wider ues
+            $scope.helpText = {}
+            $scope.helpText['launchContext'] = {msg:"Variables passed into the form that can be used for pre-population"}
+            $scope.helpText['extractAllocateId'] = {msg:"Creates an id to be used for referencing during extract"}
+            $scope.helpText['preferredTerminologyServer'] = {msg:"The Terminology server for this and descendant items"}
+            $scope.helpText['definitionExtract'] = {msg:"Defined the FHIR type to extract to"}
+            $scope.helpText['definitionExtractValue'] = {msg:"Sets a specific value in the extract - expression or fixed"}
+            $scope.helpText['initialExpression'] = {msg:"An expression that sets the initial value of this element"}
+            $scope.helpText['entryFormat'] = {msg:"Specifies placeholder text",
+                url:"https://hl7.org/fhir/R4/extension-entryformat.html"}
+            $scope.helpText['collapsible'] = {msg:"Allows the group content to be shown or hidden"}
+
+            for (let key of Object.keys($scope.helpText)) {
+                if (! $scope.helpText[key].url) {
+                    $scope.helpText[key].url = `https://hl7.org/fhir/uv/sdc/StructureDefinition-sdc-questionnaire-${key}.html`
+                }
+
+            }
+
             //get the hierarchy for this item
 
             function getChainToNode(node, targetId, chain = []) {
@@ -68,9 +88,29 @@ angular.module("pocApp")
                         for (const ext of node.extension) { //iterate over each extension
                             let extensionSummary = {url:$filter('sdcExtensionName')(ext.url),extensionProps:[]}
                             //extensionSummary.fullUrl = ext.url
+
+                            let display = ""
+                            let link = ""
+                            let help = $scope.helpText[extensionSummary.url]
+                            if (help) {
+                                display = help.msg
+                                /* doesn't work with mouseover
+                                if (help.url) {
+                                    link = `<br/><a target='_blank' href=${help.url}>More</a>`
+                                }
+
+                                 */
+                            }
+
+
+
+
                             extensionSummary._popoverHtml = $sce.trustAsHtml(
-                                ext.url + '<br/><em>Lower line</em>'
-                            );
+                                `${ext.url}<br/><em>${display}</em> ${link}`
+                                //ext.url + '<br/><em>Lower line</em>'
+                            )
+
+
                             if (ext.extension) {
                                 //complex extension. Iterate over each child value
                                 for (const child of ext.extension) {
@@ -104,8 +144,18 @@ angular.module("pocApp")
                 }
             }
 
-            $scope.extPopoverHtml = function (ext) {
-                return $sce.trustAsHtml(ext.fullUrl + '<br/>Lower line');
+            $scope.extPopoverHtmlDEP = function (ext) {
+
+               // helpText
+                let helpTextDisplay = ""
+                if (ext.url) {
+                    if (helpText[url]) [
+                        helpTextDisplay = helpText[url].msg
+                    ]
+                }
+
+
+                return $sce.trustAsHtml(`${ext.fullUrl}<br/>${helpTextDisplay}`);
             };
 
             $scope.buildComplexExtDisplayDEP = function (ext) {

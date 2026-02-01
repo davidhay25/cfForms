@@ -685,7 +685,7 @@ angular.module("pocApp")
                     function (data) {
                         $scope.input.mainTabActive = 1
                         $scope.fullQ = data.data.Q
-                        $scope.errorLog = data.data.errorLog
+                        $scope.errorLog = data.data.errorLog  //not only errors
 
                         processQ($scope.fullQ)
 

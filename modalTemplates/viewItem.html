@@ -35,7 +35,7 @@
 
     <div class="row">
       <div class="col-md-3">
-        <strong>Ancestors</strong>
+        <strong>Ancestors of this item</strong>
         <div class="list-group">
           <div ng-repeat="item in chain"
                ng-click="selectItem(item)"
@@ -51,6 +51,21 @@
           </div><br/>
 
           <br/>
+
+            <strong>Links</strong>
+            <div><a href="https://hl7.org/fhir/R4/questionnaire.html" target="_blank">Questionnaire resource (R4)</a> </div>
+            <div><a href="https://hl7.org/fhir/uv/sdc/index.html" target="_blank">SDC Spec</a> </div>
+            <div><a href="https://hl7.org/fhir/uv/sdc/populate.html" target="_blank">SDC Pre-population</a> </div>
+            <div><a href="https://hl7.org/fhir/uv/sdc/extraction.html" target="_blank">SDC Extraction</a> </div>
+            <br/> <br/>
+            <strong>Common SDC Extensions</strong>
+            <br/>
+            <ul class="list-unstyled">
+                <li ng-repeat="(k,v) in helpText" ng-show="v.url">
+
+                    <a href="{{v.url}}" target="_blank">{{k}}</a>
+                </li>
+            </ul>
 
         </div>
       </div>
@@ -186,7 +201,7 @@
 
                 </div>
                 <em>Displays the extensions defined by all the ancestor items to this one. Useful
-                as many of the SDC extensions create a variable that can be used by descendants to its
+                as many of the SDC extensions create a variable that can be used by descendants so it's
                 useful to know where (or if) they are defined in the ancestory.</em>
 
                 <!--  <pre>{{extSummary | json}}</pre> -->

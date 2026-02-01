@@ -628,7 +628,12 @@ angular.module("pocApp")
                 })
             }
 
+            //called when the path is set
             $scope.setTitle = function (title) {
+
+                if (title) {
+                    title = title.charAt(0).toUpperCase() + title.slice(1)
+                }
                 $scope.input.title = $scope.input.title || title
             }
 
