@@ -1833,8 +1833,10 @@ angular.module("pocApp")
 
                                 ed1.insertAfter = ed.insertAfter
 
-                                setValue(ed1,'controlHint',ed.controlHint,'string')
-                                //ed1.controlHint = ed.controlHint
+
+                                //setValue(ed1,'controlHint',ed.controlHint,'string')
+
+                                ed1.controlHint = ed.controlHint
                                 ed1.otherType = ed.otherType
                                 setValue(ed1,'hideInQ',ed.hideInQ,'bool')
                                 //ed1.hideInQ = ed.hideInQ
@@ -1914,11 +1916,14 @@ angular.module("pocApp")
                         }
 
                         if (! found) {
+                            alert("Error editing item - saved not changed")
                             //The attribute that was edited (eg edscription) is inherited
                             //Need to create an 'override' element and add to the DG
 
                             //now see if this is element is in the snapshot. If it is, then need to use the same Id - conditionals use it
                             //otherwise, create a new one
+                            /* - feb2 2026 - no overrides
+
                             let ar = $scope.fullElementList.filter(item => item.ed.path == ed.path)
                             if (ar.length > 0) {
                                 //should only be one... todo ?raise an error
@@ -1932,6 +1937,7 @@ angular.module("pocApp")
 
                             $scope.selectedModel.diff.push(ed)
                             //traceSvc.addAction({action:'add-override',model:$scope.selectedModel,path:ed.path})
+                            */
 
                         }
 

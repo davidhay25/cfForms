@@ -125,7 +125,7 @@ angular.module('pocApp')
 
 
             //return the item.type from the ed type. Also returns the DG if this is a contained DG
-            let vo = getControlDetails(ed)
+            let vo = makeQSvc2Helper.getControlDetails(ed)
             item.type = vo.controlType
 
 
@@ -357,7 +357,7 @@ angular.module('pocApp')
             return cleanQ;
         }
 
-        function  getControlDetails(ed) {
+        function  getControlDetailsDEP(ed) {
 
             let containedDG = null
 

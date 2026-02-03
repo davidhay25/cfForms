@@ -173,7 +173,7 @@
             <td>
               <span ng-repeat = "opt in qControlOptions">
                   <input type="radio"
-                         ng-change="setControlHintDEP(selectedNode.data.ed,opt)"
+
                          ng-model="input.controlHint" value="{{opt}}"> {{opt}}
                 </span>
 
@@ -185,7 +185,7 @@
             <td>
               <span ng-repeat = "opt in ['sometimes','textonly','never']">
                   <input type="radio"
-                         ng-change="setControlHintDEP(selectedNode.data.ed,opt)"
+
                          ng-model="input.otherType" value="{{opt}}"> {{opt}} &nbsp;
                 </span>
 

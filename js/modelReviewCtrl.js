@@ -42,6 +42,46 @@ angular.module("pocApp")
 
             //https://fhir.forms-lab.com/
 
+            let prePopConfig = $localStorage['ppConfig']
+
+            if (! prePopConfig) {
+                //prePopConfig = {dataServer:"https://hapi.fhir.org/baseR4"}
+                prePopConfig = {dataServer:"https://test.clinfhir.com/fhir"}
+                prePopConfig.termServer = "https://tx.fhir.org/r4"
+                prePopConfig.formServer = "https://hapi.fhir.org/baseR4"
+
+                prePopConfig.patient = {reference: 'Patient/sample1', display: 'Example Patient'}
+                prePopConfig.practitioner = { reference: 'Practitioner/sample1', display: 'Example Practitioner' }
+
+            }
+
+
+
+
+
+            //display and/or edit the pre-pop details
+            $scope.prePopDetails = function () {
+                $uibModal.open({
+                    backdrop: 'static',      //means can't close by clicking on the backdrop.
+                    keyboard: false,       //same as above.
+                    size : 'xlg',
+                    templateUrl: 'modalTemplates/prePopConfig.html',
+
+                    controller: 'prePopConfigCtrl',
+
+                    resolve: {
+                        prePopConfig: function () {
+                            return prePopConfig
+                        }
+                    }
+
+                }).result.then(function (config) {
+                    $localStorage['ppConfig'] = config
+                    //getAllAdHoc()   //update the list
+
+                })
+            }
+
 
             $scope.showRenderOptions = true //will display the prepop / extract options in the renderer
 
@@ -215,13 +255,13 @@ angular.module("pocApp")
                 //tod can the context be a resource
                 $scope.sendMessage('sdc.configureContext', {
                     context: {
-                        subject: { reference: 'Patient/59604221', display: 'Example Patient' },
-                        author: { reference: 'Practitioner/10652933', display: 'Example Practitioner' },
+                        subject: prePopConfig.patient,
+                        author: prePopConfig.practitioner,
+
                         launchContext: [
                             {
                                 name: 'source',
-                                contentReference: { reference: 'Practitioner/10652933',
-                                    display: 'Example Practitioner' }
+                                contentReference: prePopConfig.practitioner
                             },{
                                 name: 'testObservation',
                                 contentResource: testResource
@@ -231,9 +271,9 @@ angular.module("pocApp")
                 })
 
                 $scope.sendMessage('sdc.configure', {
-                    terminologyServer: 'https://tx.fhir.org/r4',
-                    dataServer: 'https://hapi.fhir.org/baseR4',
-                    formsServer: 'https://hapi.fhir.org/baseR4'
+                    terminologyServer: prePopConfig.termServer,// 'https://tx.fhir.org/r4',
+                    dataServer: prePopConfig.dataServer, //'https://hapi.fhir.org/baseR4',
+                    formsServer: prePopConfig.formServer //'https://hapi.fhir.org/baseR4'
                 });
             }
 
@@ -333,6 +373,16 @@ angular.module("pocApp")
                                 setQR(msg.payload.questionnaireResponse)
                             } else {
                                 console.log(angular.toJson(msg))
+                                console.log(msg.payload)
+                                if (msg.payload?.status == 'error') {
+                                    let msg1 = "An error was returned from the last operation. Details are: \n"
+                                    for (const iss of msg.payload?.outcome?.issue) {
+                                        msg1 += iss.diagnostics + "\n"
+                                    }
+                                    msg1 += "A common cause of this is that the Data Server is unavailable"
+                                    alert(msg1)
+                                }
+
                             }
 
                             break

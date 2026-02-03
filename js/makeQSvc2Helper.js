@@ -1,5 +1,5 @@
 angular.module('pocApp')
-    .service('makeQSvc2Helper', function () {
+    .service('makeQSvc2Helper', function (snapshotSvc) {
 
 
         let extDefinitionExtractValue = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-definitionExtractValue"
@@ -78,6 +78,105 @@ angular.module('pocApp')
         }
 
         return {
+
+            getControlDetails : function(ed){
+
+
+
+                let containedDG = null
+
+                //return the control type & hint based on the ed
+                let controlHint = "string"            //this can be any value - it will be an extension in the Q - https://hl7.org/fhir/R4B/extension-questionnaire-itemcontrol.html
+                let controlType = "string"          //this has to be one of the defined type values
+
+                if (ed.options && ed.options.length > 0) {
+                    controlHint = "drop-down"
+                    controlType = "choice"
+                }
+
+                if (ed.type) {
+                    let type = ed.type[0]
+
+                    containedDG = snapshotSvc.getDG(ed.type[0])
+                    if (containedDG) {
+                        //this is a contained DG
+                        controlHint = "group"
+                        controlType = "group"
+                    } else {
+                        switch (type) {
+                            case 'display' :
+                                controlType = "display"
+                                controlHint = "display"
+                                break
+                            case 'string' :
+                                controlType = "string"      //default to single text box
+                                if (ed.controlHint == 'text') {
+                                    controlType = "text"
+                                }
+                                break
+                            case 'boolean' :
+                                controlHint = "boolean"
+                                controlType = "boolean"
+                                break
+                            case 'decimal' :
+                                controlHint = "decimal"
+                                controlType = "decimal"
+                                break
+                            case 'integer' :
+                                controlHint = "integer"
+                                controlType = "integer"
+                                break
+                            case 'Quantity' :
+                                controlHint = "quantity"
+                                controlType = "quantity"
+                                if (ed.units) {
+                                    //p
+                                    //console.log(ed.units)
+                                }
+                                break
+                            case 'dateTime' :
+                                controlHint = "dateTime"
+                                controlType = "dateTime"
+                                break
+                            case 'date' :
+                                controlHint = "date"
+                                controlType = "date"
+                                break
+                            case 'CodeableConcept' :
+                                //  controltype is always choice. May want typeahead later
+
+                                controlHint = "drop-down"
+                                controlType = "choice"
+
+                                if (ed.controlHint ) {
+                                    controlHint = ed.controlHint
+                                    //csiro only supports autocomplete on open-choice
+                                    if (controlHint == 'autocomplete') {
+                                        controlType = "open-choice"
+                                    }
+                                }
+                                break
+                            case 'Group' :
+                            case 'group' :
+
+                                controlHint = "group"
+                                controlType = "group"
+
+                                break
+                            /*
+                            case 'Identifier' :
+                                controlHint = "Identifier"
+                                controlType = "Identifier"
+        */
+
+                        }
+
+                    }
+                }
+
+
+                return {controlType:controlType,controlHint:controlHint,dg:containedDG}
+            },
 
             addFixedValue : addFixedValue,
             addExtension : addExtension,

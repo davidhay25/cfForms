@@ -717,6 +717,7 @@ angular.module("pocApp")
 
 
                 ed.placeHolder = $scope.input.placeHolder
+
                 if ($scope.input.controlHint) {
                     ed.controlHint = $scope.input.controlHint
                 }
