@@ -8,6 +8,15 @@ angular.module("pocApp")
         let extensionUrls = makeQHelperSvc.getExtensionUrls()
 
         return {
+
+            makeExtractSummary : function (Q) {
+                //create a summary object for displaying extracted resources from a Q
+
+
+                //function processItem
+
+
+            },
             makeTableData : function (Q) {
                 //create a list for a table view of the Q
 

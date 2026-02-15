@@ -471,7 +471,7 @@ angular.module('pocApp')
 
             questionnaire.name = config.name || dg.name //firstElement.ed.path
             questionnaire.title = dg.title //firstElement.title
-            questionnaire.status = 'active'
+            questionnaire.status = config.status || 'draft'
             questionnaire.title = dg.title
             questionnaire.date = new Date().toISOString()
             questionnaire.url = config.url

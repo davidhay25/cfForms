@@ -86,6 +86,7 @@ async function setup() {
     playgroundModule.setup(app,database)
     serverManagerModule.setup(app)
 }
+
 setup()
 
 

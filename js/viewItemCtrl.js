@@ -11,21 +11,33 @@ angular.module("pocApp")
             //todo config file, but need to think of wider ues
             $scope.helpText = {}
             $scope.helpText['launchContext'] = {msg:"Variables passed into the form that can be used for pre-population"}
-            $scope.helpText['extractAllocateId'] = {msg:"Creates an id to be used for referencing during extract"}
             $scope.helpText['preferredTerminologyServer'] = {msg:"The Terminology server for this and descendant items"}
+            $scope.helpText['initialExpression'] = {msg:"An expression that sets the initial value of this element"}
+            $scope.helpText['extractAllocateId'] = {msg:"Creates an id to be used for referencing during extract"}
+
             $scope.helpText['definitionExtract'] = {msg:"Defined the FHIR type to extract to"}
             $scope.helpText['definitionExtractValue'] = {msg:"Sets a specific value in the extract - expression or fixed"}
-            $scope.helpText['initialExpression'] = {msg:"An expression that sets the initial value of this element"}
+
             $scope.helpText['entryFormat'] = {msg:"Specifies placeholder text",
                 url:"https://hl7.org/fhir/R4/extension-entryformat.html"}
             $scope.helpText['collapsible'] = {msg:"Allows the group content to be shown or hidden"}
 
+            $scope.helpText['itemControl'] = {msg:"Specifies placeholder text",
+                url:"https://hl7.org/fhir/R4/extension-questionnaire-itemcontrol.html"}
+
+
+
+
             for (let key of Object.keys($scope.helpText)) {
                 if (! $scope.helpText[key].url) {
-                    $scope.helpText[key].url = `https://hl7.org/fhir/uv/sdc/StructureDefinition-sdc-questionnaire-${key}.html`
+                        $scope.helpText[key].url = `https://build.fhir.org/ig/HL7/sdc/en/StructureDefinition-sdc-questionnaire-${key}.html`
+                    //$scope.helpText[key].url = `https://hl7.org/fhir/uv/sdc/StructureDefinition-sdc-questionnaire-${key}.html`
                 }
 
             }
+
+
+
 
             //get the hierarchy for this item
 

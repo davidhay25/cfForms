@@ -156,7 +156,9 @@ angular.module('formsApp')
                     $scope.treenode = "designTree"
 
                     //$scope.q is set from the directive attributes. setupQ() is only called when it is not null
-                    let vo = renderFormsSvc2.makeTreeFromQ($scope.q)
+
+
+                    let vo = renderFormsSvc2.makeTreeFromQ($scope.q,$scope.sdcView)
 
                     $scope.treeData = vo.treeData
 

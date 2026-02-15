@@ -12,6 +12,11 @@ angular.module("pocApp")
 
             $scope.selectionOptions = []
 
+            $scope.input.qStatus = ["All","draft","active","retired"]
+            $scope.input.selectedStatus = "active"
+
+            $scope.input.publishers = {All:"All"}
+            $scope.input.selectedPublisher = "All"
 
 
             //todo - UI for adding forms servers. Store in db. Only I can remove
@@ -109,12 +114,29 @@ angular.module("pocApp")
                                 return -1
                             }
                         })
+
+                        for (const q of $scope.allAdHoc) {
+                            if (q.publisher) {
+                                $scope.input.publishers[q.publisher] = q.publisher
+                            }
+                        }
                     }
                 )
             }
             getAllAdHoc()
 
             $scope.showLibraryLine = function (miniQ) {
+
+                //input.selectedStatus
+                if ($scope.input.selectedStatus !== 'All' && miniQ.status !== $scope.input.selectedStatus) {
+                    return false
+                }
+
+                if ($scope.input.selectedPublisher !== 'All' && miniQ.publisher !== $scope.input.selectedPublisher) {
+                    return false
+                }
+
+
                 if (! $scope.input.libraryTitleFilter) {
                     return true
                 }

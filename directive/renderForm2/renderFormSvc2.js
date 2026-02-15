@@ -125,7 +125,7 @@ angular.module("formsApp")
                 }
             },
 
-            makeTreeFromQ : function(Q) {
+            makeTreeFromQ : function(Q,sdcView) {
                 // a recursive form of the tree generation
                 //todo - create list of pre-pop expressions
 
@@ -146,14 +146,29 @@ angular.module("formsApp")
                     let thisItem = angular.copy(item)
                     delete thisItem.item
 
+
+
                     let text = item.text || "Unknown text"
+                    //let sdc = that.getSDCSummary(item)
+                    //text = sdc + " " + text
+
                     if (text.length > 50) {
                         text = text.slice(0,47) + "..."
                     }
 
                     let node = {id:idForThisItem,text:text,parent:parent,data:{section:sectionItem,item:item}}
 
+
+                    //If SDC view, then
                     let iconFile = "icons/icon-q-" + item.type + ".png"
+
+                    if (sdcView) {
+                     //   iconFile = "icons/icon-q-group.png"
+                    }
+
+                    //iconFile = "icons/arrow-autofit-content.svg"
+
+
                     node.icon = iconFile
 
                     //---- set style of node
@@ -222,16 +237,10 @@ angular.module("formsApp")
                 }
 
                 function addQToTree(Q) {
-                    //create a parent for this Q
-                    //let qParentId = `root`
                     let qParentId = `#`
-                    //let node = {id:qParentId,text:Q.title || `q${ctr}`,parent:"root",data:{level:'chapter'}}
-
-                    // treeData.push(node)
                     Q.item.forEach(function (item) {
                         let section = angular.copy(item)
                         delete section.item
-                        //section.reviewItem = []
                         addItemToTree(qParentId,item,'section',section)
                     })
                 }
@@ -268,7 +277,27 @@ angular.module("formsApp")
                     var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
                     return v.toString(16);
                 })
+            },
+
+            getSDCSummaryDEP : function (item) {
+                let sumry = ""
+                for (const ext of item.extension || []) {
+                    let url = ext.url
+                    if (url.indexOf('extractAllocateId') > -1) {
+                        sumry += `[allocate]`
+                    } else if (url.indexOf('definitionExtract') > -1) {
+                        sumry += `[defExt]`
+                    }
+
+
+                }
+
+                return sumry
+
+
             }
+
+
 
         }
     })

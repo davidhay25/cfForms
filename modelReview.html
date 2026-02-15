@@ -165,7 +165,8 @@
 <body style="padding: 8px;padding-top: 80px">
     <div ng-app="topApp" ng-controller="modelReviewCtrl" class="container-fluid">
 
-    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation"
+        style="height: 80px">
 
         <div class="container-fluid">
             <div class="col-md-6">
@@ -411,11 +412,33 @@
                                        placeholder="Filter text on title"
                                        ng-model="input.libraryTitleFilter">
                             </div>
+                            <div class="col-md-1">
+                                <div style="padding-top: 8px">Publisher</div>
+
+                            </div>
+
+                            <div class="col-md-4">
+                                <select class="form-control" ng-model="input.selectedPublisher"
+                                        ng-options="key as value for (key, value) in input.publishers"></select>
+                            </div>
+
+
+
+
+                            <div class="col-md-1">
+                                <div style="padding-top: 8px">Status</div>
+
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-control" ng-model="input.selectedStatus"
+                                        ng-options="status for status in input.qStatus"></select>
+                            </div>
+
                         </div>
                         <br/>
 
                         <table class="table table-bordered">
-                            <tr><th>Title</th><th>Name</th><th>Version</th><th>Publisher</th><th>Description</th></tr>
+                            <tr><th>Title</th><th>Name</th><th>Version</th><th>Publisher</th><th>Status</th><th>Description</th></tr>
                             <tr ng-repeat="miniQ in allAdHoc"
                                 ng-show="showLibraryLine(miniQ)">
                                 <td>
@@ -429,6 +452,7 @@
                                 <td>{{miniQ.name}}</td>
                                 <td>{{miniQ.version}}</td>
                                 <td>{{miniQ.publisher}}</td>
+                                <td>{{miniQ.status}}</td>
                                 <td>{{miniQ.description}}</td>
 
                             </tr>
@@ -584,7 +608,7 @@
 
                                 <td>
                                     <div ng-if="entry.initialExpression">
-                                        <strong>Initial: </strong>{{entry.initialExpression}}
+                                        <strong>InitialExp: </strong>{{entry.initialExpression}}
                                     </div>
                                     <div ng-if="entry.definition">
                                         <strong>Extraction: </strong>{{entry.definition}}

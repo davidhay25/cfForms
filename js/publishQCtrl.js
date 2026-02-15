@@ -6,6 +6,14 @@ angular.module("pocApp")
             $scope.input = {}
             let extensionUrls = makeQHelperSvc.getExtensionUrls()
 
+            $scope.states = ['draft','active','retired']
+            $scope.input.selectedStatus = $scope.states[0]     //default state
+
+            if (Q.status) {
+                $scope.input.selectedStatus = Q.status
+
+            }
+
             utilsSvc.getConfig().then(
                 function (config) {
                     $scope.systemConfig = config
@@ -18,7 +26,7 @@ angular.module("pocApp")
                 //Q.qVersion ++
                 if (confirm("Are you sure you wish to Publish")) {
                     Q.date = new Date().toISOString()
-
+                    Q.status = $scope.input.selectedStatus
                     if ($scope.input.releaseNotes) {
                         Q.extension = Q.extension || []
                         let ext = {url:extensionUrls.releaseNotes}

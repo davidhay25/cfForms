@@ -403,6 +403,7 @@ angular.module("pocApp")
                         config.name = qName
                         config.url = `${$scope.systemConfig.qUrlPrefix}/${qName}`
                         config.version = String(dg.pubVersion +1)
+                        config.status = dg.pubStatus || 'draft'   //the current status
                         //we make the Q with the new version. If it is not published, then the dg won't be updated so all good
 
                         config.url = `${$scope.systemConfig.qUrlPrefix}/${qName}`
@@ -412,6 +413,10 @@ angular.module("pocApp")
 
                         let voQ = makeQSvc.makeHierarchicalQFromDG(dg,allElements,config)
                         let Q = voQ.Q
+
+
+
+
                         $scope.qErrorLog = voQ.errorLog
 
 
@@ -431,6 +436,7 @@ angular.module("pocApp")
                             //update the version in the DG
                             $scope.hashAllDG[dg.name].pubVersion = parseInt(Q.version)
                             $scope.hashAllDG[dg.name].pubDate = Q.date //parseInt(Q.date)
+                            $scope.hashAllDG[dg.name].pubStatus = Q.status
                             $scope.updatePlayground(true)
 
                         })
@@ -473,6 +479,7 @@ angular.module("pocApp")
                         config.expandVS = false     //use proxy to expand vs
                         config.name = qName
                         config.url = `${$scope.systemConfig.qUrlPrefix}/${qName}`
+                        config.status = model.pubStatus || 'draft'
 
                         //set the version to the next one that will be published
                         let version = model.pubVersion || 0

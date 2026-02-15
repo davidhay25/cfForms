@@ -17,6 +17,8 @@
   <div class="row">
     <div ng-class="leftPane">
 
+
+
       <div class="myScroll">
         <div id="designTree"></div>
 
@@ -620,14 +622,14 @@
 
         </uib-tab>
 
-        <uib-tab  heading="Item Json">
+        <uib-tab  heading="Json">
           <div class="myScrollSmall">
             <pre>{{selectedItem | json}}</pre>
           </div>
 
         </uib-tab>
 
-        <uib-tab ng-if="technicalview" heading="Item Json (no children)">
+        <uib-tab ng-if="technicalview" heading="Json (no children)">
 
           <pre>{{selectedItemNoChild | json}}</pre>
           <em>Any child items have been removed</em>
@@ -662,56 +664,11 @@
         </uib-tab>
 
 
-        <uib-tab ng-if=" false && technicalview" heading="Q">
-
-          <span class="btn btn-link" ng-click="validate(q)">Validate</span>
-
-
-          <span class="clickable pull-right" style="padding: 8px" ng-click = "copyToClipboard()">
-            Copy to clipboard ({{Qsize}} K)
-          </span>
-
-          <a class="btn btn-link" download="{{downloadLinkJsonName}}"
-             href="{{downloadLinkJson}}" title="{{downloadLinkJsonName}}" >
-            Download Json
-          </a>
-
-
-
-          <img class="pull-right" ng-if="validating" src="css/ajax_loader_blue_32.gif"/>
-
-          <div class="clearfix"></div>
-
-
-          <div ng-if="oo" >
-            <table class="table table-bordered">
-              <tr ng-repeat="iss in oo.issue track by $index" ng-if="showIssue(iss)">
-                <td>{{iss.severity}}</td>
-                <td>{{iss.diagnostics}}
-                  <div>
-                    {{iss.location[0]}}
-                    <!--
-                    <em class="clickable" ng-click="selectByLinkId(iss.location[0])">
-                      {{iss.location[0]}}
-                    </em>
-                    -->
-                  </div>
-                  <div>{{iss.details.text}}</div>
-                  <div ng-repeat = "exp in iss.expression">
-                    <em><span class="clickable" ng-click="getItemFromOO(exp,iss)">{{exp}}</span></em>
-                  </div>
-                </td>
-
-              </tr>
-            </table>
-          </div>
-
-
-          <pre ng-hide = "oo" >{{q | json}}</pre>
-
-
+        <uib-tab heading="SDC">
+          <em>AllocateId, definitionExtract & definitionExtractValue</em>
 
         </uib-tab>
+
 
         <uib-tab ng-if="false && technicalview && errors.length > 0" >
           <uib-tab-heading>
@@ -727,9 +684,7 @@
 
 
 
-        <uib-tab ng-if="false && technicalview" heading="Q">
-          <pre>{{q | json}}</pre>
-        </uib-tab>
+
 
       </uib-tabset>
 
