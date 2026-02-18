@@ -504,7 +504,7 @@ angular.module('pocApp')
 
         function addContextExtensions(Q) {
             //add the SDC extensions required for pre-pop
-            //these are added to the
+            //these are added to the Q root
             Q.extension = Q.extension || []
             addPPExtension("patient","Patient","The patient that is to be used to pre-populate the form")
             addPPExtension("user","Practitioner","The practitioner that is to be used to pre-populate the form")
@@ -513,6 +513,7 @@ angular.module('pocApp')
 
             //let ext = {url:extSourceQuery,valueReference:{reference:"#PrePopQuery"}}
 
+            //add pre-pop extraction context
             function addPPExtension(name,type,description) {
                 let ext = {url:extLaunchContextUrl,extension:[]}
 
@@ -537,10 +538,28 @@ angular.module('pocApp')
             //https://build.fhir.org/ig/HL7/sdc/en/StructureDefinition-sdc-questionnaire-definitionExtract.html
 
             if (dg.type) {
+                //the type is the extraction type. todo badly named...
+                //default is core type, it 'http' is present, assume a profile
+
                 let canonical = `http://hl7.org/fhir/StructureDefinition/${dg.type}`
+                if (dg.type.indexOf('http') > -1) {
+                    canonical = dg.type
+                }
+
 
                 let ext = {url:extDefinitionExtract,extension:[]}
+
                 ext.extension.push({url:"definition",valueCanonical:canonical})
+                //if an id is defined on the DG then add it to the definitionExtract extension and add an allocateId
+                //extension as well. Note that the scope of the variable is this item and children
+                if (dg.extractId) {
+                    ext.extension.push({url:"fullUrl",valueString:`%${dg.extractId}`})
+
+                    //now create the allocateId extension and add it to the item...
+                    let extAId = {url:extAllocateIdUrl,valueString:dg.extractId}
+                    addExtension(item,extAId)
+
+                }
 
                 //if a patient, then use fullUrl to set the entry.fullUrl to the value of patientID which is always set
 
@@ -551,27 +570,21 @@ angular.module('pocApp')
                 addExtension(item,ext)
                 warnings.push({lvl:'info',msg: `Setting Extraction type (${dg.type}) for  DG: ${dg.name}`});
 
-
-
                 //specific processing for an Observation
                 if (dg.type == 'Observation') {
                     //set the status to 'final'
                     let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.status`
                     makeQSvc2Helper.addFixedValue(item,definition,'code','final')
 
-
-
                     if (dg.itemCode) {
                     //this is an itemCode on the DG. It's really only used for observations to set
-                    //the Observation.code value. Currently we ignore it otherwise
+                    //the Observation.code value. Currentlly we ignore it otherwise
 
                         //use the addFixedValue routine to set the value of Observation.code
                         let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.code`
 
                         makeQSvc2Helper.addFixedValue(item,definition,'CodeableConcept',{coding:[dg.itemCode]})
-
-                      //  hideItem(item) //hide the
-
+                        
                     }
                 }
 

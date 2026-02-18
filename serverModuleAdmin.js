@@ -11,6 +11,10 @@ tables.push({display:"Published Q",col:'publishedQ',
     sort: {name:1,version:-1},
     summaryFields:['name','title','version','date']})
 
+tables.push({display:"Library",col:'adhocQ',
+    sort: {name:1,version:-1},
+    summaryFields:['name','title','version','date']})
+
 
 
 //create a hash keyed on col
@@ -18,9 +22,6 @@ let hashTables = {}
 for (const table of tables) {
     hashTables[table.col] = table
 }
-
-
-
 
 async function setup(app,database,client) {
     //return a list of the tables (mongo collections) than can be examined
@@ -112,6 +113,15 @@ async function setup(app,database,client) {
 
     })
 
+    app.delete('/admin/record/:col/:id' ,async function (req,res) {
+
+    })
+
+
+
+
+
+
     //return all contents of the db as a single json file.
     app.get('/admin/getbackup' ,async function (req,res) {
         //const collections = await database.listCollections().toArray();
@@ -157,6 +167,8 @@ async function setup(app,database,client) {
         }
 
     })
+
+
 
 
     //update the local database from an extract file

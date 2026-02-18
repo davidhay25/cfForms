@@ -162,14 +162,20 @@
 
                         <div class="row">
                             <div class="col-md-2">
-                                Extraction type
+                                Extraction type / Id
                             </div>
-                            <div class="col-md-4">
-                                <input type="text" placeholder="eg Observation" class="form-control" ng-model="input.type">
+                            <div class="col-md-2">
+                                <input type="text" placeholder="eg Observation" class="form-control" ng-model="input.extractType">
                             </div>
+
+                            <div class="col-md-2">
+                                <input type="text" placeholder="resource Id" class="form-control" ng-model="input.extractId">
+                            </div>
+
                             <div class="col-md-6">
                                 If set to a FHIR resource type,
-                                <a target="_blank" href="https://build.fhir.org/ig/HL7/sdc/extraction.html#definition-extract">Definition based data extraction</a> will be enabled
+                                <a target="_blank" href="https://build.fhir.org/ig/HL7/sdc/extraction.html#definition-extract">Definition based data extraction</a> will be enabled.
+                                If a resource Id is specified, it will be used (useful when creating references)
 
                             </div>
                         </div>

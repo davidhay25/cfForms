@@ -82,15 +82,21 @@ angular.module("pocApp")
                 delete $scope.allQ
                 delete $scope.msg
                 let qry = `${$scope.input.formServer.url}&_count=50&_summary=true` //
+                let displayQry = `${$scope.input.formServer.url}/Questionnaire?_count=50&_summary=true`
 
                 for (const param of $scope.params) {
                     let value = $scope.input[param.key]
                     if (value) {
                         qry += `&${param.key}=${value}`
+                        displayQry += `&${param.key}=${value}`
                     }
                 }
 
-                $scope.query=qry
+
+                //query for display
+                $scope.displayQry=displayQry
+
+
 
                 qry = `formManagerSearch?server=${qry}` //
 

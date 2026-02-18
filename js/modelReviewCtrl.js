@@ -614,9 +614,7 @@ angular.module("pocApp")
             $scope.compVersion = null
 
             if (search) {
-
                 modelName = search.substr(1)
-
             }
 
 
@@ -786,8 +784,6 @@ angular.module("pocApp")
                     //this is the da created by the Q designer and is NOT the same as the published Q
                     let qName = modelName.slice(2)
                     $scope.loadQ(qName)
-
-
 
 
                 } else if (modelName.startsWith('url-')) {

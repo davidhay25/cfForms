@@ -124,6 +124,7 @@ async function setup(app,database) {
 
     //------ functions to interact with adHoc Q's in the Q viewer. ie not published ones.
     //------- may wish to combine published & adhoc later, but for now keep them separate...
+    //note that the Q editor will also save to this collection if publishing in clinfhir
 
 
     //get a summary of Q by url for the selection display. No items
