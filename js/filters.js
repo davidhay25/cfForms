@@ -29,6 +29,20 @@ angular.module("pocApp")
         }
     })
 
+    .filter('stripExtUrl',function(){
+        //return the last element in a url
+        //todo - there must be a more elegant way than this...
+        return function(ext) {
+
+            if (ext) {
+                let copy = angular.copy(ext)
+                delete copy.url
+                return copy
+            }
+
+
+        }
+    })
 
 
     .filter('lastInUUID',function(){

@@ -3,9 +3,97 @@
 //let MongoClient = require('mongodb').MongoClient;
 //et database        //this will be the database connection
 const path = require('path');
+const axios = require("axios");
 
 //async function setup(app,mongoDbName,uri) {
 async function setup(app,database) {
+
+    //find a Q on the server with a matching url
+
+    //const params = new URLSearchParams({ server: 'prod-01', url: 'https://example.com/path' });
+    // const response = await fetch(`/api/check?${params}`);
+
+    app.get('/q/getQFromUrl',async function(req,res) {
+        const { server, url } = req.query;
+
+        console.log(server,url)
+        const [baseUrl, version = null] = url.split('|');
+
+        //if the url is a canshare one, get it from the local db
+        if (url.indexOf('canshare.co.nz') >-1) {
+            //if there is a version then get that one.
+            if (version) {
+                let query={url:baseUrl,version:version}
+
+                console.log(query)
+
+                const cursor = await database.collection("publishedQ").find(query).toArray()
+                switch (cursor.length) {
+                    case 0 :
+                        res.status(404).json({msg:"No matching Q found on the canshare server"})
+                        break
+                    case 1 :
+                        let q = cursor[0]
+                        delete q['_id']
+                        res.json({q:q})
+                        break
+                    default :
+                        res.status(400).json({msg:`${cursor.length}  Questionnaires with the version ${version} found`})
+                        break
+
+                }
+
+            } else {
+                //if no version, then just get the latest one. We can assume a numeric version - as it's cansher
+                const q = await database.collection("publishedQ").aggregate([
+                    { $match: { url: baseUrl } },
+                    { $addFields: { versionNumeric: { $toDouble: "$version" } } },
+                    { $sort: { versionNumeric: -1 } },
+                    { $limit: 1 },
+                    { $project: { versionNumeric: 0 } }
+                ]).next();
+
+                //console.log(q)
+
+                if (q) {
+                    delete q['_id']
+                    res.json({q:q, msg:`No version was specified, this is the most recent Q with the url ${baseUrl}`})
+                } else {
+                    res.status(404).json({msg:`No Q found with the url ${baseUrl} on the CanShare server`})
+                }
+            }
+
+        } else {
+            //make a call to the term server
+            let formManager = server.endsWith('/') ? server : server + '/';
+            if (version) {
+                //a specific version
+                let qry = `${formManager}Questionnaire?url=${baseUrl}&version=${version}`
+                let response = await axios.get(qry)     //a bundle or OO
+                let bundle = response.data
+                if (bundle.entry?.length == 1) {
+                    res.json({q:bundle.entry[0].resource})
+                } else {
+                    if (bundle.entry?.length == 0) {
+                        res.status(404).json({msg:`No single Q with the url ${baseUrl} & version ${version} was found`})
+                    } else {
+                        res.status(404).json({msg:`There were ${bundle.entry?.length} Questionnaires with the url ${baseUrl} & version ${version} found on the server ${formManager}`})
+                    }
+
+                }
+            } else {
+                //if there is no version then query on url and just choose one
+                let qry = `${formManager}Questionnaire?url=${baseUrl}`
+                let response = await axios.get(qry)     //a bundle or OO
+                let bundle = response.data
+                if (bundle.entry?.length > 0) {
+                    res.json({q:bundle.entry[0].resource,msg:`There were ${bundle.entry?.length} found. This is just the first returned. `})
+                } else {
+                    res.status(404).json({msg:`No Q found with the url ${baseUrl} on the server: ${formManager}`})
+                }
+            }
+        }
+    })
 
     //when a Q is published from the designer
     app.post('/q/publish',async function(req,res){
@@ -206,7 +294,7 @@ async function setup(app,database) {
         let Q = req.body
         let url = Q.url
         let version = Q.version
-        if (! url || ! version) {
+        if (! url || ! version ) {
             let msg = "Questionnaires must have a url, version and publisher to be stored"
             res.status(422).json({msg:msg,code:'missingdata'})
             return

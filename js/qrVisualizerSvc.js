@@ -1,6 +1,6 @@
 angular.module("pocApp")
 
-    .service('qrVisualizerSvc', function() {
+    .service('qrVisualizerSvc', function($http,$q) {
 
         let config = {}
         let cmConfig = {}
@@ -8,6 +8,24 @@ angular.module("pocApp")
 
         return {
 
+            getQ : function (server,url) {
+                //find a Q on the server with a matching url
+
+                //first see if the url has a version
+                let ar = url.split('|')
+                let baseUrl = ar[0]
+                let version
+                if (ar.length > 1) {
+                    version = ar[1]
+                }
+
+                //if the url
+
+
+
+
+
+            },
             makeReport1 : function (Q,QR) {
                 //generate a report based on the QR rather than the Q
                 let hashQ = {}  //generate a hash of item by linkId

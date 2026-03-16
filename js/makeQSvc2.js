@@ -584,7 +584,7 @@ angular.module('pocApp')
                         let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.code`
 
                         makeQSvc2Helper.addFixedValue(item,definition,'CodeableConcept',{coding:[dg.itemCode]})
-                        
+
                     }
                 }
 

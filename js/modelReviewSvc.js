@@ -68,12 +68,14 @@ angular.module("pocApp")
                     //set the ed type from the item type
                     //todo - could be an externa; function - and add the others......
                     let edType = 'string'
+
                     switch (item.type) {
                         case "integer" :
                             edType = "integer"
                             break
                         case "decimal" :
-                            edType = "decimal"
+                            //edType = "decimal"
+                            edType = "quantity"
                             break
                     }
 
@@ -198,6 +200,7 @@ angular.module("pocApp")
                             item.type = 'choice'
                             log.push({linkId : item.linkId,msg:"Changed type from 'coding' to 'choice'"})
                         }
+
                     } else {
                         item.type = "string"
                         log.push({linkId : item.linkId,msg:"Missing item.type"})
@@ -246,8 +249,6 @@ angular.module("pocApp")
                 Q.id = `canshare-rcpa-${name}`
 
                 if (! Q.url) {
-
-
                     Q.url = `http://canshare.co.nz/fhir/questionnaire/rcpa-${name}`
                     log.push({linkId : 'root',msg:`Set url to ${Q.url}`})
                 }

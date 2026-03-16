@@ -18,7 +18,7 @@ angular.module("pocApp")
 
             $scope.setFormManager = function (url) {
                 $localStorage.formManager = url
-                alert("The Form Manager url has been updated.")
+                alert("The default Form Manager url has been updated.")
             }
 
             $scope.copyQRToClipboard = function () {
@@ -151,7 +151,7 @@ angular.module("pocApp")
                 parseQR($scope.selectedQR)
             }
 
-            //parse a QR item from the file list - ie {qr: }
+            //parse a QR
            let parseQR = function (QR) {
 
                 delete $scope.selectedQ
@@ -160,8 +160,9 @@ angular.module("pocApp")
 
                 $scope.hashLinkId = {}  //a hash of all items from the Q
                 $scope.lstQRItem = []   //a list of items from the QR for the report
-
+/*
                 let qUrl = QR.questionnaire
+
                if (! qUrl) {
                    alert("The QR does not have a '.questionnaire' attribute with the url of the Questionnaire. I cannot parse it.")
                    return
@@ -171,13 +172,45 @@ angular.module("pocApp")
                let ar = qUrl.split('|')
                qUrl = ar[0]
 
+
                let formManager = $scope.formManager.endsWith('/') ? $scope.formManager : $scope.formManager + '/';
 
                 let qry = `${formManager}Questionnaire?url=${qUrl}`
                if (ar.length > 1) {
                    qry += `&version=${ar[1]}`
                }
+*/
+               //let formManager = $scope.formManager.endsWith('/') ? $scope.formManager : $scope.formManager + '/';
 
+
+               const params = new URLSearchParams({ server: $scope.formManager, url: QR.questionnaire });
+               $http.get(`q/getQFromUrl?${params}`).then(
+                   function (data) {
+                       console.log(data.data)
+
+                       if (data.data.q) {
+                           //yay - a single matching Q was found
+                           let Q = data.data.q
+                           $scope.selectedQ = Q
+                           let vo = qrVisualizerSvc.makeReport(Q,QR)
+                           $scope.qBasedReport = vo.report
+                           $scope.codedItems = vo.codedItems
+                           $scope.textReport = vo.textReport
+                           $scope.checkAllCodes($scope.codedItems)
+                       }
+
+
+
+
+                   }, function (data) {
+                       let msg = data.data.msg
+
+                       alert(msg)
+
+                       console.log(data.data)
+                   }
+               )
+/*
                $scope.query = qry   //so can show on the page
 
 
@@ -211,6 +244,8 @@ angular.module("pocApp")
                         alert(`The server ${formManager} was not found`)
                     }
                 )
+
+               */
 
             }
 

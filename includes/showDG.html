@@ -234,86 +234,107 @@
 
             <div ng-if = "selectedNode.data.ed.kind == 'root'">
 
-              <table class="table table-bordered table-condensed">
-                <tr><td class="detailName" >Name</td><td>{{selectedModel.name}}</td></tr>
-                <tr><td class="detailName" >Title</td><td>{{selectedModel.title}}</td></tr>
-                <tr><td class="detailName" >Description</td><td>{{selectedModel.description}}</td></tr>
+              <uib-tabset>
+                <uib-tab heading="Details">
+                  <table class="table table-bordered table-condensed">
+                    <tr><td class="detailName" >Name</td><td>{{selectedModel.name}}</td></tr>
+                    <tr><td class="detailName" >Title</td><td>{{selectedModel.title}}</td></tr>
+                    <tr><td class="detailName" >Description</td><td>{{selectedModel.description}}</td></tr>
 
 
-                <tr ng-if="selectedModel.itemCode">
-                  <td class="detailName" style="width : 20%">Item code</td>
-                  <td>
-                    <span class="clickable" ng-click="lookup(selectedModel.itemCode.code,selectedModel.itemCode.system)">{{selectedModel.itemCode.code}}</span>  |
-                    {{selectedModel.itemCode.display}} |
-                    {{selectedModel.itemCode.system}}
-                  </td>
-                </tr>
+                    <tr ng-if="selectedModel.itemCode">
+                      <td class="detailName" style="width : 20%">Item code</td>
+                      <td>
+                        <span class="clickable" ng-click="lookup(selectedModel.itemCode.code,selectedModel.itemCode.system)">{{selectedModel.itemCode.code}}</span>  |
+                        {{selectedModel.itemCode.display}} |
+                        {{selectedModel.itemCode.system}}
+                      </td>
+                    </tr>
 
 
 
 
-                <tr ng-if="selectedModel.linkedDG"><td>Linked DG</td><td>{{selectedModel.linkedDG}}</td></tr>
+                    <tr ng-if="selectedModel.linkedDG"><td>Linked DG</td><td>{{selectedModel.linkedDG}}</td></tr>
 
-                <tr ng-if="selectedModel.type"><td class="detailName" >Resource type</td><td>{{selectedModel.type}}</td></tr>
-                <tr ng-if="selectedModel.sourceReference"><td>Source reference</td><td>{{selectedModel.sourceReference}}</td></tr>
-                <tr ng-if="false && selectedModel.checkedOut"><td>Checked out</td>
-                  <td>{{selectedModel.checkedOut}}</td></tr>
+                    <tr ng-if="selectedModel.type"><td class="detailName" >Resource type</td><td>{{selectedModel.type}}</td></tr>
+                    <tr ng-if="selectedModel.sourceReference"><td>Source reference</td><td>{{selectedModel.sourceReference}}</td></tr>
+                    <tr ng-if="false && selectedModel.checkedOut"><td>Checked out</td>
+                      <td>{{selectedModel.checkedOut}}</td></tr>
 
-                <tr ng-if="dgNamedQueries.length > 0"><td class="detailName" >Named Queries</td>
-                  <td>
+                    <tr ng-if="dgNamedQueries.length > 0"><td class="detailName" >Named Queries</td>
+                      <td>
 
-                    <div ng-repeat = "nq in dgNamedQueries">
-                      <div class="clickable" ng-click="testxquery(nq.name)">{{nq.itemName}} </div>
-
-
-                    </div>
+                        <div ng-repeat = "nq in dgNamedQueries">
+                          <div class="clickable" ng-click="testxquery(nq.name)">{{nq.itemName}} </div>
 
 
-                  </td>
-                </tr>
-
-                <tr ng-if="selectedModel.fixedValues.length > 0"><td>Fixed values</td>
-                  <td>
-                    <div ng-repeat = "fv in selectedModel.fixedValues">
-
-                      <div>{{fv.path}}</div>
-                      <div style="padding-bottom: 6px"><em  style="padding-left: 8px">{{fv.value}}</em></div>
-
-                    </div>
-
-                  </td>
-                </tr>
-
-                <tr>
-                  <td class="detailName">Ad hoc extension</td>
-                  <td>
-                    <div class="pull-right">
-                      <div class="btn btn-link" ng-click="editAdHocExtension(null,selectedModel)">Edit</div>
-                    </div>
-
-                    <div ng-if="selectedModel.adHocExtension.length > 0"
-                            class="clickableDotted"
-                            popover-append-to-body="true"
-                            uib-popover-html="popoverText(selectedModel.adHocExtension)"
-                            popover-placement="left"
-                            popover-class="custom-popover-big"
-                            popover-trigger="'mouseenter'">
-
-                      Extension
-
-                    </div>
-                  </td>
-                </tr>
-
-                <tr ng-if="componentVersion">
-                  <td>Component</td>
-                  <td>
-                    <div class="clickable" ng-click="createDiff()">View differences to component</div>
-                  </td>
-                </tr>
+                        </div>
 
 
-              </table>
+                      </td>
+                    </tr>
+
+                    <tr ng-if="selectedModel.fixedValues.length > 0"><td>Fixed values</td>
+                      <td>
+                        <div ng-repeat = "fv in selectedModel.fixedValues">
+
+                          <div>{{fv.path}}</div>
+                          <div style="padding-bottom: 6px"><em  style="padding-left: 8px">{{fv.value}}</em></div>
+
+                        </div>
+
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td class="detailName">Ad hoc extension</td>
+                      <td>
+                        <div class="pull-right">
+                          <div class="btn btn-link" ng-click="editAdHocExtension(null,selectedModel)">Edit</div>
+                        </div>
+
+                        <div ng-if="selectedModel.adHocExtension.length > 0"
+                             class="clickableDotted"
+                             popover-append-to-body="true"
+                             uib-popover-html="popoverText(selectedModel.adHocExtension)"
+                             popover-placement="left"
+                             popover-class="custom-popover-big"
+                             popover-trigger="'mouseenter'">
+
+                          Extension
+
+                        </div>
+                      </td>
+                    </tr>
+
+                    <tr ng-if="componentVersion">
+                      <td>Component</td>
+                      <td>
+                        <div class="clickable" ng-click="createDiff()">View differences to component</div>
+                      </td>
+                    </tr>
+
+
+                  </table>
+
+                </uib-tab>
+                <uib-tab heading="Ext">
+
+                  <div ng-repeat="ext in selectedModel.adHocExtension">
+                    <strong>{{ ext.url | lastInUrl}}</strong>
+                    <div>{{ ext | stripExtUrl}}</div>
+                  </div>
+
+                  <br/>
+                  <div ng-show="snapshotSvc.getDG(selectedNode.data.ed.type[0]).type">
+                    Extract to: {{snapshotSvc.getDG(selectedNode.data.ed.type[0]).type}}</div>
+                  <div ng-show="snapshotSvc.getDG(selectedNode.data.ed.type[0]).extractId">
+                    Allocated Id: {{snapshotSvc.getDG(selectedNode.data.ed.type[0]).extractId}}</div>
+
+
+                </uib-tab>
+              </uib-tabset>
+
 
 
 
@@ -887,6 +908,21 @@
 
 
               </uib-tab>
+
+              <uib-tab heading="Ext">
+                <br/>
+                <div ng-repeat="ext in selectedNode.data.ed.adHocExtension">
+                  <strong>{{ ext.url | lastInUrl}}</strong>
+                  <div>{{ ext | stripExtUrl}}</div>
+                </div>
+                <br/>
+                <div ng-show="snapshotSvc.getDG(selectedNode.data.ed.type[0]).type">
+                  Extract to: {{snapshotSvc.getDG(selectedNode.data.ed.type[0]).type}}</div>
+                <div ng-show="snapshotSvc.getDG(selectedNode.data.ed.type[0]).extractId">
+                  Allocated Id: {{snapshotSvc.getDG(selectedNode.data.ed.type[0]).extractId}}</div>
+
+              </uib-tab>
+
 
               <uib-tab heading="Element Json">
                 <div class="myScrollSmall">
