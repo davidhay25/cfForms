@@ -338,19 +338,23 @@ angular.module("pocApp")
             $scope.updateComponent = function (type,model) {
 
                 let cName = $scope.world.name + '-' + model.name
-                let msg = `Copy this DG to the Component store with the name ${cName}. If there's already a Component with that name, it will be updated. `
 
-                if (confirm(msg)) {
+                //let msg = `Copy this DG to the Component store with the name ${cName}. If there's already a Component with that name, it will be updated. `
+
+                let name = prompt("What name to use for the Component. It will replace any with the same name",cName)
+
+
+                if (name) {
                     let frozen = snapshotSvc.getFrozenDG(model.name)
                     frozen.source = $scope.userMode
                     frozen.sourceId = $scope.world.id
-                    frozen.name = cName         //the name includes the collection name
-                    saveModel(frozen)
+                    frozen.name = name         //the name includes the collection name
+                    saveModel(frozen,name)
                 }
 
 
-                function saveModel(frozen) {
-                    $http.put(`frozen/${cName}`,frozen).then(
+                function saveModel(frozen,name) {
+                    $http.put(`frozen/${name}`,frozen).then(
                         //$http.put(`frozen/${frozen.name}`,frozen).then(
                         function (data) {
                             alert("Component updated")
@@ -1150,22 +1154,28 @@ angular.module("pocApp")
                     }
 
                 }).result.then(function (vo) {
-
+/*
                     if (vo && vo.comp) {
                         //a composition was passed in. Update (or add to) the $scope.hashAllCompositions
                         //updated: now an array of comp
                         for (const c of vo.comp) {
                             $scope.hashAllCompositions[c.name] = c
                         }
-
-
                     }
-
+*/
                     if (vo && vo.dg) {
                         //A DG was selected
                         $scope.hashAllDG[vo.dg.name] = vo.dg
                         sortDG()
                         alert("DG has been downloaded. Please refresh the browser.")
+                    }
+
+                    if (vo?.selectedDG) {
+                        for (let dg of vo.selectedDG) {
+                            $scope.hashAllDG[dg.name] = dg
+                        }
+                        sortDG()
+                        alert("All DGs have been downloaded. Please refresh the browser.")
                     }
 
                     $scope.init()

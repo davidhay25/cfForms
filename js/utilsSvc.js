@@ -384,6 +384,11 @@ angular.module("pocApp")
                 return ['boolean','code','date','dateTime','decimal','integer','string','Address','Attachment','CodeableConcept','ContactPoint','Group','HumanName','Identifier','Period','Quantity','Ratio']
             },
 
+            SDImportFhirDataTypes : function(){
+                //a subset of dts. These are the ones recognized by the SD importing into modale...
+                return ['boolean','code','date','dateTime','decimal','integer','string','CodeableConcept','Period','Quantity']
+            },
+
             getSizeOfObject : function( object ) {
                 //the memory usage of an object - from https://stackoverflow.com/questions/1248302/how-to-get-the-size-of-a-javascript-object#11900218
                 var objectList = [];

@@ -72,6 +72,27 @@ angular.module("pocApp")
             }
 
 
+            $scope.input.pastedProfile = $localStorage.sdString
+            $scope.pasteProfile = function (sdString) {
+
+
+
+
+                $localStorage.sdString = sdString
+                let profile = angular.fromJson(sdString)
+                let dg = modelsSvc.parseProfile(profile)
+
+                console.log(dg)
+
+                $scope.model = dg
+                $scope.input.newModelName = $scope.model.name
+                $scope.checkName($scope.input.newModelName)
+                $scope.input.newModelTitle= $scope.model.title
+
+
+
+            }
+
             //when a DG is to be created from a Q
             $scope.pasteQ = function (Qstring) {
 

@@ -5,6 +5,7 @@ angular.module("pocApp")
                   utilsSvc,librarySvc,$timeout,$uibModal,$window,playgroundsSvc,modelsSvc) {
 
             $scope.input = {}
+            $scope.input.selected = {}
             $scope.input.showForm = true
             $scope.user = user
             $scope.userMode = userMode
@@ -81,6 +82,21 @@ angular.module("pocApp")
             }
 
 
+            //when selected from the selected list
+            $scope.selectFromSelected = function (name) {
+                let dg = $scope.components.find(item => item.name === name);
+                if (dg) {
+                    $scope.clone = dg
+                    $scope.selectFromComponent(dg)
+                }
+
+
+            }
+
+            $scope.importSelected = function () {
+
+            }
+
             $scope.selectFromComponent = function (dg) {
                 let clone = angular.copy(dg)    //to make sure we don't inadvertantly update the DG
                 //let fullElementList = snapshotSvc.getFullListOfElements(clone.name)// vo.allElements
@@ -131,6 +147,30 @@ angular.module("pocApp")
                     $scope.components = data
                 }
             )
+
+            $scope.areAnySelected = function () {
+                for (let k of Object.keys($scope.input.selected)) {
+                    if ($scope.input.selected[k]) {
+                        return true
+                        break
+                    }
+                }
+
+            }
+
+            $scope.importSelected = function () {
+                let ar = []
+                for (let k of Object.keys($scope.input.selected)) {
+                    if ($scope.input.selected[k]) {
+                        let dg = $scope.components.find(item => item.name === k);
+                        if (dg) {
+                            ar.push(dg)
+                        }
+                    }
+                }
+                $scope.$close({selectedDG:ar})
+            }
+
 
             $scope.importComponent = function (dg) {
 
@@ -398,7 +438,7 @@ angular.module("pocApp")
             //$scope.refreshCompSummary()
             
             $scope.updateRepo = function () {
-                if (confirm("This will update all DGs in the Library with the loacal ones. Are you sure you wish to do this?")) {
+                if (confirm("This will update all DGs in the Library with the local ones. Are you sure you wish to do this?")) {
 
                     Object.keys(allDG).forEach(function (key) {
                         let localDG = allDG[key]
@@ -645,7 +685,7 @@ angular.module("pocApp")
                 }
             }
 
-            $scope.deleteComposition = function (comp) {
+            $scope.deleteCompositionDEP = function (comp) {
 
                 if (comp.checkedOut) {
                     alert(`Composition is checked out to ${comp.checkedOut} and must be checked in by them prior to deletion`)

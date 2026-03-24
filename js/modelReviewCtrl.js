@@ -650,6 +650,8 @@ angular.module("pocApp")
                 if (arExt.length > 0) {
                     $scope.versionReleaseNotes =  arExt[0].valueMarkdown
                 }
+
+                makeLink(Q)
             }
 
 
@@ -774,8 +776,12 @@ angular.module("pocApp")
                 window.open(url, '_blank', features)
             }
 
-            // process any request that was passed in the call.
-            //I *think* it's only from models
+
+            //make a direct link to review the Q
+            function makeLink(Q) {
+                $scope.link = `${$window.location.protocol}//${$window.location.host}/modelReview.html?pub-${Q.name}|${Q.version}`
+
+            }
 
             if (modelName) {
 
@@ -807,8 +813,11 @@ angular.module("pocApp")
                             }
                         })
                 } else if (modelName.startsWith('pub-'))  {
-                    /* Not used...
-                    //This is from the csFrontPage - retrieve a published Q
+                    //the format is pub-{name}|{version}
+                    //http://localhost:9500/modelReview.html?pub-SkinProject-skin_request%7C2
+
+                    modelName = decodeURIComponent(modelName);
+
                     let tmp = modelName.slice(4)
                     let ar = tmp.split('|')
 
@@ -825,7 +834,7 @@ angular.module("pocApp")
                             alert(err.data.msg)
                         }
                     )
-*/
+
                 }
 
             } else {
@@ -1149,10 +1158,34 @@ angular.module("pocApp")
                 URL.revokeObjectURL(url);
             };
 
+            function clippie(text) {
+                var copyElement = document.createElement("span");
+                copyElement.appendChild(document.createTextNode(text));
+                copyElement.id = 'tempCopyToClipboard';
+                angular.element(document.body.append(copyElement));
+
+                // select the text
+                var range = document.createRange();
+                range.selectNode(copyElement);
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(range);
+
+                // copy & cleanup
+                document.execCommand('copy');
+                window.getSelection().removeAllRanges();
+                copyElement.remove();
+            }
+
+            $scope.copyLinkToClipboard = function(text){
+                clippie(text)
+                alert("Link on clipboard")
+            }
 
             $scope.copyToClipboard = function(){
                 if ($scope.fullQ) {
                     //https://stackoverflow.com/questions/29267589/angularjs-copy-to-clipboard
+                    clippie(angular.toJson($scope.fullQ),2)
+                    /*
                     var copyElement = document.createElement("span");
                     copyElement.appendChild(document.createTextNode(angular.toJson($scope.fullQ),2));
                     copyElement.id = 'tempCopyToClipboard';
@@ -1168,10 +1201,9 @@ angular.module("pocApp")
                     document.execCommand('copy');
                     window.getSelection().removeAllRanges();
                     copyElement.remove();
-
+*/
                     alert("The Questionnaire has been copied to the clipboard.")
                 }
-
             };
 
 

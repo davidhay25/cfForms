@@ -5,8 +5,40 @@
 const path = require('path');
 const axios = require("axios");
 
+
+
+
+
+
+
+
 //async function setup(app,mongoDbName,uri) {
 async function setup(app,database) {
+
+    //check that the collection (adhocQ or publishQ) does not already have a Q with this url & version
+    async function checkQVersion(Q,colName) {
+        let url = Q.url
+        let version = Q.version
+        if (!url || !version) {
+            return "Questionnaires must have a url, version and publisher to be stored"
+
+        }
+
+        try {
+
+            //there can only be a single url / version combo
+            let query = {url: url, version: version}
+            let result = await database.collection(colName).find(query).toArray()
+            if (result.length > 0) {
+                return `There is already a Questionnaire with the url ${url} and version ${version}`
+
+            }
+
+        } catch(ex) {
+            return "Unable to access database"
+
+        }
+    }
 
     //find a Q on the server with a matching url
 
@@ -99,6 +131,11 @@ async function setup(app,database) {
     app.post('/q/publish',async function(req,res){
         let Q = req.body
         try {
+
+
+
+
+
             await database.collection("publishedQ").insertOne(Q)
             res.json(Q)
         } catch(ex) {

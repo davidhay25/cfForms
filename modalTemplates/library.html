@@ -45,6 +45,10 @@
           <tr ng-repeat="dg in components"
               ng-class="{listItemSelected:dg.name == clone.name}"
               ng-if="canShow(input.filter,dg)" >
+
+            <td><checkbox
+                    ng-hide="dg.nameExists"
+                    ng-model="input.selected[dg.name]"></checkbox></td>
             <td>
               <div class="clickable" ng-click="selectFromComponent(dg)">
                 {{dg.title}}
@@ -78,19 +82,47 @@
         </table>
       </div>
       <div class="col-md-4">
-        <div>Id: {{clone.id | lastInUUID}}</div>
 
-        <div ng-show="dupsCount" class="alert alert-danger">
-          There are {{dupsCount}} elements with duplicate or missing ids which need to be fixed. This may
-          break conditionals which will need to be manually fixed (You can see them in the Dependencies tab).
-          The fix will be applied when the Component is imported. After fixing them in the Collection
-          copy, save the Component back to the library.
+        <div ng-show="areAnySelected()">
+          <strong>Selected components</strong>
+          <div ng-repeat="(k,v) in input.selected">
+            <div class="clickable"
+                    ng-click="selectFromSelected(k)"
+                    ng-show="v">{{k}}</div>
+          </div>
 
+          <button class="btn-link btn pull-right"
+                  ng-show="areAnySelected()"
+                  ng-click="importSelected()">Import selected</button>
 
+          <br/> <br/>
         </div>
 
-        <br/>
-        <div id="componentTree"></div>
+
+
+
+
+        <div ng-show="clone">
+          <div>Id: {{clone.id | lastInUUID}}</div>
+
+          <div ng-show="dupsCount" class="alert alert-danger">
+            There are {{dupsCount}} elements with duplicate or missing ids which need to be fixed. This may
+            break conditionals which will need to be manually fixed (You can see them in the Dependencies tab).
+            The fix will be applied when the Component is imported. After fixing them in the Collection
+            copy, save the Component back to the library.
+
+
+          </div>
+
+          <br/>
+          <div id="componentTree"></div>
+        </div>
+
+
+
+
+
+
       </div>
     </div>
 

@@ -1,12 +1,109 @@
 angular.module("pocApp")
 
-    .service('modelsSvc', function($q,$filter,$http,$timeout,snapshotSvc) {
+    .service('modelsSvc', function($q,$filter,$http,$timeout,snapshotSvc,utilsSvc) {
         let cache = {}
 
         this.fhir = {}
         this.user
 
         return {
+
+            parseProfile:function (profile) {
+                //parse a StructureDefinition to a DG
+
+                const isCapital = str => str[0] === str[0].toUpperCase();
+
+                let ignoreElement=['id','meta','implicitRules','language','text','contained','extension','modifierExtension']
+
+                let dg = {kind:"dg",diff:[]}
+
+                dg.name = profile.name
+
+                dg.description = profile.description
+
+                for (let element of profile.snapshot.element) {
+                    console.log(element)
+
+                    //
+                    if (! element.type) {
+                        continue
+                    }
+
+                    //some in the profile are ignored
+                    let ignore = false
+                    let ar = element.path.split('.')
+                    if (ar.length > 1) {
+
+                        //specific elements are ignored wherever they are in the path
+                        for (let segment of ar) {
+                            if (ignoreElement.indexOf(segment) > -1) {
+                                ignore = true
+                            }
+                        }
+
+                    }
+
+                    if (! ignore) {
+
+                        //remove the leading segment - will be the DG name
+                        ar.splice(0,1)
+                        let edPath = ar.join('.')
+
+                        let ed = {path:edPath}
+
+
+                        ed.description = element.definition
+                        ed.title = ar[ar.length-1]
+                        ed.mult = `${element.min}..${element.max}`
+                        ed.definition = `${dg.name}.${edPath}`
+
+
+
+                        //only set the type to the supported set of types
+                        ed.type = ['string']    //default
+                        if (element.type) {
+                            let type = element.type[0].code //only consider first one todo - what if > 1
+
+
+                            //these are DTs that can be directly imported into a DG
+                            if (utilsSvc.SDImportFhirDataTypes().indexOf(type) > -1) {
+                                ed.type = [type]
+                            } else if (type == 'BackboneElement') {
+
+                                ed.type = ["Group"]
+                            } else if (isCapital(type)) {
+                                ed.type = [`dt${type}`]
+                            }
+
+
+
+
+                        }
+
+
+
+                        if (element.binding?.valueSet) {
+                            ed.valueSet = element.binding.valueSet
+
+                        }
+
+
+
+
+                        ed.importedED = element     //for debugging. todo - remove when done
+                        dg.diff.push(ed)
+
+                    }
+
+
+
+                }
+
+
+                return dg
+
+
+            },
 
 
             sortDiff: function (diff) {

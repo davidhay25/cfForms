@@ -468,7 +468,7 @@
                     {{selectedNode.data.ed.mult}}
                   </td></tr>
 
-                  <tr ng-if="selectedNode.data.ed.type[0] == 'CodeableConcept'">
+                  <tr ng-if="selectedNode.data.ed.valueSet">
                     <td class="detailName">ValueSet</td>
                     <td>
 
@@ -990,6 +990,7 @@
                   {{element.ed.description}}
                 </td>
                 <td>
+
                   <div ng-repeat="type in element.ed.type">
                     {{type}}
                   </div>

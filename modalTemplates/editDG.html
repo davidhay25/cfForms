@@ -343,7 +343,7 @@
 
                 <div class="myScroll">
                     <table class="table table-bordered">
-                        <tr><th>Inx</th><th>Path</th><th>Level</th><th>Title</th><th>Type</th><th>Description</th><th>Card.</th><th>Move</th><th>Delete</th></tr>
+                        <tr><th>Inx</th><th>Path</th><th>Level</th><th>Title</th><th>Type</th><th>Description</th><th>Card.</th><th>Move</th><th>Action</th></tr>
                         <tr ng-repeat="element in model.diff">
                             <td>{{$index+1}}</td>
 
@@ -666,6 +666,17 @@
                 </div>
 
                 <textarea class="form-control" ng-model="input.pastedQ" rows="20"></textarea>
+            </uib-tab>
+
+            <uib-tab heading="Import from Profile">
+
+                <button class="btn btn-link pull-right"
+                        ng-click="pasteProfile(input.pastedProfile)"
+                        ng-if="true">Parse Profile</button>
+
+
+                <textarea class="form-control" ng-model="input.pastedProfile" rows="20"></textarea>
+
             </uib-tab>
 
             <uib-tab heading="Json">

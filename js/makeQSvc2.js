@@ -419,6 +419,7 @@ angular.module('pocApp')
                             controlType = "date"
                             break
                         case 'CodeableConcept' :
+                        case 'code' :
                             //  controltype is always choice. May want typeahead later
 
                             controlHint = "drop-down"
