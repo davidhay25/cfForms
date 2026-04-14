@@ -4,13 +4,7 @@
 //et database        //this will be the database connection
 const path = require('path');
 const axios = require("axios");
-
-
-
-
-
-
-
+const { ObjectId } = require("mongodb");
 
 //async function setup(app,mongoDbName,uri) {
 async function setup(app,database) {
@@ -40,15 +34,14 @@ async function setup(app,database) {
         }
     }
 
-    //find a Q on the server with a matching url
 
-    //const params = new URLSearchParams({ server: 'prod-01', url: 'https://example.com/path' });
-    // const response = await fetch(`/api/check?${params}`);
+
+
 
     app.get('/q/getQFromUrl',async function(req,res) {
         const { server, url } = req.query;
 
-        console.log(server,url)
+        //console.log(server,url)
         const [baseUrl, version = null] = url.split('|');
 
         //if the url is a canshare one, get it from the local db
@@ -57,7 +50,7 @@ async function setup(app,database) {
             if (version) {
                 let query={url:baseUrl,version:version}
 
-                console.log(query)
+              //  console.log(query)
 
                 const cursor = await database.collection("publishedQ").find(query).toArray()
                 switch (cursor.length) {
@@ -145,10 +138,55 @@ async function setup(app,database) {
         }
     })
 
+    app.put('/q/publishedStatus/:table/:recordId/:status',async function(req,res){
+        //let table = req.params.table    //publishedQ = published Q, adhocQ = library
+        let recordId =  req.params.recordId
+        let status =  req.params.status
+       // console.log(recordId,status)
+        let collectionName = req.params.table    //publishedQ = published Q, adhocQ = library
+
+
+        try {
+            await database.collection(collectionName).updateOne(
+                { _id: new ObjectId(recordId) },
+                { $set: { status: status } }
+            );
+            res.json()
+        } catch(ex) {
+            console.log(ex)
+            res.status(500).json(ex.message)
+        }
+
+
+    })
+
+
+    //get all the published Q - used for backup. This should be Ok as there won't be
+    //that many
+    app.get('/q/allCompleteDEP', async function(req,res) {
+        try {
+            const results = await database.collection("publishedQ").find().toArray()
+            res.json(results)
+
+        } catch(ex) {
+            console.log(ex)
+            res.status(500).json(ex.message)
+        }
+    })
+
+
     //get the most recent version of all published Q
     app.get('/q/all', async function(req,res) {
         try {
             const results = await database.collection("publishedQ").aggregate([
+
+                // exclude deleted docs - added mar24
+                {
+                    $match: {
+                        status: { $ne: "retired" }
+                    }
+                },
+
                 // sort so the highest version is first
                 { $sort: { key: 1, version: -1 } },
 
@@ -179,8 +217,6 @@ async function setup(app,database) {
                     }
                 }
             ]).toArray();
-
-
             res.json(results)
 
         } catch(ex) {
@@ -198,7 +234,7 @@ async function setup(app,database) {
             //let version = parseInt( req.params.version)
             let query={name:name,version:version}
 
-            console.log(query)
+           // console.log(query)
 
             const cursor = await database.collection("publishedQ").find(query).toArray()
             switch (cursor.length) {
@@ -228,13 +264,10 @@ async function setup(app,database) {
     //get all the versions of a published Q
     app.get('/q/:name/versions', async function(req,res) {
         let name = req.params.name
-        let query={name:name}
+        let query={name:name,status: { $ne: "retired" }}
 
         try {
             const cursor = await database.collection("publishedQ").find(query).sort({version:-1}).toArray()
-
-
-
 
             res.json(cursor)
 

@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>Admin</title>
 
+
     <script src="js/libs/jquery-1.9.0.min.js"></script>
     <script src="js/libs/angular.min1-5.js"></script>
     <script src="js/libs/ui-bootstrap-tpls-2.0.1.min.js"></script>
@@ -36,17 +37,7 @@
 
 
 
-<!--
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script src="js/qrVisualizerCtrl.js"></script>
-    <script src="js/libs/angular-sanitize.js"></script>
-    <script src="js/showParameters.js"></script>
 
-    <script src="js/viewVSCtrl.js"></script>
-    <script src="js/qrVisualizerSvc.js"></script>
-    <script src="js/viewItemCtrl.js"></script>
-    <script src="js/makeQHelperSvc.js"></script>
-    -->
     <script src="js/utilsSvc.js"></script>
     <script src="js/filters.js"></script>
     <script src="js/loginCtrl.js"></script>
@@ -56,6 +47,9 @@
             background-color: mistyrose;
         }
 
+        .inactive {
+            background-color: #f2dede;
+        }
 
         .deleted {
             background-color: red;
@@ -272,7 +266,7 @@
 
             <strong>Table</strong>
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="list-group">
                         <div ng-class="{'list-group-item' : true,listItemSelected:table == selectedTable}"
                              style="cursor: pointer"
@@ -308,22 +302,20 @@
 
                 </div>
 
-                <div class="col-md-4">
-
-
-
+                <div class="col-md-5">
 
                     <div class="tableFixHead">
                         <table class="table-bordered table table-condensed">
                             <thead>
                             <tr>
-                                <th ng-repeat="col in selectedTable.summaryFields">{{col}}</th>
+                                <th ng-repeat="col in selectedTable.summaryFields">{{ col.charAt(0).toUpperCase() + col.slice(1)}}</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr ng-repeat="row in tableSummary"
                                 style="cursor: pointer"
-                                ng-class="{listItemSelected:selectedRow == row}"
+
+                                ng-class="{listItemSelected:selectedRow == row,inactive:row.status == 'retired'}"
                                 ng-click="getRecord(row)">
 
                                 <td ng-repeat="col in selectedTable.summaryFields">
@@ -343,11 +335,13 @@
                 </div>
                 <div class="col-md-5">
                     <uib-tabset>
+
                         <uib-tab heading="Json">
                             <div class="myScroll">
                                 <pre ng-show="selectedRecord">{{selectedRecord | json}}</pre>
                             </div>
                         </uib-tab>
+
                         <uib-tab ng-show="selectedTable.col == 'playground'" heading="Collection info">
                             <h4>DataGroups in Collection</h4>
                             <div class="myScroll">
@@ -404,11 +398,67 @@
                                 <tr><td>Name</td><td>{{selectedRecord.name}}</td></tr>
                                 <tr><td>Title</td><td>{{selectedRecord.title}}</td></tr>
                                 <tr><td>Description</td><td>{{selectedRecord.description}}</td></tr>
-                                <tr><td>Status</td><td>{{selectedRecord.status}}</td></tr>
+                                <tr><td>Status</td><td>
+                                    {{selectedRecord.status}}
+                                    <div class="pull-right  clickable"
+                                         ng-show="selectedRecord.status == 'active' || selectedRecord.status == 'draft'"
+                                         ng-click="setPublishedStatus(selectedRecord,'retired')">Deactivate</div>
+
+                                    <div class="pull-right  clickable"
+                                         ng-show="selectedRecord.status == 'draft'"
+                                         style="padding-right: 10px"
+                                         ng-click="setPublishedStatus(selectedRecord,'active')">Make Active</div>
+
+                                    <div class="pull-right clickable"
+                                         ng-show="selectedRecord.status == 'retired'"
+                                         style="padding-left: 10px"
+                                         ng-click="setPublishedStatus(selectedRecord,'active')">Reactivate as Active</div>
+
+                                    <div class="pull-right clickable"
+                                         ng-show="selectedRecord.status == 'retired'"
+                                         ng-click="setPublishedStatus(selectedRecord,'draft')">Reactivate as Draft</div>
+                                </td></tr>
                                 <tr><td>Url</td><td>{{selectedRecord.url}}</td></tr>
                                 <tr><td>Version</td><td>{{selectedRecord.version}}</td></tr>
                             </table>
+
+
                         </uib-tab>
+
+                        <uib-tab  ng-show="selectedTable.col == 'adhocQ'"heading="Library Q info">
+                            <h5>Metadata</h5>
+                            <table class="table table-bordered">
+                                <tr><td>Id</td><td>{{selectedRecord.id}}</td></tr>
+                                <tr><td>Name</td><td>{{selectedRecord.name}}</td></tr>
+                                <tr><td>Title</td><td>{{selectedRecord.title}}</td></tr>
+                                <tr><td>Description</td><td>{{selectedRecord.description}}</td></tr>
+                                <tr><td>Status</td><td>
+                                    {{selectedRecord.status}}
+                                    <div class="pull-right  clickable"
+                                         ng-show="selectedRecord.status == 'active' || selectedRecord.status == 'draft'"
+                                         ng-click="setPublishedStatus(selectedRecord,'retired')">Deactivate</div>
+
+                                    <div class="pull-right  clickable"
+                                         ng-show="selectedRecord.status == 'draft'"
+                                         style="padding-right: 10px"
+                                         ng-click="setPublishedStatus(selectedRecord,'active')">Make Active</div>
+
+                                    <div class="pull-right clickable"
+                                         ng-show="selectedRecord.status == 'retired'"
+                                         style="padding-left: 10px"
+                                         ng-click="setPublishedStatus(selectedRecord,'active')">Reactivate as Active</div>
+
+                                    <div class="pull-right clickable"
+                                         ng-show="selectedRecord.status == 'retired'"
+                                         ng-click="setPublishedStatus(selectedRecord,'draft')">Reactivate as Draft</div>
+                                </td></tr>
+                                <tr><td>Url</td><td>{{selectedRecord.url}}</td></tr>
+                                <tr><td>Version</td><td>{{selectedRecord.version}}</td></tr>
+                            </table>
+
+
+                        </uib-tab>
+
                     </uib-tabset>
 
 

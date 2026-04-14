@@ -18,12 +18,25 @@ if (termServerUrl.indexOf('authoring') > -1) {
 }
 
 
+const configPath = process.env.CONFIG_PATH || require('path').join(__dirname, 'secrets', 'nzhtsconfig.config');
+const config = fs.readFileSync(configPath);
+const nzhtsconfig = JSON.parse(config.toString())
+
+console.log(configPath,nzhtsconfig)
+
+
+//let configPath = "./secrets/nzhtsconfig.config"
+console.log('CWD:', process.cwd());
+console.log('Full path:', require('path').resolve(configPath));
+console.log('configPath:', configPath);
 
 
 //load the config file for accessing NZHTS (the file is excluded from git)
-const nzhtsconfig = JSON.parse(fs.readFileSync("./nzhtsconfig.config").toString())
+//const nzhtsconfig = JSON.parse(fs.readFileSync(configPath).toString())
 
 let currentToken = {token:null,expires:null}    //expires is the date.getTime() of when the token expires
+
+
 
 async function getNZHTSAccessToken() {
     //if this isn't canshare (nzhts) then we can just return an empty token...
@@ -238,7 +251,7 @@ function setup(app, termServerUrl) {
                     res.json(data.data)
 
                 }).catch(function(ex) {
-                    console.log(ex)
+                   // console.log(ex)
                     if (ex.response) {
                         //console.log("----- NOT found -----")
                         res.status(ex.response.status).json(ex.response.data)

@@ -13,6 +13,8 @@ const domain = require("domain");
 let jobs = {}
 
 //load the config file for accessing NZHTS (the file is excluded from git)
+
+
 const nzhtsconfig = JSON.parse(fs.readFileSync("./nzhtsconfig.config").toString())
 
 

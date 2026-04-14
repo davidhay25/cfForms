@@ -4,16 +4,16 @@ const { ObjectId } = require('mongodb');
 const axios = require("axios");
 
 let tables = []       //an array of tables (mongo collections) that can be queried
-tables.push({display:"Collections",col:'playground',summaryFields:['name','description','publishedVersion']})
-tables.push({display:"Components",col:'frozenDG',summaryFields:['name','updated']})
+tables.push({display:"Collections",col:'playground',summaryFields:['name','description','publishedVersion','status']})
+tables.push({display:"Components",col:'frozenDG',summaryFields:['name','updated','status']})
 //tables.push({display:"Generated Q",col:'questionnaire',summaryFields:['Q.name','Q.description']})
 tables.push({display:"Published Q",col:'publishedQ',
-    sort: {name:1,version:-1},
-    summaryFields:['name','title','version','date']})
+    sort: {title:1,version:-1},
+    summaryFields:['title','name','version','date','status']})
 
 tables.push({display:"Library",col:'adhocQ',
     sort: {name:1,version:-1},
-    summaryFields:['name','title','version','date']})
+    summaryFields:['title','name','version','date','status']})
 
 
 
@@ -25,6 +25,25 @@ for (const table of tables) {
 
 async function setup(app,database,client) {
     //return a list of the tables (mongo collections) than can be examined
+
+    //retrieve all the published Q from the prod server and apply them to the local
+    //get a list of most recent (based on q name) then all versons for each
+    //there are more efficient ways to do this but I need to use existing API.
+    async  function updateAllPublishedDEP() {
+        let qry = "https://canshare.co.nz/forms/q/all"      //the most recent for all published
+
+        const docs = await axios.get(qry)
+
+        for (const doc of docs) {
+            let qry = `https://canshare.co.nz/forms/q/${doc.name}/versions`
+            //const versions =
+
+        }
+
+
+
+
+    }
 
     app.get('/admin/databases', async function(req,res){
         const adminDb = client.db().admin();
@@ -118,10 +137,6 @@ async function setup(app,database,client) {
     })
 
 
-
-
-
-
     //return all contents of the db as a single json file.
     app.get('/admin/getbackup' ,async function (req,res) {
         //const collections = await database.listCollections().toArray();
@@ -138,8 +153,6 @@ async function setup(app,database,client) {
             res.status(500).json({msg:ex.message})
         }
 
-
-
     })
 
     app.post('/admin/updateFromProd', async function (req,res) {
@@ -153,8 +166,6 @@ async function setup(app,database,client) {
         } catch (ex) {
             res.status(500).json({msg:ex.message})
         }
-
-
     })
 
     app.post('/admin/restoreFromExtract', async function (req,res) {
@@ -167,8 +178,6 @@ async function setup(app,database,client) {
         }
 
     })
-
-
 
 
     //update the local database from an extract file

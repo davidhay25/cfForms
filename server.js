@@ -7,7 +7,9 @@
 let http = require('http');
 const axios = require("axios");
 
-const termServerUrl = process.env.TERM_SERVER_URL || 'https://r4.ontoserver.csiro.au/fhir/'
+let termServerUrl = process.env.TERM_SERVER_URL || 'https://r4.ontoserver.csiro.au/fhir/'
+termServerUrl += termServerUrl.endsWith('/') ? '' : '/'         //ensure the training slash
+
 const environment = process.env.ENVIRONMENT || 'canshare'       //allows for environment specific behaviours
 const setting = process.env.SETTING
 

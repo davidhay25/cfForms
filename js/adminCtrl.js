@@ -14,6 +14,7 @@ angular.module("pocApp")
             )
 
 
+
             $http.get('admin/databases').then(
                 function (data) {
                     $scope.databases = data.data
@@ -24,6 +25,29 @@ angular.module("pocApp")
             $scope.execute = function (cmd) {
                 console.log(cmd)
                 $scope[cmd.fnName]()
+            }
+
+            $scope.setPublishedStatus =  function (record,status)  {
+                console.log(record)
+
+                console.log($scope.selectedTable.col)
+                console.log(`q/publishedStatus/${$scope.selectedTable.col}/${record['_id']}/${status}`)
+               // return
+
+                if (confirm(`Are you sure you wish to set the status of this Q to ${status}`)) {
+                    let qry = `q/publishedStatus/${$scope.selectedTable.col}/${record['_id']}/${status}`
+                    $http.put(qry).then(
+                        function (data) {
+                            alert(`Status set to ${status}`)
+                            record.status = status
+                            $scope.selectedRow.status = status
+                        }, function (err) {
+                            alert(angular.toJson(err.data))
+                        }
+                    )
+                    console.log(qry)
+                }
+
             }
 
             function getTables() {
@@ -210,14 +234,38 @@ angular.module("pocApp")
 
                         if (! sort) {
                             //sort by name by default. Do it here as it's easier than on the server!
-                            $scope.tableSummary.sort(function (a,b) {
-                                if (a?.name.toLowerCase() > b?.name.toLowerCase()) {
-                                    return 1
-                                } else {
-                                    return -1
-                                }
 
-                            })
+
+                            if (mongoCol == 'publishedQ' || mongoCol == 'adhocQ') {
+                                $scope.tableSummary.sort(function (a, b) {
+                                    const titleA = a?.title?.toLowerCase() ?? '';
+                                    const titleB = b?.title?.toLowerCase() ?? '';
+                                    const titleCompare = titleA > titleB ? 1 : titleA < titleB ? -1 : 0;
+
+                                    if (titleCompare !== 0) {
+                                        return titleCompare;
+                                    }
+
+                                    // Titles are equal, sort by version ascending
+                                    const versionA = a?.version ?? '';
+                                    const versionB = b?.version ?? '';
+                                    return versionA > versionB ? 1 : versionA < versionB ? -1 : 0;
+                                });
+                            } else {
+                                $scope.tableSummary.sort(function (a,b) {
+                                    if (a?.name.toLowerCase() > b?.name.toLowerCase()) {
+                                        return 1
+                                    } else {
+                                        return -1
+                                    }
+
+                                })
+                            }
+
+
+
+
+
                         }
 
 

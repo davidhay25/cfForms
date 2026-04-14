@@ -953,9 +953,9 @@ angular.module("pocApp")
 
                 //a replacement Q generator
                 let vo2 = makeQSvc2.buildQuestionnaireFromFlat(lstElements,dg,config)
-                console.log('------------')
-                console.log(vo2)
-                console.log('------------')
+              //  console.log('------------')
+              //  console.log(vo2)
+              //  console.log('------------')
 
 
 

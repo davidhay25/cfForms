@@ -37,7 +37,6 @@ angular.module("pocApp")
             } else {
                 let name = $localStorage.world.name
 
-               // $localStorage.world.dataGroups[].diff=[]
 
 
                 if (($localStorage.world &&
@@ -178,6 +177,11 @@ angular.module("pocApp")
 
 
 
+            $scope.splitBranch = function (ed) {
+                console.log(ed)
+
+
+            }
 
 
             //these are collections in the browser cache
@@ -1609,6 +1613,7 @@ angular.module("pocApp")
             $scope.copyToClipboard = function (json) {
                 let text = angular.toJson(json,true)
                 $scope.localCopyToClipboard (text)
+                alert("copied")
             }
 
             //remove a DG from the local store
@@ -2415,7 +2420,8 @@ angular.module("pocApp")
                 $scope.relationshipsSummary = snapshotSvc.getRelationshipsSummary(dg.name)
                 $scope.dgNamedQueries = snapshotSvc.getNamedQueries(dg.name)
                 $scope.variablesForDG =snapshotSvc.getVariables(dg.name)
-
+                $scope.SDfromDG = modelDGSvc.makeSD(dg)
+console.log($scope.SDfromDG)
                 $scope.dgContainingThis = snapshotSvc.dgContainedBy(dg.name)    //all DGs that have a reference to this one or any of its children
 
 
@@ -2471,23 +2477,11 @@ angular.module("pocApp")
                         }
 
 
-                        //if (item.ed.mult !== '0..0') {
-                           // $scope.allPaths.push(item.ed.path)
-                     //   }
                     }
 
                 })
 
 
-                //adjust according to 'insertAfter' values. Note that if the user updates the order, the updateList will be empty
-                //orderingSvc.sortFullListByInsertAfter($scope.fullElementList,dg,$scope.hashAllDG)
-
-                //this is intended to allow a DG to apply the ordering to referenced DGs - but it's confusing. working on a better solution
-                //$scope.dgReferencesOrdering = orderingSvc.getOrderingForReferences($scope.fullElementList,dg,$scope.hashAllDG)
-
-                // ordering move instructions by element to move. So we can have a display to detect elements with multiple move instructions {dupsExist:dupsExist,hash:hash}
-                //$scope.orderingByToMove = orderingSvc.getOrderingByToMove(dg)
-                //$scope.referencedDGOrdering = orderingSvc.createMoveFromReferences($scope.fullElementList,$scope.selectedModel,$scope.hashAllDG)
 
                 $scope.dgFshLM = igSvc.makeFshForDG(dg,$scope.fullElementList)
 
@@ -2527,15 +2521,7 @@ angular.module("pocApp")
 
                     //ensure DG view selected
                     $scope.input.mainTabActive = $scope.ui.tabDG
-/*
-                    //ensure all elements in the diff have an id. This is now needed for proper Q linkId generation
-                    for (let ed of dg.diff || []) {
-                        if (! ed.id) {
-                            ed.id = utilsSvc.getUUID()
-                            console.log('missing')
-                        }
-                    }
-*/
+
                     clearB4Select()
                     $scope.selectedModel = dg
 

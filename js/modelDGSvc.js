@@ -8,6 +8,91 @@ angular.module("pocApp")
 
         return {
 
+            makeSD : function (dg) {
+                //construct an SD version of a DG
+
+                let ctr = 0
+
+                let typeName = `Cs${dg.name}`
+
+
+                let urlBase = "http://canshare.co.nz/"
+
+                let SD = {resourceType:"StructureDefinition"}
+                SD.id = "Cs" + typeName
+                let text = "Generated SD from DataGroup"
+                SD.text = {status:"generated"}
+                SD.text.div = `<div xmlns="http://www.w3.org/1999/xhtml">${text}</div>`
+                SD.identifier = [{system:"http://canshare.co.nz/fhir/NamingSystem/logical-models",value:typeName}]
+
+                SD.name = typeName
+                SD.fhirVersion = "4.0.1"
+                SD.version = "0.1"
+
+                SD.url =  `${urlBase}StructureDefinition/${typeName}`
+
+                SD.type= `${typeName}`  //`http://example.org/StructureDefinition/${typeName}` //type is required, otherwise we get a weird null access pointer
+                SD.status = "draft"
+                SD.kind = "logical"
+                SD.abstract = false
+                SD.description = "test"
+                SD.baseDefinition = "http://hl7.org/fhir/StructureDefinition/Element"  //was element
+                SD.derivation = "specialization"
+
+
+
+                SD.snapshot = {element:[]}
+
+                let firstED = {}
+                firstED.path = typeName
+                firstED.id = typeName
+                firstED.min = 0
+                firstED.max = "*"
+                firstED.definition = SD.description
+                firstED.base = {path:firstED.path,min:firstED.min,max:firstED.max}
+                SD.snapshot.element.push(firstED)
+
+                for (const ed of dg.diff) {
+                    if (ed.type?.[0] == 'display') {
+                        continue
+                    }
+                    let newED = {}
+                    newED.path = `${typeName}.${ed.path}`
+                    newED.id = newED.path
+                    if (ed.mult) {
+                        let ar = ed.mult.split("..")
+                        newED.min = parseInt(ar[0])
+                        newED.max = ar[1]
+                    }
+
+
+                    newED.short = ed.title
+                    newED.definition = ed.title
+                    if (ed.type ) {
+                        newED.type = []
+                        for (type of ed.type) {
+                            newED.type.push({code: type})
+                        }
+                    }
+
+                    newED.base = {path:newED.path,min:newED.min,max:newED.max}
+
+                    SD.snapshot.element.push(newED)
+
+                }
+                
+
+
+
+
+
+                return SD
+
+
+
+            },
+
+
             checkAllIds : function (world) {
                 //check that allthe elements in the DG's have an id
 
@@ -26,6 +111,16 @@ angular.module("pocApp")
                         }
                     }
                 }
+
+
+            },
+
+            splitDG : function (DG,splitPointED) {
+                //create a new DG from the split point
+                let path = splitPointED.path
+
+
+
 
 
             },

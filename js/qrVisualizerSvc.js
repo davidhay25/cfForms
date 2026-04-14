@@ -155,7 +155,7 @@ angular.module("pocApp")
                 }
 
                 //the result of this will be to populate hashQR with ann answers, keyed by linkId
-                for (const item of QR.item) {
+                for (const item of QR.item || []) {
                     processQRItem(hashQR,item)
                 }
 

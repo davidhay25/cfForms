@@ -1,6 +1,8 @@
 .DS_Store
 Thumbs.db
 .idea
+
+secrets/
 **/*.config
 artifacts/
 

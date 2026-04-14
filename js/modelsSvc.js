@@ -10,18 +10,38 @@ angular.module("pocApp")
 
             parseProfile:function (profile) {
                 //parse a StructureDefinition to a DG
+                //todo - extensions into ad-hoc extensions
+                //todo valuesets into options
+                let log = []
 
-                const isCapital = str => str[0] === str[0].toUpperCase();
+                const isCapital = str => str[0] === str[0].toUpperCase(); //is the first letter a capital
 
+                //if these are in any segment then ignore the ED
                 let ignoreElement=['id','meta','implicitRules','language','text','contained','extension','modifierExtension']
 
+                //create a hash of options from contained valuesets
+                let hashVS = {}
+                if (profile.contained) {
+                    for (const resource of profile.contained) {
+                        if (resource.resourceType == 'ValueSet') {
+                            let key = `#${resource.id}`
+                            hashVS[key] = {concepts:[]}
+                            let system = resource.compose?.include?.[0]
+                            for (const concept of resource.compose?.include?.[0]?.concept || []) {
+                                hashVS[key].concepts.push(concept)
+                            }
+                        }
+                    }
+                }
+
                 let dg = {kind:"dg",diff:[]}
-
                 dg.name = profile.name
-
+                dg.title = profile.name         //is there a better title?
                 dg.description = profile.description
 
-                for (let element of profile.snapshot.element) {
+                let elements = profile.snapshot?.element || profile.differential?.element
+
+                for (let element of elements) {
                     console.log(element)
 
                     //
@@ -64,6 +84,12 @@ angular.module("pocApp")
                         if (element.type) {
                             let type = element.type[0].code //only consider first one todo - what if > 1
 
+                            if (type == 'Reference') {
+                                if (! element.type[0].profile && ! element.type[0].targetProfile) {
+                                    log.push({path:element.path, msg:`Reference dataType with no profile or targetProfile`})
+                                }
+                            }
+
 
                             //these are DTs that can be directly imported into a DG
                             if (utilsSvc.SDImportFhirDataTypes().indexOf(type) > -1) {
@@ -75,20 +101,30 @@ angular.module("pocApp")
                                 ed.type = [`dt${type}`]
                             }
 
-
-
-
                         }
 
 
-
+                        //set valueset binding or resolve contained ValueSets
                         if (element.binding?.valueSet) {
                             ed.valueSet = element.binding.valueSet
 
+                            if (ed.valueSet.indexOf('http') == -1 && ed.valueSet[0] !== '#') {
+                                log.push({path:element.path, msg:`ValueSet url invalid:${ed.valueSet}`})
+                            }
+
+                            if (hashVS[ed.valueSet]) {
+                                //this is a reference to a contained ValueSet
+                                ed.options = hashVS[ed.valueSet].concepts
+                                hashVS[ed.valueSet].useCount = (hashVS[ed.valueSet].useCount ?? 0) + 1 //number of usages
+
+                                delete ed.valueSet //can't have both VS and options...
+                            }
                         }
 
+                        if (element.extension) {
+                            ed.adHocExtension = element.extension
 
-
+                        }
 
                         ed.importedED = element     //for debugging. todo - remove when done
                         dg.diff.push(ed)
@@ -99,8 +135,15 @@ angular.module("pocApp")
 
                 }
 
+                //look for unused contained valuesete
+                for (const [key, value] of Object.entries(hashVS)) {
+                    if (! value.useCount) {
+                        log.push({path:key, msg:`Contained ValueSet ${key} not used`})
+                    }
+                }
 
-                return dg
+
+                return {dg:dg,log:log}
 
 
             },

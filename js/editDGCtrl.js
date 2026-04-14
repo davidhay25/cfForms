@@ -80,15 +80,20 @@ angular.module("pocApp")
 
                 $localStorage.sdString = sdString
                 let profile = angular.fromJson(sdString)
-                let dg = modelsSvc.parseProfile(profile)
+                let vo = modelsSvc.parseProfile(profile)
+                let dg = vo.dg
+                $scope.parseLog = vo.log
 
                 console.log(dg)
 
                 $scope.model = dg
                 $scope.input.newModelName = $scope.model.name
+
+                //$scope.isNew = true
                 $scope.checkName($scope.input.newModelName)
                 $scope.input.newModelTitle= $scope.model.title
 
+               // $scope.checkName()
 
 
             }
@@ -286,13 +291,18 @@ angular.module("pocApp")
                 }
             }
 
+            $scope.nzTermServer = 'https://canshare.co.nz/canshare/proxy'
+
+            $scope.setTermServer = function () {
+                $scope.input.termSvr = $scope.nzTermServer
+            }
 
             //create the list of DG's that can be added as child elements. Don't include this one...
             if (isNew) {
                 $scope.input.types = Object.keys(hashTypes) //an array for the new type dropdown
 
-                $scope.input.termSvr = 'https://test.canshare.co.nz/proxy'
-
+                //$scope.input.termSvr = 'https://test.canshare.co.nz/proxy'
+                $scope.input.termSvr = $scope.nzTermServer
 
             } else {
                 //all DFGs that contain this one...

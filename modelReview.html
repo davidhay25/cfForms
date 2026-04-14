@@ -528,10 +528,17 @@
 
             <div class="alert alert-info">
                 {{fullQ.name}} {{fullQ.version}}
-                <span ng-show="input.selectedInputOption.code == 'adhoc'" class="pull-right">
+                <span style="padding-left: 10px" ng-show="input.selectedInputOption.code == 'adhoc'" class="pull-right">
                     <div class = 'clickable' ng-click="saveAdHocQ()">Save Questionnaire to Library</div>
 
                 </span>
+
+                <span class="pull-right">
+                    <div style="padding-left: 10px" class = 'clickable' ng-click="makeLinkFromQ(fullQ)">Make link</div>
+
+                </span>
+
+
             </div>
 
 

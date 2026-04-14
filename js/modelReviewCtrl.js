@@ -32,9 +32,11 @@ angular.module("pocApp")
                             $scope.selectionOptions.push({display:"Upload Questionnaire",code:'adhoc'})
                         } else {
                             //clinfhir
-                            $scope.selectionOptions.push({display:"Retrieve from External Form Manager",code:'manager'})
-                            $scope.selectionOptions.push({display:"Upload Questionnaire",code:'adhoc'})
                             $scope.selectionOptions.push({display:"Retrieve from Library",code:'library'})
+                            $scope.selectionOptions.push({display:"Retrieve from External Form Manager",code:'manager'})
+                           // $scope.selectionOptions.push({display:"Select Published Questionnaire",code:'published'})
+                            $scope.selectionOptions.push({display:"Upload Questionnaire",code:'adhoc'})
+
 
                         }
 
@@ -379,7 +381,7 @@ angular.module("pocApp")
 
                     switch (msgType) {
                         case "sdc.ui.changedFocus":
-                            console.log(msg.payload.linkId)
+                            //console.log(msg.payload.linkId)
                             break
                         case 'sdc.ui.changedQuestionnaireResponse' :
                             setQR(msg.payload?.questionnaireResponse)
@@ -394,8 +396,8 @@ angular.module("pocApp")
                             } else if (msg.payload?.questionnaireResponse) {
                                 setQR(msg.payload.questionnaireResponse)
                             } else {
-                                console.log(angular.toJson(msg))
-                                console.log(msg.payload)
+                                //console.log(angular.toJson(msg))
+                                //console.log(msg.payload)
                                 if (msg.payload?.status == 'error') {
                                     let msg1 = "An error was returned from the last operation. Details are: \n"
                                     for (const iss of msg.payload?.outcome?.issue) {
@@ -778,8 +780,16 @@ angular.module("pocApp")
 
 
             //make a direct link to review the Q
+            //this has the url for canshare - with 'forms' in it. May require adjusting if used in clinfhir
+
             function makeLink(Q) {
-                $scope.link = `${$window.location.protocol}//${$window.location.host}/modelReview.html?pub-${Q.name}|${Q.version}`
+                $scope.link = `${$window.location.protocol}//${$window.location.host}/forms/modelReview.html?pub-${Q.name}|${Q.version}`
+
+            }
+
+            $scope.makeLinkFromQ = function (Q) {
+                makeLink(Q)
+                $scope.copyLinkToClipboard($scope.link)
 
             }
 
@@ -821,7 +831,7 @@ angular.module("pocApp")
                     let tmp = modelName.slice(4)
                     let ar = tmp.split('|')
 
-                    let qry = `/q/${ar[0]}/v/${ar[1]}` //get that verson of the Q
+                    let qry = `q/${ar[0]}/v/${ar[1]}` //get that verson of the Q
                     $http.get(qry).then(
                         function (data) {
                             console.log(data)

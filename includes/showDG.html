@@ -942,6 +942,13 @@
                       ng-click="deleteDGItem(selectedNode.data.ed)">
                 Delete this item
               </button>
+<!--
+              <button ng-show = "selectedNode.data.ed.type[0] == 'Group'" class="btn-link btn"
+
+                      ng-click="splitBranch(selectedNode.data.ed)">
+                Split branch
+              </button>
+              -->
 
             </div>
 
@@ -1392,6 +1399,17 @@
 
 
         </uib-tab>
+
+
+        <uib-tab heading="StructureDefinition">
+
+          <div class="clickable pull-right" ng-click="copyToClipboard(SDfromDG)">Clipboard</div>
+          <div class="clearfix"></div>
+
+          <pre>{{ SDfromDG | json}}</pre>
+        </uib-tab>
+
+
 
         <uib-tab heading="Json">
           <br/>

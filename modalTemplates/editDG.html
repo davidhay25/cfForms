@@ -313,7 +313,7 @@
                                 The Terminology server to use for ValueSet expansion in this DG.
                                 <!-- changed ts from backup - doesn't work with poc.canshare..  - why?-->
                                 <span class="clickable"
-                                      ng-click="input.termSvr = 'https://canshare.co.nz/canshare/proxy'">
+                                      ng-click="setTermServer()">
                             Set to the National New Zealand Terminology Server.</span>
                             </div>
                         </div>
@@ -675,7 +675,27 @@
                         ng-if="true">Parse Profile</button>
 
 
-                <textarea class="form-control" ng-model="input.pastedProfile" rows="20"></textarea>
+                <div class="row">
+                    <div class="col-md-6">
+                        <textarea class="form-control" ng-model="input.pastedProfile" rows="20"></textarea>
+                    </div>
+                    <div class="col-md-6">
+
+                        <div ng-repeat="entry in parseLog">
+                            <strong>{{entry.path}}</strong>
+                            <div style="padding-left: 8px"><em>{{entry.msg}}</em></div>
+                        </div>
+
+                        <table class="table table-bordered">
+                            <tr ng-repeat="entry in parseLog">
+                                <td>{{entry.path}}</td>
+                                <td>{{entry.msg}}</td>
+                            </tr>
+                        </table>
+
+                    </div>
+                </div>
+
 
             </uib-tab>
 
