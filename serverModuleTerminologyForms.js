@@ -19,10 +19,10 @@ if (termServerUrl.indexOf('authoring') > -1) {
 
 
 const configPath = process.env.CONFIG_PATH || require('path').join(__dirname, 'secrets', 'nzhtsconfig.config');
-const config = fs.readFileSync(configPath);
-const nzhtsconfig = JSON.parse(config.toString())
 
-console.log(configPath,nzhtsconfig)
+
+
+
 
 
 //let configPath = "./secrets/nzhtsconfig.config"
@@ -30,6 +30,10 @@ console.log('CWD:', process.cwd());
 console.log('Full path:', require('path').resolve(configPath));
 console.log('configPath:', configPath);
 
+
+const config = fs.readFileSync(configPath);
+const nzhtsconfig = JSON.parse(config.toString())
+console.log(configPath,nzhtsconfig)
 
 //load the config file for accessing NZHTS (the file is excluded from git)
 //const nzhtsconfig = JSON.parse(fs.readFileSync(configPath).toString())

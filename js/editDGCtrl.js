@@ -588,6 +588,7 @@ angular.module("pocApp")
 
 
                 $scope.model.type = $scope.input.extractType
+
                 $scope.model.extractId = $scope.input.extractId
 
                 //todo - should this be $scope - need to re-write so cancel works properly!!!

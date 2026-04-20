@@ -2349,8 +2349,16 @@ angular.module("pocApp")
 
                         } else {
                             //this is an update
-                            $scope.hashAllDG[newModel.name] = newModel  //so it gets updated in the browser cache
+
+                            angular.extend($scope.hashAllDG[newModel.name], newModel);
+
+
+                          //  $scope.hashAllDG[newModel.name] = newModel  //so it gets updated in the browser cache
+
+                           // $localStorage.world.dataGroups = $scope.hashAllDG //Apr202026
+
                             $scope.selectedModel = newModel             //the currently selected DG
+
                             //the model may have been updated - select it to refresh the various tabs
                             //note this is the model passed in for editing
 
