@@ -251,6 +251,28 @@
                         </div>
                         <br/>
 
+                        <div class="row">
+                            <div class="col-md-2">
+                                Is Component
+                            </div>
+                            <div class="col-md-1">
+                                <checkbox ng-model="input.isComponent"></checkbox>
+
+                            </div>
+
+                            <div class="col-md-3">
+
+
+
+                            </div>
+
+                            <div class="col-md-6">
+                                Set if this DG was imported from the Component library. It can still be edited.
+                            </div>
+                            <br/> <br/>
+                        </div>
+                        <br/>
+
                         <!-- not yet enabled
                                         <div ng-if="input.type == 'Observation'" class="row">
                                             <div class="col-md-2">
@@ -710,15 +732,9 @@
 
     <div class="modal-header">
 
-        <div ng-show="model.parent">
-            DataGroup parent: <em>{{model.parent}}</em>
 
-        </div>
-        <div ng-hide="model.parent">
-            <em>This model does not have a parent</em>
-
-        </div>
-
+<!--
         {{selectedTab}}
+        -->
     </div>
 </div>

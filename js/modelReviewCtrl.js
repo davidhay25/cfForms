@@ -553,6 +553,24 @@ angular.module("pocApp")
                     $scope.resourceChart.setOptions({ physics: false });
                 });
 
+                $scope.resourceChart.on("click", function (obj)
+                {
+
+                    let nodeId = obj.nodes[0];  //get the first node
+
+                    let node = vo.graphData.nodes.get(nodeId);
+
+
+                    //let node = $scope.allGraphData.nodes.get(nodeId);
+
+                    $scope.selectedResourceFromGraph = node.resource
+
+
+
+
+                    $scope.$digest()
+
+                })
 
 
             }

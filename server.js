@@ -7,6 +7,8 @@
 let http = require('http');
 const axios = require("axios");
 
+console.log("Term server from environment",process.env.TERM_SERVER_URL)
+
 let termServerUrl = process.env.TERM_SERVER_URL || 'https://r4.ontoserver.csiro.au/fhir/'
 termServerUrl += termServerUrl.endsWith('/') ? '' : '/'         //ensure the training slash
 

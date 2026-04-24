@@ -691,7 +691,6 @@ angular.module("pocApp")
             //doesn't set the path - as that is different when being used to create a new DG element
             function editED (ed) {
 
-
                 ed.type = [$scope.input.selectedType]
                 //ed.path = `new.${$scope.input.path}`        //the 'new.' is stripped off, as the full path is passed in for editing existing
                 ed.description = $scope.input.description
@@ -785,6 +784,7 @@ angular.module("pocApp")
                     ed.qFixedValues = $scope.input.qFixedValues
                 }
 
+
                 ed.itemCode = $scope.input.itemCode
 
 
@@ -836,21 +836,6 @@ angular.module("pocApp")
 
 
 
-                /*
-                let expression = `%Launch${prePop}`
-                let qry = `/Q/prePop?fp=${expression}&ts=${new Date().toISOString()}`
-                $http.get(qry).then(
-                    function (data) {
-                        $scope[displayElement] = data.data.result
-                      //  alert(angular.toJson(data.data.result,null,2))
-
-                    }, function (err) {
-                        alert(angular.toJson(err.data))
-                        console.log(err)
-                    }
-                )
-
-                */
             }
 
             $scope.save = function() {

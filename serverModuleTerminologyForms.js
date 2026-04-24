@@ -248,14 +248,15 @@ function setup(app, termServerUrl) {
                 let config = {headers:{authorization:'Bearer ' + token}}
                 config['content-type'] = "application/fhir+json"
 
-                //console.log('general query:',qry)
+               // console.log('general query:',qry)
 
                 axios.get(qry,config).then(function(data) {
 
                     res.json(data.data)
 
                 }).catch(function(ex) {
-                   // console.log(ex)
+                    console.log('>>> error with query:',qry)
+                    console.log(ex)
                     if (ex.response) {
                         //console.log("----- NOT found -----")
                         res.status(ex.response.status).json(ex.response.data)

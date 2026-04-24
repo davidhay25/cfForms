@@ -4,7 +4,7 @@
 
     #resourceGraph {
       width: 100%;
-      height: 550px;
+      height: 350px;
       border: 1px solid lightgray;
     }
 
@@ -108,6 +108,10 @@
       <div class="clearfix"></div>
 
       <div id="resourceGraph"></div>
+
+
+      <pre ng-show="selectedResourceFromGraph">{{selectedResourceFromGraph | json}}</pre>
+
     </uib-tab>
 
     <uib-tab ng-show="extractBundle" heading="Extract resource list">

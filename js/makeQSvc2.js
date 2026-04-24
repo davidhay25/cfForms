@@ -20,6 +20,8 @@ angular.module('pocApp')
 
             let systemItemControl = "http://hl7.org/fhir/questionnaire-item-control"
 
+            let extUnit = "http://hl7.org/fhir/StructureDefinition/questionnaire-unit"
+
 //"http://hl7.org/fhir/questionnaire-item-control"
             //let extHTMLRender = "http://hl7.org/fhir/StructureDefinition/rendering-xhtml"
 
@@ -65,6 +67,10 @@ angular.module('pocApp')
                 inItems.forEach(function (thing, inx) {
                     let ed = thing.ed
                     if (inx == 0) {
+                        //this is the first item
+                        if (dg.isTabbedContainer) {
+                            ed.isTabbedContainer = true
+                        }
                         ed.type = ['display']
                         ed._isMainDG = dg
                     }
@@ -97,6 +103,20 @@ angular.module('pocApp')
                 segments.forEach((segment, index) => {
                     const fullPath = segments.slice(0, index + 1).join('.');
                     currentItem = getOrCreateItem(currentItems, segment, fullPath);
+
+
+                    //here is where the tabed container
+                    if (ed.isTabbedContainer) {
+                        let ext = {url: extItemControlUrl}
+                        ext.valueCodeableConcept = {
+                            coding: [{
+                                code: "tab-container",
+                                system: "http://hl7.org/fhir/questionnaire-item-control"
+                            }]
+                        }
+                        currentItem.extension = currentItem.extension || []
+                        currentItem.extension.push(ext)
+                    }
 
                     // Index every node (real or synthetic)
                     pathIndex.set(fullPath, currentItem);
@@ -257,6 +277,22 @@ angular.module('pocApp')
 
                     addItemControl(item, 'gtable')
                 }
+
+                if (ed.units && ed.units.length > 0) {
+                    //only add the forst one ATM
+
+                    let ext = {url: extUnit, valueCoding:{code:ed.units[0],system:'http://unitsofmeasure.org'}}
+                    makeQSvc2Helper.addExtension(item, ext)
+
+                }
+
+                if (ed.hiddenInQ) {
+                    hideItem(item)
+                }
+
+
+
+
 
 
 
@@ -521,6 +557,20 @@ angular.module('pocApp')
 
                 addContextExtensions(questionnaire) //extensions that define the launct context
 
+/*
+                if (dg.isTabbedContainer) {
+                    let ext = {url: extItemControlUrl}
+                    ext.valueCodeableConcept = {
+                        coding: [{
+                            code: "tab-container",
+                            system: "http://hl7.org/fhir/questionnaire-item-control"
+                        }]
+                    }
+                    currentItem.extension = currentItem.extension || []
+                    currentItem.extension.push(ext)
+                }
+                */
+
 
                 questionnaire.item = []
 
@@ -611,14 +661,17 @@ angular.module('pocApp')
                         let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.status`
                         makeQSvc2Helper.addFixedValue(item, definition, 'code', 'final')
 
+                        //todo - ? add author as performer
+
                         if (dg.itemCode) {
                             //this is an itemCode on the DG. It's really only used for observations to set
                             //the Observation.code value. Currentlly we ignore it otherwise
 
                             //use the addFixedValue routine to set the value of Observation.code
-                            let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.code`
+                            let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.code.coding`
 
-                            makeQSvc2Helper.addFixedValue(item, definition, 'CodeableConcept', {coding: [dg.itemCode]})
+                            makeQSvc2Helper.addFixedValue(item, definition, 'Coding', dg.itemCode)
+                            //makeQSvc2Helper.addFixedValue(item, definition, 'CodeableConcept', {coding: [dg.itemCode]})
 
                         }
                     }
@@ -665,7 +718,7 @@ angular.module('pocApp')
 
             }
 
-            function hideItemDEP(item) {
+            function hideItem(item) {
                 //create a hidden extension and add to the item
                 let ext = {url: extHidden, valueBoolean: true}
                 addExtension(item, ext)

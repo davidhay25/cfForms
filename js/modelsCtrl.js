@@ -341,9 +341,16 @@ angular.module("pocApp")
 
             $scope.updateComponent = function (type,model) {
 
+                //update the component. If isComponent is true, then use the DG name as the component name
+                //Otherwise prompt for a name
+
                 let cName = $scope.world.name + '-' + model.name
+                if (model.isComponent) {
+                    cName = model.name
+                }
 
                 //let msg = `Copy this DG to the Component store with the name ${cName}. If there's already a Component with that name, it will be updated. `
+
 
                 let name = prompt("What name to use for the Component. It will replace any with the same name",cName)
 
@@ -352,8 +359,24 @@ angular.module("pocApp")
                     let frozen = snapshotSvc.getFrozenDG(model.name)
                     frozen.source = $scope.userMode
                     frozen.sourceId = $scope.world.id
-                    frozen.name = name         //the name includes the collection name
-                    saveModel(frozen,name)
+                    frozen.name = name         //the name includes the collection name by default
+                    frozen.isComponent = true
+                    model.isComponent = true
+
+                    $http.get(`frozen/${name}`,frozen).then(
+                        function () {
+                            if (confirm("This will update the existing Component. Are you sure?")) {
+                                saveModel(frozen,name)
+                            }
+
+                        }, function () {
+                            //not found, just save
+                            saveModel(frozen,name)
+                        }
+                    )
+
+
+
                 }
 
 
@@ -1130,7 +1153,7 @@ angular.module("pocApp")
             }
 
 
-            //The main library button
+            //The main library button. Relabelled as component
             $scope.library = function () {
 
                 $uibModal.open({
@@ -2181,7 +2204,7 @@ angular.module("pocApp")
                 }
             }
 
-            $scope.listAllDG = function () {
+            $scope.listAllDGDEP = function () {
                 $scope.input.showDGList = true
                 delete $scope.selectedModel
             }
@@ -2349,6 +2372,11 @@ angular.module("pocApp")
 
                         } else {
                             //this is an update
+
+                            // remove old keys
+                            Object.keys($scope.hashAllDG[newModel.name]).forEach(k => {
+                                delete $scope.hashAllDG[newModel.name][k];
+                            });
 
                             angular.extend($scope.hashAllDG[newModel.name], newModel);
 

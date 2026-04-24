@@ -186,7 +186,17 @@ angular.module("pocApp")
                             let dt = $scope.input.devFhirDT
                             let v = `value${dt.charAt(0).toUpperCase() + dt.slice(1)}`
                             let child = {url:'fixed-value'}
-                            child[v] = $scope.input.devFixed
+
+                            let value = $scope.input.devFixed
+                            try {
+                                value = JSON.parse(value)
+                            } catch (e) {
+                                console.log(e)
+                            }
+                            
+                            child[v] = value
+                            
+                            
                             ext.extension.push(child)
 
 

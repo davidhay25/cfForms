@@ -265,7 +265,9 @@
                                     </div>
                                     <div class="col-md-6">
                                         <button ng-if = "user.email" class="btn btn-link  pull-right" ng-click="newModel('dg')">New</button>
+                                        <!--
                                         <button class="btn btn-link pull-right" ng-click="listAllDG()">List all</button>
+                                        -->
                                     </div>
                                 </div>
 
@@ -281,11 +283,16 @@
                                          ng-if="showDG(v,input.dgFilter)"
                                          ng-repeat="v in sortedDGList">
 
+
+
                                         <i ng-if="canEdit(v)"
                                            class="glyphicon glyphicon-edit pull-right clickable"
                                            ng-click="editModel(v)"></i>
 
-                                        <div ng-class="{isContainer:v.isContainer}">{{v.title}}</div>
+                                        <div ng-class="{isContainer:v.isContainer}">{{v.title}}
+                                            <span ng-if="v.isComponent">🧩</span>
+                                        </div>
+
                                     </div>
                                 </div>
                             </div>

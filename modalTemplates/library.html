@@ -41,7 +41,7 @@
         </div>
 
         <table class="table table-bordered">
-          <tr><th>Title</th><th>DG Name</th><th>Description</th><th>Type</th><th>Cnt</th><th></th></tr>
+          <tr><th>Sel</th><th>Title</th><th>Name</th><th>Description</th><th>Type</th><th>Cnt</th><th></th></tr>
           <tr ng-repeat="dg in components"
               ng-class="{listItemSelected:dg.name == clone.name}"
               ng-if="canShow(input.filter,dg)" >
@@ -116,6 +116,8 @@
 
           <br/>
           <div id="componentTree"></div>
+
+          <pre ng-if="selectedED">{{selectedED | json}}</pre>
         </div>
 
 

@@ -53,7 +53,7 @@
         <span ng-if = "canEdit(selectedModel)">
 
           <span class=" clickable"
-              ng-click="editModel(selectedModel)">Edit</span>
+              ng-click="editModel(selectedModel)">Edit DG</span>
 
           <span ng-if = "false" class="clickable spacer"
               ng-click="cloneDG(selectedModel)">Make a copy</span>
@@ -260,7 +260,8 @@
                     <tr ng-if="selectedModel.linkedDG"><td>Linked DG</td><td>{{selectedModel.linkedDG}}</td></tr>
 
                     <tr ng-if="selectedModel.type"><td class="detailName" >Resource type</td><td>{{selectedModel.type}}</td></tr>
-                    <tr ng-if="selectedModel.sourceReference"><td>Source reference</td><td>{{selectedModel.sourceReference}}</td></tr>
+                    <tr ng-if="selectedModel.sourceReference">
+                      <td  class="detailName">Source reference</td><td>{{selectedModel.sourceReference}}</td></tr>
                     <tr ng-if="false && selectedModel.checkedOut"><td>Checked out</td>
                       <td>{{selectedModel.checkedOut}}</td></tr>
 
@@ -1446,40 +1447,6 @@
 
 <br/>
       <div class="row">
-        <!--
-        <div class="col-md-3">
-
-          <strong>Ancestry</strong>
-          <br/>
-          <div>
-            <div ng-repeat="parent in relationshipsSummary.parents">
-              <div class = 'clickable' ng-click="termSelectDG({DGName:parent},selectedModel.name)">{{hashAllDG[parent].title}}</div>
-              <div>
-                <i style="margin-left: 40px" class="glyphicon glyphicon-arrow-down"></i>
-              </div>
-            </div>
-
-            <div ng-if="relationshipsSummary.parents.length > 0">
-              <div  class="rounded-box">{{selectedModel.title}}</div>
-            </div>
-
-            <div  ng-if="relationshipsSummary.parents.length == 0">
-              <em>There is no parent</em>
-            </div>
-
-          </div>
-
-        </div>
-        <div class="col-md-3">
-          <strong>Direct children</strong>
-          <br/>
-          <div ng-repeat="child in relationshipsSummary.children">
-            <div class = 'clickable' ng-click="termSelectDG({DGName:child},selectedModel.name)">{{hashAllDG[child].title}}</div>
-          </div>
-
-        </div>
-        -->
-
 
         <div class="col-md-6">
           <strong>Contained DGs in this DG</strong>

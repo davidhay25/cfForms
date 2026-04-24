@@ -291,6 +291,7 @@ angular.module("pocApp")
                 }
             }
 
+            //actually a proxy to the termserver - needed for the Q renderer
             $scope.nzTermServer = 'https://canshare.co.nz/canshare/proxy'
 
             $scope.setTermServer = function () {
@@ -351,6 +352,7 @@ angular.module("pocApp")
                     $scope.input.sourceReference = model.sourceReference
                     $scope.input.newModelDescription = model.description
                     $scope.input.isContainer = model.isContainer
+                    $scope.input.isComponent = model.isComponent
                     $scope.input.isTabbedContainer = model.isTabbedContainer
 
                     $scope.input.idVariable = model.idVariable
@@ -595,6 +597,7 @@ angular.module("pocApp")
                 $scope.model.fixedValues = $scope.input.fixedValues
                 $scope.model.resourceReferences = $scope.input.resourceReferences
                 $scope.model.isContainer = $scope.input.isContainer
+                $scope.model.isComponent = $scope.input.isComponent
                 $scope.model.qUrl = $scope.input.qUrl
 
                 delete $scope.model.isTabbedContainer
@@ -624,6 +627,8 @@ angular.module("pocApp")
                     $scope.model.itemCode.code = $scope.input.itemCode.code
                     $scope.model.itemCode.system = $scope.input.itemCode.system
                     $scope.model.itemCode.display = $scope.input.itemCode.display
+                } else {
+                    delete $scope.model.itemCode
                 }
 
 
@@ -737,7 +742,8 @@ angular.module("pocApp")
                     if (!isNaN(newPos)) {
                         //alert(`You entered: ${newPos}`);
                         newPos--
-                        if (newPos > 0 && newPos < $scope.model.diff.length-1) {
+                        //if (newPos > 0 && newPos < $scope.model.diff.length-1) {
+                        if (newPos > 1 && newPos < $scope.model.diff.length-1) {
                             const [row] = $scope.model.diff.splice(pos,1)
                             if (newPos > pos) (
                                 newPos--

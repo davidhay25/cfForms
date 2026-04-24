@@ -67,7 +67,7 @@ angular.module("pocApp")
                     dg.deleted = true
                     $http.put(`frozen/${dg.name}`,dg).then(
                         function () {
-                            alert("Component has been removed (It's still there, but hidden ")
+                            alert("Component has been removed (It's still there, but hidden)")
                             playgroundsSvc.getImportableDG(allDG).then(
                                 function (data) {
                                     $scope.components = data
@@ -98,6 +98,7 @@ angular.module("pocApp")
             }
 
             $scope.selectFromComponent = function (dg) {
+                delete $scope.selectedED
                 let clone = angular.copy(dg)    //to make sure we don't inadvertantly update the DG
                 //let fullElementList = snapshotSvc.getFullListOfElements(clone.name)// vo.allElements
                 let elementList = [{ed:{path:clone.name,title:clone.name}}]
@@ -129,9 +130,17 @@ angular.module("pocApp")
                 ).bind("loaded.jstree", function (event, data) {
                     let id = treeData[0].id
                     $(this).jstree("open_node", id);
-                    //let treeObject = $(this).jstree(true).get_json('#', { 'flat': false })
 
 
+
+                }).bind('changed.jstree', function (e, data) {
+                    $timeout(function () {
+                        $scope.selectedED = data?.node?.data?.ed
+                    });
+
+                   //
+
+                    console.log(data)
                 })
             }
 
