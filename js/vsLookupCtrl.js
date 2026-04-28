@@ -38,7 +38,7 @@ angular.module("pocApp")
 
             let nzDisplayLanguage = "en-x-sctlang-23162100-0210105"
 
-            let termServer = "https://r4.ontoserver.csiro.au/fhir/"
+            //let termServer = "https://r4.ontoserver.csiro.au/fhir/"
             let snomed = "http://snomed.info/sct"
 
 

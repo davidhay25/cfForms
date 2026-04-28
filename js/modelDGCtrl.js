@@ -832,6 +832,17 @@ angular.module("pocApp")
 
             }
 
+
+            //return true if the ed has a fixed value
+            $scope.hasFixedType = function (ed) {
+                if (ed?.fixedRatio?.numerator || ed?.fixedQuantity?.value || ed?.fixedCoding?.code) {
+                    return true
+                }
+
+
+            }
+
+
             //return true if the datatype can have a fixed or default value
             $scope.isFixedType = function (ed) {
                 if (ed && ed.type) {

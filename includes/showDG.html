@@ -548,7 +548,7 @@
                     </td>
                   </tr>
 
-                  <tr ng-if="isFixedType(selectedNode.data.ed)">
+                  <tr ng-if="hasFixedType(selectedNode.data.ed)">
                     <td class="detailName">Fixed value</td>
 
                     <td>
@@ -707,25 +707,7 @@
                     </td>
                   </tr>
 
-                  <tr>
-                    <td class="detailName">Ad hoc extension</td>
-                    <td>
 
-                      <div class="pull-right">
-                        <div class="btn btn-link" ng-click="editAdHocExtension(selectedNode.data.ed)">Edit</div>
-                      </div>
-
-                      <span ng-if="selectedNode.data.ed.adHocExtension.length > 0"
-                           class="clickableDotted"
-                           uib-popover-html="popoverText(selectedNode.data.ed.adHocExtension)"
-                           popover-placement="left"
-                           popover-class="custom-popover-big"
-                           popover-trigger="'mouseenter'"> Extension </span>
-
-
-
-                    </td>
-                  </tr>
 
 
                   <tr ng-if="selectedNode.data.ed.identifierSystem">
@@ -799,6 +781,27 @@
                       <div ng-hide ="presentInDiff(selectedNode.data.ed.path)">
                         There is no diff entry
                       </div>
+
+
+                    </td>
+                  </tr>
+
+
+                  <tr>
+                    <td class="detailName">Ad hoc extension</td>
+                    <td>
+
+                      <div class="pull-right">
+                        <div class="btn btn-link" ng-click="editAdHocExtension(selectedNode.data.ed)">Edit</div>
+                      </div>
+
+                      <span ng-if="selectedNode.data.ed.adHocExtension.length > 0"
+                            class="clickableDotted"
+                            uib-popover-html="popoverText(selectedNode.data.ed.adHocExtension)"
+                            popover-placement="left"
+                            popover-class="custom-popover-big"
+                            popover-trigger="'mouseenter'"> Extension </span>
+
 
 
                     </td>

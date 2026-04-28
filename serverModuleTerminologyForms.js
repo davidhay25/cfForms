@@ -7,8 +7,11 @@ const fs = require("fs")
 
 
 let isNZHTS = false
+
 //let termServerUrl = process.env.TERM_SERVER_URL || 'https://backup.canshare.co.nz/proxy/' //todo change default to ontoserver
-let termServerUrl = process.env.TERM_SERVER_URL || 'https://r4.ontoserver.csiro.au/fhir/' //todo change default to ontoserver
+//let termServerUrl = process.env.TERM_SERVER_URL || 'https://r4.ontoserver.csiro.au/fhir/' //todo change default to ontoserver
+//let termServerUrl = process.env.TERM_SERVER_URL || 'https://r4.ontoserver.csiro.au/fhir/'
+let termServerUrl = process.env.TERM_SERVER_URL || 'https://authoring.nzhts.digital.health.nz/fhir/'
 
 //this isn't the most elegant way to see if this is running under canshare. ?Should we look for the whole string??
 if (termServerUrl.indexOf('authoring') > -1) {
@@ -61,6 +64,9 @@ async function getNZHTSAccessToken() {
 
     let url = "https://authenticate.nzhts.digital.health.nz/auth/realms/nzhts/protocol/openid-connect/token"
     let body =`grant_type=client_credentials&client_id=${nzhtsconfig.clientId}&client_secret=${nzhtsconfig.clientSecret}`
+
+
+
     try {
         let result = await axios.post(url,body)
         //if here, then we need a new token

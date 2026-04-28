@@ -39,6 +39,10 @@ angular.module('pocApp')
             resourcesForPatientReference['Task'] = {path: 'for'}
 
 
+            //If this DG defines a ServiceRequest, then we'll save the assigned Id (if any) so other resources
+            //can have a reference from the SR.supportingInfo or SR.specimen
+            let ServiceRequestPresent
+
             function addItemControl(item,code) {
                 let ext = {url:extItemControlUrl}
                 ext.valueCodeableConcept = {
@@ -57,6 +61,11 @@ angular.module('pocApp')
                 const warnings = [];
                 const pathIndex = new Map();    //a hash of item by path
                 const idIndex = {}                 //hash by id - used for conditionals
+
+                //so we can add references from other extracted resources from the SR
+                if (dg.type == 'ServiceRequest' && dg.extractId) {
+                    ServiceRequestPresent = dg.extractId
+                }
 
                 let questionnaire = makeInitialQuestionnaire(dg, config, warnings)     //generate the questionnaire
 
@@ -254,11 +263,22 @@ angular.module('pocApp')
 
                 //add all the extensions to create an observation from this item. Still uses definition based extraction
                 if (ed.extractAsObservation) {
+
+                    //create an id for the observation. Then it can be referenced from a ServiceRequest
+                    let obsId = `obs${utilsSvc.getUUIDHash(ed.id || 'noId')}`
+
+                    //create a variable...
+                    item.extension = item.extension || []
+                    item.extension.push({url: extAllocateIdUrl, valueString: obsId})
+
                     //set the definitionExtract to Observation
                     let ext = {url: extDefinitionExtract, extension: []}
                     ext.extension.push({url: "definition", valueCanonical: "http://hl7.org/fhir/StructureDefinition/Observation"})
 
-                    item.extension = item.extension || []
+
+                    ext.extension.push({url: "fullUrl", valueString: `%${obsId}`})
+
+
                     item.extension.push(ext)
 
                     //set the status to 'final'
@@ -266,7 +286,7 @@ angular.module('pocApp')
                     makeQSvc2Helper.addFixedValue(item, definition, 'code', 'final')
 
                     //add the reference to the patient
-                    let definition1 = `http://hl7.org/fhir/StructureDefinition/Observation}#Observation.subject.reference`
+                    let definition1 = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.subject.reference`
                     let expression = "%patientID"
                     makeQSvc2Helper.addFixedValue(item, definition1, null, null, expression)
 
@@ -278,6 +298,15 @@ angular.module('pocApp')
 
                     //set the value. Assume a CodeableConcept
                     item.definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.valueCodeableConcept.coding`
+
+                    if (ServiceRequestPresent) {
+                        //there's a ServiceRequest defined on the DG. Set a reference from it to the observation
+                        let definition3 = `http://hl7.org/fhir/StructureDefinition/ServiceRequest#ServiceRequest.supportingInfo.reference`
+                        let expression3 = `%${obsId}`
+                        makeQSvc2Helper.addFixedValue(item, definition3, null, null, expression3)
+
+                        //todo Obs needs an id...  needs
+                    }
 
 
 
@@ -612,33 +641,7 @@ angular.module('pocApp')
                 addExtension(questionnaire, {url: extAllocateIdUrl, valueString: 'patientID'})
 
                 addContextExtensions(questionnaire) //extensions that define the launct context
-
-/*
-                if (dg.isTabbedContainer) {
-                    let ext = {url: extItemControlUrl}
-                    ext.valueCodeableConcept = {
-                        coding: [{
-                            code: "tab-container",
-                            system: "http://hl7.org/fhir/questionnaire-item-control"
-                        }]
-                    }
-                    currentItem.extension = currentItem.extension || []
-                    currentItem.extension.push(ext)
-                }
-                */
-
-
                 questionnaire.item = []
-
-                /*
-                            //create a top level group for thq Q
-                            let top = {text:"Top",type:'group',item:[]}
-                            questionnaire.item.push(top)
-                */
-                //temp processDG(dg,questionnaire,warnings)     //attributes like term server defined in the DG
-//todo ??? should this just explicitely be the term server
-
-
                 return questionnaire
             }
 
@@ -679,7 +682,7 @@ angular.module('pocApp')
                 //https://build.fhir.org/ig/HL7/sdc/en/StructureDefinition-sdc-questionnaire-definitionExtract.html
 
                 if (dg.type) {
-                    //the type is the extraction type. todo badly named...
+                    //the type is the extraction type. could be better named - but likely a bit late to change...
                     //default is core type, it 'http' is present, assume a profile
 
                     let canonical = `http://hl7.org/fhir/StructureDefinition/${dg.type}`
@@ -687,15 +690,18 @@ angular.module('pocApp')
                         canonical = dg.type
                     }
 
+                    //now set the definitionExtract that indicates what to extract this DG to.
+                    //There's special processing for Patient & Specimen
 
                     let ext = {url: extDefinitionExtract, extension: []}
 
                     ext.extension.push({url: "definition", valueCanonical: canonical})
                     //if an id is defined on the DG then add it to the definitionExtract extension and add an allocateId
                     //extension as well. Note that the scope of the variable is this item and children
+
+
                     if (dg.extractId) {
                         ext.extension.push({url: "fullUrl", valueString: `%${dg.extractId}`})
-
                         //now create the allocateId extension and add it to the item...
                         let extAId = {url: extAllocateIdUrl, valueString: dg.extractId}
                         addExtension(item, extAId)
@@ -703,10 +709,32 @@ angular.module('pocApp')
                     }
 
                     //if a patient, then use fullUrl to set the entry.fullUrl to the value of patientID which is always set
-
                     if (dg.type == 'Patient') {
                         ext.extension.push({url: "fullUrl", valueString: "%patientID"})
                     }
+
+                    //if a Specimen and there is a ServiceRequest in scope, then we need to create a url for the
+                    //resource, and a reference from the SR.specimen -> specimen
+                    if (dg.type == 'Specimen' && ServiceRequestPresent) {
+
+                        //create an id for the Specimen. Then it can be referenced from a ServiceRequest
+                        let specId = `spec${utilsSvc.getUUIDHash(dg.id || 'noId')}`
+
+                        //create a variable...
+                        item.extension = item.extension || []
+                        item.extension.push({url: extAllocateIdUrl, valueString: specId})
+
+                        //set the definitionExtract to use the variable
+                        ext.extension.push({url: "fullUrl", valueString: `%${specId}`})
+
+                        //set the SR reference
+                        let definition3 = `http://hl7.org/fhir/StructureDefinition/ServiceRequest#ServiceRequest.specimen.reference`
+                        let expression3 = `%${specId}`
+                        makeQSvc2Helper.addFixedValue(item, definition3, null, null, expression3)
+
+
+                    }
+
 
                     addExtension(item, ext)
                     warnings.push({lvl: 'info', msg: `Setting Extraction type (${dg.type}) for  DG: ${dg.name}`});
@@ -727,12 +755,9 @@ angular.module('pocApp')
                             let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.code.coding`
 
                             makeQSvc2Helper.addFixedValue(item, definition, 'Coding', dg.itemCode)
-                            //makeQSvc2Helper.addFixedValue(item, definition, 'CodeableConcept', {coding: [dg.itemCode]})
 
                         }
                     }
-
-
                 }
 
                 let resourceType = dg.type
@@ -787,35 +812,5 @@ angular.module('pocApp')
                 item.extension.push(ext)
             }
 
-            /*
-                    //add a fixed value expression to the item (or Q)
-                    function addFixedValueDEP(item,definition,type,value,expression) {
-                        //add a fixed value extension. Can either be a value or an expression
-                        //definition is the path in the resource (added to the 'item.definition' value
-
-
-                        //http://hl7.org/fhir/StructureDefinition/sdc-questionnaire-itemExtractionValue
-                        let ext = {url:extDefinitionExtractValue,extension:[]}
-                        ext.extension.push({url:"definition",valueUri:definition})
-
-                        if (value) {
-                            let child = {url:'fixed-value'}
-                            child[`value${type}`] = value
-
-                            ext.extension.push(child)
-                        } else if (expression){
-                            let child = {url:'expression'}
-                            child.valueExpression = {language:"text/fhirpath",expression:expression}
-                            ext.extension.push(child)
-                        } else {
-                            return  //todo shoul add error...
-                        }
-
-
-                        item.extension = item.extension || []
-                        item.extension.push(ext)
-
-                    }
-                    */
 
         });

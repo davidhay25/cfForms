@@ -371,11 +371,12 @@ angular.module("pocApp")
                 window.addEventListener('message',function (data) {
                     let msg = data.data
                     let msgType = msg.messageType
+
                     console.log(msg,msgType)
 
                     if (msg.responseToMessageId) {
                         if (hashResponse[msg.responseToMessageId]) {
-                            hashResponse[msg.responseToMessageId]()
+                            hashResponse[msg.responseToMessageId](msg)
                             delete hashResponse[msg.responseToMessageId]
 
                         }
@@ -513,7 +514,14 @@ angular.module("pocApp")
 
             //get the extract bundle from the currently rendered form
             $scope.getExtractBundle = function () {
-                $scope.sendMessage('sdc.requestExtract', {});
+                delete $scope.extractOutcome
+                $scope.sendMessage('sdc.requestExtract', {},function (outcome) {
+
+                    if (outcome?.payload?.outcome) {
+                        $scope.extractOutcome = outcome?.payload?.outcome
+                    }
+                    console.log("outcome of extraction",outcome)
+                });
             }
 
             $scope.processExtractBundle = function (bundle) {
