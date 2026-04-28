@@ -81,6 +81,7 @@ angular.module("pocApp")
             function formViewerSetup() {
                 $scope.messageCounter = 0
                 let url = "https://dev.fhirpath-lab.com/swm-csiro-smart-forms"
+                // let url = "https://dev.fhirpath-lab.com/swm-csiro-smart-forms"
 
                 const iframe = document.getElementById('formPreview');
                 if ( iframe) {
@@ -1841,7 +1842,6 @@ angular.module("pocApp")
                         let ar1 = $scope.selectedModel.diff.filter(localEd => localEd.path == ed.path)
                         if (ar1.length == 0) {
 
-
                             $scope.selectedModel.diff.push(ed)
                             displayPath = ed.path
 
@@ -1938,6 +1938,7 @@ angular.module("pocApp")
                                 ed1.adHocExt = ed.adHocExt
                                 ed1.instructions = ed.instructions
                                 ed1.itemCode = ed.itemCode
+                                ed1.extractAsObservation = ed.extractAsObservation
                                 ed1.displayAfter = ed.displayAfter
                                 ed1.displayBefore = ed.displayBefore
 

@@ -279,11 +279,16 @@
 
           <tr>
             <td>Help text</td>
-            <td><input type="text" class="form-control" ng-model="input.helpText"/>
+            <td>
+
+              <input type="text" class="form-control" ng-model="input.helpText"/>
               <div><em>A note about the item. Will appear as a help icon in the form.</em>
               <span ng-if="input.description" class="clickable" ng-click="input.helpText = input.description">
                 Paste description</span>
               </div>
+
+
+
             </td>
           </tr>
 
@@ -352,6 +357,50 @@
           </tr>
 
           <tr>
+            <td>PrePop expression</td>
+            <td>
+
+              <div >
+                <div class="row">
+                  <div class="col-md-8">
+                  <textarea
+                          placeholder="FHIRPath pre-pop expression - eg %patient.family"
+                          class="form-control" ng-model="input.prePop"></textarea>
+
+                  </div>
+
+                  <div class="col-md-4">
+                    <strong>Contexts in scope</strong>
+                    <div ng-repeat="ctx in contextAtPath"
+                         class="clickable"
+                         ng-click="testxquery(ctx.name)">
+                      {{ctx.itemName}} ({{ctx.source}})
+                    </div>
+                    <!--
+                    <a style="display:block ; margin-top: 8px" href="https://hl7.org/fhir/fhirpath.html" target="_blank">Spec</a>
+                    -->
+                  </div>
+                </div>
+
+
+
+
+                <div ng-if="testPPResult" ng-class="testPPResultOutcome">
+                  {{testPPResult}}
+                </div>
+              </div>
+
+              <div ng-if = "! dg.namedQueries || dg.namedQueries.length < 1">
+                <em>If not pre-popping from standard variable (%patient %user) or a user defined variable, you need to select a named query for this DG. This is
+                  done from the main DG editor (the link at the top of the DG display page).</em>
+              </div>
+
+            </td>
+          </tr>
+
+
+
+          <tr>
             <td>Extract expression</td>
             <td>
               <div class="row">
@@ -411,6 +460,20 @@
           </tr>
 
 
+          <tr ng-show="input.itemCode.code">
+            <td>Extract as Observation</td>
+            <td>
+              <div class="row">
+                <div class="col-md-1">
+                  <checkbox ng-model="input.extractAsObservation"></checkbox>
+                </div>
+                <div class="col-md-11">
+                  <em>If checked, then an Observation will be extracted from this element</em>
+                </div>
+              </div>
+            </td>
+          </tr>
+
           <tr ng-if="canHavePopulationContext()">
             <td>Population context</td>
 
@@ -448,48 +511,6 @@
 
           </tr>
 
-
-          <tr>
-            <td>PrePop expression</td>
-            <td>
-
-              <div >
-                <div class="row">
-                  <div class="col-md-8">
-                  <textarea
-                          placeholder="FHIRPath pre-pop expression - eg %patient.family"
-                          class="form-control" ng-model="input.prePop"></textarea>
-
-                  </div>
-
-                  <div class="col-md-4">
-                    <strong>Contexts in scope</strong>
-                    <div ng-repeat="ctx in contextAtPath"
-                        class="clickable"
-                         ng-click="testxquery(ctx.name)">
-                       {{ctx.itemName}} ({{ctx.source}})
-                    </div>
-                    <!--
-                    <a style="display:block ; margin-top: 8px" href="https://hl7.org/fhir/fhirpath.html" target="_blank">Spec</a>
-                    -->
-                  </div>
-                </div>
-
-
-
-
-                <div ng-if="testPPResult" ng-class="testPPResultOutcome">
-                  {{testPPResult}}
-                </div>
-              </div>
-
-              <div ng-if = "! dg.namedQueries || dg.namedQueries.length < 1">
-                <em>If not pre-popping from standard variable (%patient %user) or a user defined variable, you need to select a named query for this DG. This is
-                  done from the main DG editor (the link at the top of the DG display page).</em>
-              </div>
-
-            </td>
-          </tr>
 
 
 

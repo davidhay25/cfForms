@@ -66,8 +66,12 @@ angular.module('pocApp')
 
                 inItems.forEach(function (thing, inx) {
                     let ed = thing.ed
+
+                    //ensure there is an id
+                    ed.id = ed.id || utilsSvc.getUUID()
+
                     if (inx == 0) {
-                        //this is the first item
+                        //this is the first item, then check to see if the DG is tabbed. if so, add a flag to the ed and the 'insertItem()' will add the extension
                         if (dg.isTabbedContainer) {
                             ed.isTabbedContainer = true
                         }
@@ -105,7 +109,7 @@ angular.module('pocApp')
                     currentItem = getOrCreateItem(currentItems, segment, fullPath);
 
 
-                    //here is where the tabed container
+                    //here is where the tabbed container
                     if (ed.isTabbedContainer) {
                         let ext = {url: extItemControlUrl}
                         ext.valueCodeableConcept = {
@@ -163,6 +167,7 @@ angular.module('pocApp')
                 }
 
                 item.linkId = utilsSvc.getUUIDHash(ed.id) //ed.linkId || item.linkId;
+
                 item.text = ed.title;
 
 
@@ -218,6 +223,7 @@ angular.module('pocApp')
                     makeQSvc2Helper.addExtension(item, ext)
                 }
 
+                // any options defined
                 if (ed.options && ed.options.length > 0) {
                     let options = []
                     for (const opt of ed.options) {
@@ -225,6 +231,56 @@ angular.module('pocApp')
                     }
 
                     item.answerOption = options
+                }
+
+                //The helptext item
+                if (ed.helpText){
+                    const guid = utilsSvc.getUUID() //createUUID()
+
+                    let foItem = {linkId:utilsSvc.getUUIDHash(guid),text:ed.helpText,type:'display'}
+
+                    let ext1 = {url:extItemControlUrl}
+                    ext1.valueCodeableConcept = {
+                        coding: [{
+                            code: "flyover",
+                            system: systemItemControl
+                        }]
+                    }
+                    foItem.extension = [ext1]
+                    item.item = item.item || []
+                    item.item.push(foItem)
+
+                }
+
+                //add all the extensions to create an observation from this item. Still uses definition based extraction
+                if (ed.extractAsObservation) {
+                    //set the definitionExtract to Observation
+                    let ext = {url: extDefinitionExtract, extension: []}
+                    ext.extension.push({url: "definition", valueCanonical: "http://hl7.org/fhir/StructureDefinition/Observation"})
+
+                    item.extension = item.extension || []
+                    item.extension.push(ext)
+
+                    //set the status to 'final'
+                    let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.status`
+                    makeQSvc2Helper.addFixedValue(item, definition, 'code', 'final')
+
+                    //add the reference to the patient
+                    let definition1 = `http://hl7.org/fhir/StructureDefinition/Observation}#Observation.subject.reference`
+                    let expression = "%patientID"
+                    makeQSvc2Helper.addFixedValue(item, definition1, null, null, expression)
+
+                    //set the Observation.code from the itemCode.
+                    if (ed.itemCode?.code) {
+                        let definition2 = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.code.coding`
+                        makeQSvc2Helper.addFixedValue(item, definition2, 'Coding', ed.itemCode)
+                    }
+
+                    //set the value. Assume a CodeableConcept
+                    item.definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.valueCodeableConcept.coding`
+
+
+
                 }
 
 
@@ -655,7 +711,7 @@ angular.module('pocApp')
                     addExtension(item, ext)
                     warnings.push({lvl: 'info', msg: `Setting Extraction type (${dg.type}) for  DG: ${dg.name}`});
 
-                    //specific processing for an Observation
+                    //specific processing for an Observation if defined on the DG (rather than an item)
                     if (dg.type == 'Observation') {
                         //set the status to 'final'
                         let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.status`

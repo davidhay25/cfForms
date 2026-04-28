@@ -336,7 +336,7 @@ angular.module("pocApp")
 
                 //start by creating all the node with a hash
                 let arNodes = []
-                bundle.entry.forEach(function(entry,inx) {
+                bundle.entry?.forEach(function(entry,inx) {
                     let nodeId = inx+1      //used for creating links
                     let resource = entry.resource;
 

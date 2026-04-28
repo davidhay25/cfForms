@@ -274,6 +274,8 @@ angular.module("pocApp")
 
             let setContext = function () {
 
+                //return //<<< temp
+
                 let testResource = {resourceType:'Observation',valueString:"test data"}
 
                 //tod can the context be a resource
@@ -369,7 +371,7 @@ angular.module("pocApp")
                 window.addEventListener('message',function (data) {
                     let msg = data.data
                     let msgType = msg.messageType
-                    console.log(msgType)
+                    console.log(msg,msgType)
 
                     if (msg.responseToMessageId) {
                         if (hashResponse[msg.responseToMessageId]) {
