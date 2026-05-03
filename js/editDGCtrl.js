@@ -32,7 +32,7 @@ angular.module("pocApp")
                     $scope.config = data.data
                     if (isNew) {
                         //for a new DG, set the term server to the default
-                        $scope.input.termSvr = $scope.config.termServerUrl
+                        $scope.input.termSvr = $scope.config.termServerProxy
                     }
                 }
             )

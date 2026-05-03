@@ -571,20 +571,22 @@ angular.module("pocApp")
                         //change to title
                         let title = ed.title || ed.path
                         title = title.trim()
-                        let name = title.replace(/ /g,'_')
+
+                        //let name = title.replace(/ /g,'_')
+                        let name = title.replace(/[ ()_]/g, '')   //Underscore,space ( and )  causes issues in ig publisher
 
 
-/*
-                        //this segment uses the title - better for iccr
-                        let name = ed.title.trim()
-                        name = name.replace(/ /g,'_')
-                        name = name.replace(/\./g, "_")
-                        name = name.replace(/\(/g, "_")
-                        name = name.replace(/\)/g, "_")
-                        name = name.replace(/\,/g, "_")
-                        name = name.replace(/\//g, "_")
+                        /*
+                                                //this segment uses the title - better for iccr
+                                                let name = ed.title.trim()
+                                                name = name.replace(/ /g,'_')
+                                                name = name.replace(/\./g, "_")
+                                                name = name.replace(/\(/g, "_")
+                                                name = name.replace(/\)/g, "_")
+                                                name = name.replace(/\,/g, "_")
+                                                name = name.replace(/\//g, "_")
 
-*/
+                        */
 
                         lne = `* ${name}`
                         let mult = ed.mult || '0..1'

@@ -1838,6 +1838,9 @@ angular.module("pocApp")
 
                         ed.path = `${pathOfCurrentElement}${ar.join('.')}`
 
+
+
+                        //todo don't really need this - but it is belt & braces...
                         //The path check in the dialog doesn't look for deleted elements, so we need to check here
                         let ar1 = $scope.selectedModel.diff.filter(localEd => localEd.path == ed.path)
                         if (ar1.length == 0) {
@@ -1848,6 +1851,8 @@ angular.module("pocApp")
                         } else {
                             alert("There's a deleted element with this path. It cannot be added.")
                         }
+
+
 
 
                     } else {
@@ -1882,6 +1887,9 @@ angular.module("pocApp")
                                 //setValue(ed1,'controlHint',ed.controlHint,'string')
 
                                 ed1.controlHint = ed.controlHint
+                                ed1.choiceOrientation = ed.choiceOrientation
+
+
                                 ed1.otherType = ed.otherType
                                 setValue(ed1,'hideInQ',ed.hideInQ,'bool')
                                 //ed1.hideInQ = ed.hideInQ

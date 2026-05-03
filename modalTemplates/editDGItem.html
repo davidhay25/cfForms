@@ -1,20 +1,12 @@
 <div>
-<!--
-<style>
-  .custom-textarea {
-    width: 100%;
-    min-height: 100px;
-    padding: 10px;
-    font-family: Arial, sans-serif;
-    font-size: 16px;
-    color: #333;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    resize: vertical;
-  }
 
-</style>
-  -->
+
+  <style>
+    .hintTextWidth {
+      display: inline-block;
+      width: 100px;
+    }
+  </style>
 
   <div class="modal-header">
     <div class="row">
@@ -171,11 +163,19 @@
           <tr>
             <td>Control Hint</td>
             <td>
-              <span ng-repeat = "opt in qControlOptions">
+              <span class="hintTextWidth">Style:</span>  <span ng-repeat = "opt in qControlOptions">
                   <input type="radio"
 
                          ng-model="input.controlHint" value="{{opt}}"> {{opt}}
                 </span>
+
+              <div style="margin-top: 8px" ng-show="input.selectedType == 'CodeableConcept'">
+                <span class="hintTextWidth">Orientation:</span>
+                <input type="radio" ng-model="input.choiceOrientation" value="vertical"> Vertical
+
+                <input style="padding-left: 8px" type="radio" ng-model="input.choiceOrientation" value="horizontal"> Horizontal
+
+              </div>
 
             </td>
           </tr>

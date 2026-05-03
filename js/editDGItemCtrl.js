@@ -102,25 +102,7 @@ angular.module("pocApp")
                         $scope.item.adHocExtension.push(ext)
                         $scope.input.adHocExt = angular.toJson(ext,true)
                     }
-/*
 
-                    let json = angular.toJson(ext,true)
-
-
-
-                    //$scope.input.adHocExt = "[" + json + ']'
-
-
-
-
-                    if ($scope.input.adHocExt) {
-                        let l = $scope.input.adHocExt.length
-                        $scope.input.adHocExt = $scope.input.adHocExt.substring(0,l-1) + "," + json + '\n]'
-                    } else {
-                        $scope.input.adHocExt = `[${json}]`
-                    }
-
-                    */
 
                 })
 
@@ -237,7 +219,7 @@ angular.module("pocApp")
 
             $scope.fhirResourceType = igSvc.findResourceType(hashAllDG[dgName],hashAllDG)
 
-
+/*
             //parentEd is the ed to which the new one is going to be added. It's ignored during editing existing
             //we want to be sure that any path added at this level is unique (but OK at other levels)
             let posOfChildren = 1  //by default, will look for dups in the first segment. Don't always have a selected element - eg when a DG is first selected
@@ -250,6 +232,7 @@ angular.module("pocApp")
 
             //used to detect duplicate path names
             //Issue is that it won't include deleted items (mult = 0..0) as they are no linger in the list...
+            //this isn't an issue in collections
             fullElementList.forEach(function (item) {
                 let ed = item.ed
                 if (ed && ed.path) {
@@ -261,7 +244,7 @@ angular.module("pocApp")
                     }
                 }
             })
-
+*/
 
             //update the coded list for the optional valueSet feature. A separate routine to make the logic clearer
             $scope.codedElements = []
@@ -303,6 +286,11 @@ angular.module("pocApp")
 
                 $scope.input.path =  $filter('dropFirstInPath')(item.ed.path)
                 $scope.input.controlHint =  item.ed.controlHint
+                $scope.input.choiceOrientation =  item.ed.choiceOrientation
+
+
+
+
                 $scope.input.otherType =  item.ed.otherType
                 $scope.input.placeHolder =  item.ed.placeHolder
 
@@ -718,6 +706,11 @@ angular.module("pocApp")
                     ed.controlHint = $scope.input.controlHint
                 }
 
+                ed.choiceOrientation = $scope.input.choiceOrientation
+
+
+
+
                 ed.hideLabel = $scope.input.hideLabel
                 ed.labelText = $scope.input.labelText
 
@@ -857,11 +850,30 @@ angular.module("pocApp")
                 if ($scope.isNew) {
                     //don't allow an existing path to be added. This is legit as an override, but not through this dialog
 
+                    //make sure there isn't already an item with this path
+                    //let dgName = fullElementList[0].ed.path     //it's aways the first element in the list...
+                    let testPath = `${parentEd.path}.${$scope.input.path}`
+/*
+                    fullElementList.forEach(item => {
+                        console.log(item.ed?.path, testPath);
+                    });
+
+
+                    let dup = false
+                    */
+                    let ar1 = fullElementList.filter(item => item.ed.path == testPath)
+                    if (ar1.length !== 0) {
+                        alert("This path has already been used at this level in this DG")
+                        return
+                    }
+
+
+                    /*
                    if (hashChildNames[$scope.input.path] ){
                        alert("This path has already been used at this level in this DG")
                        return
                    }
-
+*/
 
                     //check that there are no spaces in the path
                     if ($scope.input.path.indexOf(" ") > -1) {
@@ -893,8 +905,6 @@ angular.module("pocApp")
                     editED(ed)
 
 
-                   // let newEd = cleanObject(ed)
-                   // $scope.$close(newEd)
                     $scope.$close(ed)
 
                 } else {

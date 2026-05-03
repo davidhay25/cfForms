@@ -22,6 +22,8 @@ angular.module('pocApp')
 
             let extUnit = "http://hl7.org/fhir/StructureDefinition/questionnaire-unit"
 
+            let choiceOrientation = "http://hl7.org/fhir/StructureDefinition/questionnaire-choiceOrientation"
+
 //"http://hl7.org/fhir/questionnaire-item-control"
             //let extHTMLRender = "http://hl7.org/fhir/StructureDefinition/rendering-xhtml"
 
@@ -37,10 +39,11 @@ angular.module('pocApp')
             resourcesForPatientReference['ServiceRequest'] = {path: 'subject'}
             resourcesForPatientReference['Procedure'] = {path: 'subject'}
             resourcesForPatientReference['Task'] = {path: 'for'}
+            resourcesForPatientReference['BodyStructure'] = {path: 'patient'}
 
 
-            //If this DG defines a ServiceRequest, then we'll save the assigned Id (if any) so other resources
-            //can have a reference from the SR.supportingInfo or SR.specimen
+            //If this DG defines a ServiceRequest, then we'll set a flag as there will be references from this resource
+            //currently  SR.supportingInfo or SR.specimen
             let ServiceRequestPresent
 
             function addItemControl(item,code) {
@@ -221,7 +224,6 @@ angular.module('pocApp')
                     if (ed.mult.indexOf('1..') > -1) {
                         item.required = true
                     }
-
                 }
 
 
@@ -357,15 +359,18 @@ angular.module('pocApp')
                     makeQSvc2Helper.addExtension(item, ext)
                 }
 
+                if (ed.choiceOrientation) {
+                    let ext = {url: choiceOrientation, valueCode: ed.choiceOrientation}
+                    makeQSvc2Helper.addExtension(item, ext)
+                }
+
 
                 if (ed.gTable) {
-
                     addItemControl(item, 'gtable')
                 }
 
                 if (ed.units && ed.units.length > 0) {
-                    //only add the forst one ATM
-
+                    //only add the first one ATM
                     let ext = {url: extUnit, valueCoding:{code:ed.units[0],system:'http://unitsofmeasure.org'}}
                     makeQSvc2Helper.addExtension(item, ext)
 
@@ -377,15 +382,29 @@ angular.module('pocApp')
 
 
 
+                //if a control hint is set, then apply it. We assume that the Q editor has placed appropriate codes by datatype
+                switch (ed.controlHint) {
+                    case "autocomplete" :
+                        addItemControl(item,'autocomplete')
+                        break
+                    case "radio" :
+                        addItemControl(item,'radio-button')
+                        break
+                    case "check-box" :
+                        addItemControl(item,'check-box')
+                        break
+                }
+
 
 
 
 
                 //specific item processing for each type - like fixed or default values
+                //todo - review this function. It's doing thimgs like setting a default - but not sure how important that is...
                 makeQSvc2Helper.typeSpecificProcessing(item, ed)
 
                 //other processing for this item - unrelated to the type - like helptext or displaytext
-                makeQSvc2Helper.miscProcessing(item, ed)
+                //makeQSvc2Helper.miscProcessing(item, ed)
 
                 // Stash original source for later resolution - used for enableWhen
                 item._source = ed;

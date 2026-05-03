@@ -810,7 +810,7 @@ angular.module("pocApp")
                 } else {
                     //The attribute that was edited (eg edscription) is inherited
                     //Need to create an 'override' element and add to the DG
-
+alert("Creating override - shouldn't really need to do this so there is something weird happening...")
                     //set the minimum required elements..
                     let ed = {path:pathToDelete,mult:"0..0",type:item.type,title:item.title,description:item.description}
 

@@ -9,9 +9,13 @@ const axios = require("axios");
 
 console.log("Term server from environment",process.env.TERM_SERVER_URL)
 
+//this is the actual location of the Term server
 let termServerUrl = process.env.TERM_SERVER_URL || 'https://authoring.nzhts.digital.health.nz/fhir/'
 //let termServerUrl = process.env.TERM_SERVER_URL || 'https://r4.ontoserver.csiro.au/fhir/'
 termServerUrl += termServerUrl.endsWith('/') ? '' : '/'         //ensure the training slash
+
+//this is a proxy to the term server -
+let termServerProxy = process.env.TERM_SERVER_PROXY || "https://canshare.co.nz/canshare/proxy"
 
 const environment = process.env.ENVIRONMENT || 'canshare'       //allows for environment specific behaviours
 const setting = process.env.SETTING
@@ -68,6 +72,7 @@ let systemConfig = {
     mongoDb: mongoDbName,
     logoUrl: process.env.APP_LOGO_URL || 'images/canshareLogo.png',
     termServerUrl : termServerUrl,
+    termServerProxy : termServerProxy,
     qUrlPrefix : qUrlPrefix,
     defaultVsPrefix : "https://nzhts.digital.health.nz/fhir/ValueSet"  //often the vs url is just the name...
 
