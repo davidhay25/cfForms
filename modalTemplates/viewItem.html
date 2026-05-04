@@ -177,8 +177,18 @@
                     </div>
 
                     <div>
+
+
                         <table class="table table-bordered">
+                            <tr ng-show="node.definition">
+                                <td>Definition</td>
+                                <td>{{node.definition}}</td>
+                            </tr>
                             <tr ng-repeat="ext in node.extensions">
+
+
+
+
                                 <td style="width: 25%">
                                     <div class="clickableDotted"
                                             uib-popover-html="ext._popoverHtml"

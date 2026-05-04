@@ -93,6 +93,7 @@ angular.module("pocApp")
                 let endOfQueue = false
                 for (const node of chain) {
                     let nodeDetails = {text:node.text || "No text",linkId:node.linkId,extensions:[]}
+                    nodeDetails.definition = node.definition
 
                     if (node.extension) { //summary has an entry even if no extensions
 
@@ -106,16 +107,8 @@ angular.module("pocApp")
                             let help = $scope.helpText[extensionSummary.url]
                             if (help) {
                                 display = help.msg
-                                /* doesn't work with mouseover
-                                if (help.url) {
-                                    link = `<br/><a target='_blank' href=${help.url}>More</a>`
-                                }
 
-                                 */
                             }
-
-
-
 
                             extensionSummary._popoverHtml = $sce.trustAsHtml(
                                 `${ext.url}<br/><em>${display}</em> ${link}`
