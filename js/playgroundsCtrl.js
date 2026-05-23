@@ -1,7 +1,7 @@
 angular.module("pocApp")
     .controller('playgroundsCtrl',
         function ($scope,$http,userMode,playground,utilsSvc,$localForage,user,initialPlayground,playgroundsSvc,
-                  $uibModal) {
+                  $uibModal,$localStorage,$timeout) {
 
             $scope.input = {}
 
@@ -11,6 +11,34 @@ angular.module("pocApp")
                 if (! confirm("Make sure you have saved any updates before switching to Playground mode! Do you wish to continue?")){
                         return
                 }
+            }
+
+
+            $scope.onPaste = function ($event) {
+
+                $timeout(function () {
+                    const textarea = $event.target;
+
+                    textarea.scrollTop = 0;
+
+                    // Optional: move cursor to start
+                    textarea.selectionStart = 0;
+                    textarea.selectionEnd = 0;
+                });
+            };
+
+            $scope.parseSS = function (text) {
+                let raw = text || $localStorage.rawSS
+
+                $localStorage.rawSS = raw
+                console.log(raw)
+                let vo = playgroundsSvc.parseSS(raw)
+                $scope.importLog = vo.log
+                $scope.importedCollection = vo.collection
+
+
+
+
             }
 
             $scope.differences = playgroundsSvc.currentPlaygroundDiff(playground,initialPlayground)

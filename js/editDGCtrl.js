@@ -1,7 +1,7 @@
 angular.module("pocApp")
     .controller('editDGCtrl',
-        function ($scope,model,hashTypes,hashValueSets,isNew,modelsSvc,snapshotSvc, parent,$localStorage,
-                  utilsSvc, modelDGSvc,$http,userMode,$uibModal,$timeout,$filter,viewVS,modelReviewSvc, url) {
+        function ($scope,model,hashTypes,hashValueSets,isNew,modelsSvc,snapshotSvc,parent,$localStorage,
+                  utilsSvc, modelDGSvc,$http,userMode,$uibModal,$timeout,$filter,viewVS,modelReviewSvc, url, playgroundsSvc) {
 
 
             //if parent is set, then 'isNew' will be also...
@@ -36,6 +36,106 @@ angular.module("pocApp")
                     }
                 }
             )
+
+            //------------ functions for importing from a Spreadsheet
+
+            $scope.input.pastedSSDG = $localStorage.pastedSSDG      //temp while developing
+
+            //move the cursor to the top after pasting...
+            $scope.onPaste = function ($event) {
+
+                $timeout(function () {
+                    const textarea = $event.target;
+                    textarea.scrollTop = 0;
+                    // Optional: move cursor to start
+                    textarea.selectionStart = 0;
+                    textarea.selectionEnd = 0;
+                });
+            };
+
+            //parse the pasted spreadsheet
+            $scope.parseSS = function (text) {
+                let raw = text || $localStorage.pastedSSDG
+
+                $localStorage.pastedSSDG = raw
+                //console.log(raw)
+                let vo = playgroundsSvc.parseSSDG(raw)
+                $scope.importLog = vo.log
+                //$scope.importedDG = vo.DG
+
+
+                //$scope.model is the internal representation of the DG
+                $scope.model = vo.DG //$scope.importedDG
+                $scope.input.newModelName = $scope.model.name
+
+                //$scope.isNew = true
+                $scope.checkName($scope.input.newModelName)
+                $scope.input.newModelTitle= $scope.model.title
+
+                //generate the tree
+                $scope.makeTreeFromSS($scope.model)
+
+            }
+            /* let treeData = modelsSvc.makeTreeFromElementList($scope.fullElementList)
+                drawDGTree(treeData)*/
+
+
+            //Create the tree view from a pasted SS
+            $scope.makeTreeFromSS = function (dg) {
+                //delete $scope.selectedED
+                let clone = angular.copy(dg)    //to make sure we don't inadvertantly update the DG
+                //let fullElementList = snapshotSvc.getFullListOfElements(clone.name)// vo.allElements
+                let elementList = [{ed:{path:clone.name,title:clone.name}}]
+
+
+                //create the elements list
+                for (const ed of clone.diff) {
+                    ed.path = `${dg.name}.${ed.path}`   //need the full path including DG name for the tree creation
+                    elementList.push({ed:ed})
+                }
+
+                //$scope.clone = clone        //just for the UI
+                let treeData = modelsSvc.makeTreeFromElementList(elementList)
+
+
+
+                $('#ssDG').jstree('destroy');
+                $('#ssDG').jstree(
+                    {'core':
+                            {'multiple': false,
+                                'data': treeData,
+                                'themes': {name: 'proton', responsive: true}}
+                    }
+                ).bind("loaded.jstree", function (event, data) {
+                    let id = treeData[0].id
+                    $(this).jstree("open_node", id);
+
+
+                }).bind('changed.jstree', function (e, data) {
+                    $timeout(function () {
+                        $scope.selectedSsED = data?.node?.data?.ed
+
+                        //Need to remove the DG name in the path which was added so the tree worked.
+                        //It's a bit crufty - but changing this wouod be a big task
+                        if ($scope.selectedSsED) {
+                            let ar = $scope.selectedSsED.path.split('.')
+                            if (ar.length > 1) {
+                                ar.shift()
+                                $scope.selectedSsED.path = ar.join('.')
+                            }
+                        }
+
+
+                    });
+
+
+                })
+            }
+
+
+
+
+            //----------------------
 
 
             $scope.lookupItemCode = function (code) {
@@ -655,8 +755,14 @@ angular.module("pocApp")
 
                       //  $scope.$close($scope.model)
                     } else {
-                        alert("The name is not valid - likely a duplicate")
-                        return
+                        let msg = "There is already a DG with this name. If you proceed, the existing one will be replaced. Do you still wish to save?"
+
+                        if (! confirm(msg)) {
+                            return
+                        }
+
+                       // alert("The name is not valid - likely a duplicate")
+                       // return
                     }
                 }
 

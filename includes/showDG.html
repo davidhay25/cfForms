@@ -76,7 +76,8 @@
           -->
           <button class="btn btn-link"
                   ng-if = "user.email && canEdit(selectedModel)"
-                  ng-click="publishQ(selectedModel)">Publish</button>
+                  ng-click="publishQ(selectedModel)">Release</button>
+            <!-- process renamed to release-->
         </div>
 
         <br/>
@@ -366,11 +367,14 @@
 
 
                       <!--  <span class="pull-right clickable" ng-click="hideInQ(selectedNode.data.ed)"> -->
+
                       <span class="pull-right" >
                         <span ng-if="selectedNode.data.ed.hideInQ">Not copied into Q</span>
                          <span ng-if="selectedNode.data.ed.hiddenInQ">Present but hidden in Q</span>
                         <span ng-hide="selectedNode.data.ed.hideInQ || selectedNode.data.ed.hiddenInQ">Appears in Q</span>
                       </span>
+
+
 
                     </td>
 
@@ -517,7 +521,7 @@
                     </td>
                   </tr>
 
-                  <tr ng-if="selectedNode.data.ed.type[0] == 'CodeableConcept'">
+                  <tr ng-if="selectedNode.data.ed.type[0] == 'CodeableConcept' && selectedNode.data.ed.options.length > 0">
                     <td class="detailName">Options</td>
                     <td>
                       <div ng-if="selectedNode.data.ed.options">
@@ -916,9 +920,6 @@
                   </div>
 
                 </div>
-
-
-
 
 
               </uib-tab>

@@ -260,13 +260,14 @@
                                 <h5>Published Questionnaires (from Questionnaire editor)</h5>
 
                                 <table class="table table-bordered">
-                                    <tr><th>Title</th><th>Description</th><th>Latest version</th></tr>
+                                    <tr><th>Title</th><th>Description</th><th>Latest status</th><th>Latest version</th></tr>
                                     <tr ng-repeat="Q in lstQ"
                                         ng-class="{listItemSelected:selectedMiniQ == Q}">
                                         <td>
                                             <div class="clickable" ng-click="selectPublishedQ(Q)">{{Q.title}}</div>
                                         </td>
                                         <td>{{Q.description}}</td>
+                                        <td>{{Q.status}}</td>
                                         <td>{{Q.version}}</td>
                                     </tr>
                                 </table>

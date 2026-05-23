@@ -125,10 +125,6 @@ async function setup(app,database) {
         let Q = req.body
         try {
 
-
-
-
-
             await database.collection("publishedQ").insertOne(Q)
             res.json(Q)
         } catch(ex) {

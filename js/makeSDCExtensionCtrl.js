@@ -164,6 +164,9 @@ angular.module("pocApp")
                         if ($scope.input.devFixed && $scope.input.devExpression) {
                             alert("You can have a fixed value OR an expression - not both!")
                         }
+
+
+
                         ext.url = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-definitionExtractValue"
                         ext.extension = []
 
@@ -177,12 +180,23 @@ angular.module("pocApp")
                         ext.extension.push({url:'definition',valueUri:canonical})
 
                         if ($scope.input.devExpression) {
+                            //an expression was entered
                             let child = {}
 
                             child.expression = $scope.input.devExpression
                             child.language = "text/fhirpath"
-                            ext.extension.push({url:"expression",valueExpression:child})
+                            ext.extension.push({url: "expression", valueExpression: child})
+
+                        } else if ($scope.input.devCode) {
+                            //a code was entered. This is only shown for a CC
+                            let coding = {system:$scope.input.devSystem,code:$scope.input.devCode}
+
+                            let child = {url:'fixed-value'}
+                            child.valueCodeableConcept = {coding:[coding]}
+                            ext.extension.push(child)
+
                         } else if ($scope.input.devFixed) {
+                            //a fixed value - could be json
                             let dt = $scope.input.devFhirDT
                             let v = `value${dt.charAt(0).toUpperCase() + dt.slice(1)}`
                             let child = {url:'fixed-value'}
@@ -193,12 +207,10 @@ angular.module("pocApp")
                             } catch (e) {
                                 console.log(e)
                             }
-                            
-                            child[v] = value
-                            
-                            
-                            ext.extension.push(child)
 
+                            child[v] = value
+
+                            ext.extension.push(child)
 
 
                         }

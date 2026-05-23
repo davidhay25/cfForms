@@ -239,11 +239,37 @@
                       <div class="col-md-4">
                           <select class="form-control" ng-model="input.devFhirDT"
                                   ng-options="dt for dt in fhirDataTypes"></select>
-                          <div><em>The element dataType</em></div>
+
+                      </div>
+                      <div class="col-md-6">
+                          <em>The element dataType</em>
                       </div>
                   </div>
 
-                  <div class="row">
+
+                  <div class="row" ng-show="input.devFhirDT == 'CodeableConcept'">
+                      <div class="col-md-2">
+                          Code/System
+                      </div>
+                      <div class="col-md-10">
+                          <div class="row">
+
+                              <div class="col-md-3">
+                                    <input type="text" class="form-control" ng-model="input.devCode"/>
+                              </div>
+                              <div class="col-md-2">
+                                  System
+                              </div>
+                              <div class="col-md-5">
+                                  <input type="text" class="form-control" ng-model="input.devSystem"/>
+                              </div>
+                          </div>
+
+
+                      </div>
+                  </div>
+
+                  <div class="row" ng-hide="input.devFhirDT == 'CodeableConcept'">
                       <div class="col-md-2">
                           Fixed value
                       </div>
@@ -257,7 +283,7 @@
 
 
                   <button class="btn btn-primary pull-right"
-                          ng-if="input.devCanonical && (input.devFixed || input.devExpression)"
+                          ng-if="input.devCanonical && (input.devFixed || input.devExpression || input.devCode)"
                           ng-click="save('defextractvalue')">Save</button>
 
               </div>

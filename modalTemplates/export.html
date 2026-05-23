@@ -52,7 +52,32 @@
             </uib-tab>
             <uib-tab heading="Json Import">
                 <div class="row" ng-hide="uploadComplete">
-                    <div class="col-md-6 col-sm-6">
+                    <div class="col-md-12">
+                        <br/>
+
+
+                        <div ng-show="meta.name">
+                            Importing into an existing Collection. DG's from the import will be merged
+                            into this one.
+
+                            If there is already a DG with the name as in the import it will be replaced.
+                        </div>
+
+                        <div ng-hide="meta.name">
+                            Creating a new Collection which will have the same contents as the imported one, including
+                            the name.
+                            <br/><br/>
+                            It won't be saved in the repository automatically - you'll need to click the save button.
+                            If there is already a collection in the repository with the same name then there will be 2
+                            collections with the same name, but likely different contents.
+                            <br/><br/>
+                            A collection name can be changed
+                            on the 'Collection Info' tab on the main editor page.
+                        </div>
+                       <br/>
+
+                        The file selected MUST be an export file from the export tab in this dialog
+                        <br/><br/>
                         <div ng-hide="uploadedDG">
                             <input type="file" id="fileUploadFileRef" accept="application/json" />
                             <button class="btn btn-link" ng-click="uploadJson()">Upload Json file</button>
@@ -63,17 +88,38 @@
                         <checkbox ng-model="input.newCollection"></checkbox> Import as new collection
 -->
 
+
+
+
+
                     </div>
-                    <div class="col-md-6 col-sm-6">
+                    <!--
+                    <div class="col-md-6">
+
                         Upload a Json file containing DataGroups from the computer, and import them into
-                        the app. The file must have been created using the export option in the other tab.
+                        the app. The file must have been created using the export option in the other tab of this dialog.
+                        <br/><br/>
+
+                        If importing into an existing collection then the DGs will be added to the collection. If there
+                        is already a DG with the same name as an imported one, it will be replaced.
+                        <br/><br/>
+                        If importing into an empty workspace (after clicking 'Clear working collection') then a new
+                        collection will be created with the name of the imported one. If there's already a collection
+                        with that name then it won't be replaced - but you'll wind up with 2 collections having the same name.
+
+                        The collection name can be changed in the 'Collection Info' tab.
+                        <br/><br/>
+                        In either case the collection WON'T be saved into the repository automatically - you have to do that manually.
+
                     </div>
+                    -->
                 </div>
 
 
 
                 <div class="row" ng-show="uploadedDG">
                     <div class="col-md-6">
+
                         <strong>DataGroups</strong>
                         <div class="myScroll">
                             <table class="table table-condensed table-bordered">
@@ -84,7 +130,7 @@
                         </div>
 
                     </div>
-
+<!--
                     <div class="col-md-6" ng-show="uploadedComp">
                         <strong>Compositions</strong>
                         <div class="myScroll">
@@ -95,6 +141,7 @@
                             </table>
                         </div>
                     </div>
+                    -->
                 </div>
 
                 <!--
@@ -150,7 +197,7 @@
 
 
     <div class="modal-header">
-
+<!--
         <div ng-hide="input.newCollection">
             The DGs in this import file will be added to the current collection. If there is a DG
             with the same name as one in the import file, it will be replaced.
@@ -159,6 +206,6 @@
         <div ng-show="input.newCollection">
             A new collection will be created when this collection in imported.
         </div>
-
+-->
     </div>
 </div>

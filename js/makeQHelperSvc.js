@@ -23,7 +23,7 @@ angular.module("pocApp")
         extensionUrls.candidateExpression = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-candidateExpression"
 
 
-        extensionUrls.releaseNotes = "http://canshare.co/nz/StructureDefinition/canshare-release-notes"
+        extensionUrls.releaseNotes = "http://canshare.co.nz/fhir/StructureDefinition/canshare-release-notes"
         let unknownCodeSystem = "http://example.com/fhir/CodeSystem/example"
 
         //colours for the questionnaire graph

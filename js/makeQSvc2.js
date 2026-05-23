@@ -285,7 +285,7 @@ angular.module('pocApp')
 
                     //set the status to 'final'
                     let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.status`
-                    makeQSvc2Helper.addFixedValue(item, definition, 'code', 'final')
+                    makeQSvc2Helper.addFixedValue(item, definition, 'Code', 'final')
 
                     //add the reference to the patient
                     let definition1 = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.subject.reference`
@@ -652,7 +652,10 @@ angular.module('pocApp')
                 questionnaire.title = dg.title
                 questionnaire.date = new Date().toISOString()
                 questionnaire.url = config.url
-                questionnaire.version = config.version || 'draft'
+
+
+
+                questionnaire.version = config.version // || 'draft'
                 questionnaire.description = dg.description
 
 

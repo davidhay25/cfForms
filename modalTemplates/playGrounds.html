@@ -135,6 +135,30 @@
 
             </uib-tab>
 
+            <uib-tab heading="Create from SpreadSheet">
+                <div class="row">
+                    <div class="col-md-6">
+                        <textarea class="form-control" rows="10" ng-model="input.ss" ng-paste="onPaste($event)"></textarea>
+                        <button class="btn btn-link" ng-click="parseSS(input.ss)">Parse</button>
+                    </div>
+                    <div class="col-md-6">
+                        <uib-tabset>
+                            <uib-tab heading="Log">
+                                <table class="table table-bordered">
+                                    <tr ng-repeat="item in importLog">
+                                        <td>{{item.line}}</td>
+                                        <td>{{item.msg}}</td>
+                                    </tr>
+                                </table>
+                            </uib-tab>
+                        </uib-tabset>
+
+                    </div>
+
+                </div>
+
+            </uib-tab>
+
             <uib-tab ng-if = "false" heading="Local Store">
                 <table class="table table-bordered">
                     <tr><th>Name</th><th>Description</th><th># DG / Comp</th><th>Updated</th><th>Version</th></tr>

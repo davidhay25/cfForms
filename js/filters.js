@@ -390,7 +390,7 @@ angular.module("pocApp")
         .filter('prettyDate',function(){
             return function(da){
                 if (da) {
-                    return moment(da).format('MMM D hh:mm a')
+                    return moment(da).format('MMM D YYYY hh:mm a ')
                 }
 
             }

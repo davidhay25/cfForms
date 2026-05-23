@@ -7,9 +7,10 @@ angular.module("pocApp")
 
             let fhirDT = utilsSvc.fhirDataTypes()
 
+
             let obj = {dg:hashAllDG,comp:hashAllCompositions}
             obj.meta = meta
-
+            $scope.meta = meta  //so we can personalize the display
             //variables for the Json downlaod
             $scope.downloadLinkJson = window.URL.createObjectURL(new Blob([angular.toJson(obj,true) ],{type:"application/json"}))
 

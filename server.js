@@ -59,7 +59,7 @@ app.use(express.json({ limit: '50mb' , type: ['application/json', 'application/f
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 let mongoHostName = process.env.MONGOHOSTNAME || "127.0.0.1"
-let qUrlPrefix = process.env.QURLPREFIX || "http://canshare.co.nz/questionnaire"
+let qUrlPrefix = process.env.QURLPREFIX || "http://canshare.co.nz/fhir/questionnaire"
 
 const mongoUri = `mongodb://${mongoHostName}:27017`  //local machine
 console.log(`Mongo connection uri is ${mongoUri}`)

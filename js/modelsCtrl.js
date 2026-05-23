@@ -418,11 +418,7 @@ angular.module("pocApp")
 
                         let qName = `${$scope.world.name}-${dg.name}`
                         qName = qName.replace(/\s+/g, "");
-                        //qName = qName.replace(/\s+/g, "");
 
-
-                        //let qName = dg.name
-                        //qName = qName.replace(/\s+/g, "");
 
                         //update the pubversion.
                         dg.pubVersion = dg.pubVersion || 0
@@ -434,20 +430,21 @@ angular.module("pocApp")
                         config.expandVS = false     //use proxy to expand vs
                         config.name = qName
                         config.url = `${$scope.systemConfig.qUrlPrefix}/${qName}`
-                        config.version = String(dg.pubVersion +1)
+
+
+                        //the version will be updated in the dialog as it will differ if this is a simple release
+                        //or a publication. So we leave it at the current status when building.
+
+                        config.version = dg.pubVersion || 0 //String(dg.pubVersion +1)
+
                         config.status = dg.pubStatus || 'draft'   //the current status
                         //we make the Q with the new version. If it is not published, then the dg won't be updated so all good
 
                         config.url = `${$scope.systemConfig.qUrlPrefix}/${qName}`
 
 
-
-
                         let voQ = makeQSvc.makeHierarchicalQFromDG(dg,allElements,config)
                         let Q = voQ.Q
-
-
-
 
                         $scope.qErrorLog = voQ.errorLog
 
@@ -461,13 +458,16 @@ angular.module("pocApp")
                                 Q: function () {
                                     return Q
 
+                                },
+                                DG : function () {
+                                    return dg
                                 }
                             }
                         }).result.then(function (Q) {
 
                             //update the version in the DG
-                            $scope.hashAllDG[dg.name].pubVersion = parseInt(Q.version)
-                            $scope.hashAllDG[dg.name].pubDate = Q.date //parseInt(Q.date)
+                            $scope.hashAllDG[dg.name].pubVersion = Q.version
+                            $scope.hashAllDG[dg.name].pubDate = Q.date
                             $scope.hashAllDG[dg.name].pubStatus = Q.status
                             $scope.updatePlayground(true)
 
@@ -803,7 +803,10 @@ angular.module("pocApp")
 
                 $scope.world = $localStorage.world
 
-                $scope.world.saveTo = 'browser'
+                //$scope.world.saveTo = 'browser'
+                $scope.world.saveTo = 'library'     //DGs will be saved to the collections library
+
+
 
                 $scope.hashAllDG = $localStorage.world.dataGroups
                 $scope.hashAllCompositions = $localStorage.world.compositions
@@ -1260,49 +1263,49 @@ angular.module("pocApp")
                     }
 
                 }).result.then(function (vo) {
-                    //vo is actually the downloaded world object
+                    //vo is actually the downloaded world object - ie a collection. This is only fired when importing
+                    //and we only import DGs
+
                     $localStorage.initialPlayground = vo    //so we can track changes
 
 
+                    //assuming there are Datagroups, add them to the current world, replacing any with the same name
                     if (vo.dg) {
-                        //a hash of dg
+                        //a hash of dg.
                         Object.keys(vo.dg).forEach(function (key) {
                             let dg = vo.dg[key]
-
+/*
+                            //ensure the current user can edit - this was for the old check in/out
                             if ($scope.user) {
                                 dg.checkedOut = $scope.user.email
                             }
-
+*/
                             $scope.hashAllDG[dg.name] = dg
                         })
-
                     }
 
-/*
-                    if (vo.comp) {
-                        //a hash of dg
-                        Object.keys(vo.comp).forEach(function (key) {
-                            let comp = vo.comp[key]
-                            $scope.hashAllCompositions[comp.name] = comp
-                        })
 
+                    //if importing into an emprt collection (ie after clear working collection) then we need
+                    //to create a new collection from the imported one. Otherwise, we're done.
+
+                    if (! $scope.world.name) {
+                        //should be present in all
+                        vo.meta = vo.meta || {}
+
+                        $scope.world.name = vo.meta.name || "No name"
+                        //$scope.world.name = `${$scope.world.name}-imported`
+                        $scope.world.id = utilsSvc.getUUID()    //if saved will be a new collection
+                        $scope.world.description = vo.meta.description || ""
+                        $scope.world.version = vo.meta.version || 0
+                        delete $scope.world.lockedTo
+
+                        //make sure the local user can edit it
+                        if ($scope.user) {
+                            $scope.world.lockedTo = $scope.user.email
+                        }
                     }
-*/
 
-                    //should be present in all
-                    vo.meta = vo.meta || {}
 
-                    $scope.world.name = vo.meta.name || "No name"
-                    $scope.world.name = `${$scope.world.name}-imported`
-                    $scope.world.id = utilsSvc.getUUID()    //if saved will be a new collection
-                    $scope.world.description = vo.meta.description || ""
-                    $scope.world.version = vo.meta.version || 0
-                    delete $scope.world.lockedTo
-
-                    //make sure the local user can edit it
-                    if ($scope.user) {
-                        $scope.world.lockedTo = $scope.user.email
-                    }
 
                     $scope.init()
 
@@ -2054,15 +2057,17 @@ angular.module("pocApp")
                 //locate the DG with this name and set it active. This will select it in the DG tab
                 $scope.selectedModel = $scope.hashAllDG[item.DGName]
                 $scope.selectModel($scope.selectedModel)
-
+/*
                 $("#allDGTree").jstree().deselect_all(true);
                 $('#allDGTree').jstree('select_node', item.DGName);
+       */
 
+/*
                 if ($("#sectionDGTree").jstree().deselect_all) {
                     $("#sectionDGTree").jstree().deselect_all(true);
                     $('#sectionDGTree').jstree('select_node', item.DGName);
                 }
-
+*/
 
 
                 //$scope.selectModel
@@ -2516,7 +2521,7 @@ console.log($scope.SDfromDG)
                         if (fhirDT.indexOf(type) == -1) {
                             //this is a reference to a DG
                             if (! $scope.hashAllDG[type]) {
-                                let msg = `The element '${item.ed.title}' references a DG named ${type} that is missing from the collection`
+                                let msg = `The element '${item.ed.title} (${item.ed.path}) has a type of '${type}' that is missing from the collection`
                                 $scope.dgErrors.push({type:'Missing DG',msg:msg})
                             }
                         }
@@ -2774,7 +2779,6 @@ console.log($scope.SDfromDG)
 
 
                         if (indexTarget !== -1) {
-
 
                             //slice the source into the diff at target+1
                             diff.splice(indexTarget,0,sourceEd)

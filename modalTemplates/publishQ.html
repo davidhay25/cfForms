@@ -6,13 +6,14 @@
     <div class="row">
       <div class="col-md-8 col-sm-8">
         <h3 class="modal-title">
-          Publish questionnaire
+          Release questionnaire
         </h3>
       </div>
 
 
+
       <div class="col-md-4 col-sm-4">
-        <button class="btn btn-primary pull-right" ng-click="publish()">Publish</button>
+        <button class="btn btn-primary pull-right" ng-click="publish()">{{input.releaseType.charAt(0).toUpperCase() + input.releaseType.slice(1)}}</button>
         <button class="btn btn-link pull-right" ng-click="$dismiss()">Cancel</button>
 
       </div>
@@ -21,12 +22,82 @@
   </div>
   <div class="modal-body">
     <uib-tabset>
-      <uib-tab heading="Perform update">
+      <uib-tab heading="Perform {{input.releaseType}}">
         <br/>
 
         Questionnaire Url: <strong>{{Q.url}}</strong>
         <br/><br/>
 
+
+
+        <div class="row">
+          <div class="col-md-2">
+            Release type
+          </div>
+          <div class="col-md-3">
+            <input type="radio" ng-model="input.releaseType"
+                   ng-change="setReleaseType(input.releaseType)"
+                   name="rType" value="release"/> Interim release
+
+            <div><input type="radio" ng-model="input.releaseType"
+                        ng-change="setReleaseType(input.releaseType)"
+                        name="rType" value="publish"/> Formal publication</div>
+          </div>
+          <div class="col-md-7">
+            An interim release can be done at any time - usually to allow others to review it. The minor version is incremented.
+            A formal publication is when a Q is finalized (at least a specific version) and will increment the major version.
+          </div>
+
+  </div>
+
+  <br/><br/>
+
+
+          <div class="row">
+              <div class="col-md-2">
+                  Status
+              </div>
+              <div class="col-md-3">
+                  <select class="form-control" ng-options = "state for state in states" ng-model="input.selectedStatus"></select>
+              </div>
+              <div class="col-md-7">
+                  The status is generally set with the release type. For an interim release it will be 'draft' and
+                  for a publication it will be 'active'.
+              </div>
+
+          </div>
+
+          <br/><br/>
+
+
+          <div class="row">
+              <div class="col-md-2">
+                  Current version
+              </div>
+              <div class="col-md-3">
+                  {{currentMajorVersion}}.{{currentMinorVersion}}
+                  <div ng-show="DG.pubDate">
+                      {{DG.pubDate | prettyDate}}
+                  </div>
+              </div>
+              <div class="col-md-7">
+                  This is the current version of this Questionnaire
+              </div>
+          </div>
+            <br/>
+          <div class="row">
+              <div class="col-md-2">
+                  New version
+              </div>
+              <div class="col-md-3">
+                  {{majorVersion}}.{{minorVersion}}
+              </div>
+              <div class="col-md-7">
+                  This will be the new version after {{input.releaseType}}
+              </div>
+          </div>
+
+        <br/>
         <div><strong>Release notes</strong></div>
 
         <textarea class="form-control"
@@ -34,17 +105,8 @@
                   ng-model="input.releaseNotes"></textarea>
         <br/><br/>
 
-        <div class="row">
-          <div class="col-md-2">
-            Status
-          </div>
-          <div class="col-md-3">
-            <select class="form-control" ng-options = "state for state in states" ng-model="input.selectedStatus"></select>
-          </div>
-        </div>
 
-        <br/><br/>
-
+<!--
         <div>Click the 'Publish' button to Publish the Questionnaire built from this model. This will:</div>
         <br/>
         <ul>
@@ -53,6 +115,7 @@
           <li>Set the status to {{input.selectedStatus}}</li>
         </ul>
         <br/>
+          -->
         <div class="banner">Note that the containing Collection will be updated to the Repository after the Questionnaire has been published.</div>
 
 
@@ -66,6 +129,24 @@
       <uib-tab heading="Q Json">
         <pre>{{Q | json}}</pre>
       </uib-tab>
+
+        <uib-tab heading="DG Json">
+            <pre>{{DG | json}}</pre>
+        </uib-tab>
+
+        <uib-tab heading="Versions">
+            <table class="table-bordered table">
+                <tr ng-repeat="Q in history">
+                    <td>{{Q.version}}</td>
+                    <td>{{Q.date | prettyDate}}</td>
+                    <td></td>
+                </tr>
+            </table>
+
+        </uib-tab>
+
+
+
     </uib-tabset>
 
 

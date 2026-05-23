@@ -727,6 +727,8 @@ angular.module("pocApp")
                                 first = false
                             }
                             delete v['_id']
+
+                            display += ` [${v.status}]`
                             $scope.ddVersions.push({Q:v,version:v.version,display:display})
                         }
 
@@ -888,7 +890,7 @@ angular.module("pocApp")
                     //$scope.allQ = data.data
                     try {
                         $scope.lstQ.sort(function (a,b) {
-                            if (a.name?.toLowerCase() > b.name?.toLowerCase()) {
+                            if (a.title?.toLowerCase() > b.title?.toLowerCase()) {
                                 return 1
                             } else {
                                 return -1

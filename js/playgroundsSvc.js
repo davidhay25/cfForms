@@ -2,7 +2,315 @@ angular.module("pocApp")
 
     .service('playgroundsSvc', function($http,utilsSvc,$q) {
 
+        function addEd(dg,arCols,path,lineNumber,log) {
+            let ed = {}
+           // let path = arCols[9]
+            ed.path =  path //arCols[9]  //`${currentPath}.${path}`
+
+
+            ed.title = arCols[4] || arCols[5] || arCols[6] || ed.path
+            ed.description = arCols[10]
+            ed.mult = arCols[11] || '0..1'
+            let type = arCols[12]
+            ed.type = [type]
+            if (fhirDataTypes.indexOf(type) == -1) {
+                log.push({path: ed.path,line:lineNumber,msg:`DataType ${type} unknown`})
+            }
+
+            let vs = arCols[13]
+            if (vs) {
+                if (vs.indexOf('http') == -1) {
+                    vs = `https://nzhts.digital.health.nz/fhir/ValueSet/${vs}`
+                }
+                ed.valueSet = vs
+            }
+            // options - generally for CC
+            let options = arCols[14]
+            if (options) {
+                let ar = options.split(',')
+                ed.options = []
+                for (const v of ar) {
+                    ed.options.push({display:v})
+                }
+            }
+            //the observable entity. format in SS is display | code snomed assumed
+            let code = arCols[15]
+            if (code) {
+                let ar = code.split('|')
+                ed.itemCode = {display:ar[0]?.trim(),code:ar[1]?.trim(),system:'http://snomed.info/sct'}
+            }
+
+            // let note = arCols[14]
+            dg.diff.push(ed)
+
+        }
+
+
         return {
+/*
+            parseSSDGOrig: function (text) {
+                //parse from a spreadsheet into a DG
+                //parse from a spreadsheet into a collection
+                let arTable = []
+                let arLines = text.split('\n')
+                //arLines.splice(0,2)
+                let fhirDataTypes = utilsSvc.fhirDataTypes()
+                let log = []
+
+                let lineNumber = 2
+
+                let currentDG
+                //let currentPath
+                //let allDG = []
+
+
+                for (let lne of arLines) {
+                    let arCols = lne.split('\t')
+                    lineNumber++
+
+                    //let tabName = arCols[0]
+                    let dgName = arCols[1]
+                    //hard coded to 3 levels of nesting in any DG
+                    let eleTitle = arCols[4]
+                    //let eleTitle1 = arCols[5]
+                    //let eleTitle2 = arCols[6]
+
+
+                    if (dgName) {
+                        //this is the start of a new DG in the current tab
+                        console.log('new dg', dgName)
+                        if (currentDG) {
+                            //there should only be a single DG
+                            log.push({line:lineNumber,msg:`There's a second DG in this input. Only 1 is allowed. `})
+                            break   //stop processing
+
+                        }
+                        let description = arCols[3]
+                        let title = arCols[2]
+                        //currentPath = dgName
+                        currentDG = {
+                            kind: 'dg',
+                            name: dgName,
+                            id: utilsSvc.getUUID(),
+                            title: title,
+                            description: description,
+                            diff: []
+                        }
+                        //currentTabDG.diff.push(currentDG)
+                        continue
+                    }
+
+                    if (eleTitle) {
+                        //this is the start of a new ED in the current DG
+                        console.log('new ed', eleTitle)
+                        addEd(currentDG, arCols, lineNumber,log)
+                        continue
+                    }
+
+                }
+                return {DG:currentDG,log:log}
+
+            },
+*/
+            parseSSDG: function (text) {
+                //parse from a spreadsheet into a DG
+                //parse from a spreadsheet into a collection
+                let arTable = []
+                let arLines = text.split('\n')
+                //arLines.splice(0,2)
+                let fhirDataTypes = utilsSvc.fhirDataTypes()
+                let log = []
+
+                let lineNumber = 2
+
+                let currentDG
+                //let currentPath
+                //let allDG = []
+
+                let levelPath = {}
+
+                for (let lne of arLines) {
+                    console.log(JSON.stringify(lne));
+                    let arCols = lne.split('\t')
+                    lineNumber++
+
+                    //let tabName = arCols[0]
+                    let dgName = arCols[1]
+                    //hard coded to 3 levels of nesting in any DG
+                    let eleTitle = arCols[4]
+                    let eleTitle1 = arCols[5]
+                    let eleTitle2 = arCols[6]
+
+                    // Determine nesting level from title columns
+                    let level = -1;
+
+                    if (arCols[4]?.trim()) {
+                        level = 0;
+                    } else if (arCols[5]?.trim()) {
+                        level = 1;
+                    } else if (arCols[6]?.trim()) {
+                        level = 2;
+                    }
+//console.log(level,eleTitle,eleTitle1,eleTitle2)
+
+                    if (dgName) {
+                        //this is the start of a new DG in the current tab
+                        console.log('new dg', dgName)
+                        if (currentDG) {
+                            //there should only be a single DG
+                            log.push({line:lineNumber,msg:`There's a second DG in this input. Only 1 is allowed. `})
+                            break   //stop processing
+
+                        }
+                        let description = arCols[3]
+                        let title = arCols[2]
+                        //currentPath = dgName
+                        currentDG = {
+                            kind: 'dg',
+                            name: dgName,
+                            id: utilsSvc.getUUID(),
+                            title: title,
+                            description: description,
+                            diff: []
+                        }
+                        //currentTabDG.diff.push(currentDG)
+                        continue
+                    }
+
+                    if (eleTitle) {
+                        //this is an ED at the root
+
+                        let path = arCols[9]
+                        if (! path) {
+                            log.push({path: "path is missing",line:lineNumber,msg:`The Path is missing in the spreadsheet`})
+                        }
+                        console.log('new ED - level 0', eleTitle, path)
+                        levelPath[0] = path     //save the path at this level
+                        addEd(currentDG, arCols, path, lineNumber,log)
+                        continue
+                    }
+
+                    if (eleTitle1) {
+                        //this is a child off a root
+                        console.log('new ed - level 1', eleTitle)
+                        if (! arCols[9]) {
+                            log.push({path: "path is missing",line:lineNumber,msg:`The Path is missing for ${eleTitle1}`})
+                        }
+
+                        let path = `${levelPath[0]}.${arCols[9]}`
+                        levelPath[1] = path
+                        addEd(currentDG, arCols, path, lineNumber,log)
+                        continue
+                    }
+
+                    if (eleTitle2) {
+                        //this is grandchild
+                        console.log('new ed - level 2', eleTitle)
+                        //let path = `${levelPath[0]}.${levelPath[1]}.${arCols[9]}`
+                        if (! arCols[9]) {
+                            log.push({path: "path is missing",line:lineNumber,msg:`The Path is missing for ${eleTitle2}`})
+                        }
+                        let path = `${levelPath[1]}.${arCols[9]}`
+                        levelPath[2] = path
+                        addEd(currentDG, arCols, path, lineNumber,log)
+                        continue
+                    }
+
+
+
+                }
+
+                console.log(currentDG)
+
+                return {DG:currentDG,log:log}
+
+            },
+
+            parseSS: function(text) {
+                //parse from a spreadsheet into a collection
+                let arLines = text.split('\n')
+                arLines.splice(0,2)
+                let fhirDataTypes = utilsSvc.fhirDataTypes()
+                let log = []
+
+                let lineNumber = 2
+                let currentTabDG
+                let currentDG
+                let currentPath
+                let collection = {name:"new collection",id:utilsSvc.getUUID(),dataGroups:{}}
+
+                for (let lne of arLines) {
+                    let arCols = lne.split('\t')
+                    lineNumber++
+
+                    let tabName = arCols[0]
+                    let dgName = arCols[1]
+                    //hard coded to 3 levels of nesting in any DG
+                    let eleTitle = arCols[4]
+                    let eleTitle1 = arCols[5]
+                    let eleTitle2 = arCols[6]
+
+                    if (tabName) {
+                        //a new tab. set up tabDG
+                        console.log('new tab', tabName)
+                        currentTabDG = {kind:'dg',name:tabName,id:utilsSvc.getUUID(), diff:[]}
+                        collection.dataGroups[tabName] = currentTabDG
+
+                        continue
+                    }
+
+                    if (dgName) {
+                        //this is the start of a new DG in the current tab
+                        console.log('new dg',dgName)
+                        let description = arCols[3]
+                        let title = arCols[2]
+                        currentPath = dgName
+                        currentDG = {kind:'dg',name:dgName,id:utilsSvc.getUUID(), title:title, description:description, diff:[]}
+                        currentTabDG.diff.push(currentDG)
+                        continue
+                    }
+
+                    if (eleTitle) {
+                        //this is an element at the root
+                        console.log('new ed',eleTitle)
+                        addEd(currentDG,arCols,currentPath,lineNumber,log)
+                        continue
+                    }
+
+                    if (eleTitle1) {
+                        //this is the start of a child off the root
+                        console.log('new ed',eleTitle1)
+                        addEd(currentDG,arCols,currentPath,lineNumber,log)
+                        continue
+                    }
+
+
+                }
+                console.log(angular.toJson(collection,2))
+                return {log:log,collection:collection}
+
+                function addEdDEP(dg,arCols) {
+                    let ed = {}
+                    let path = arCols[9]
+                    ed.path = `${currentPath}.${path}`
+                    ed.description = arCols[10]
+                    ed.mult = arCols[11] || '0..1'
+                    let type = arCols[12]
+                    ed.type = [type]
+                    if (fhirDataTypes.indexOf(type) == -1) {
+                        log.push({line:lineNumber,msg:`DataType ${type} unknown`})
+
+                    }
+
+                   // let vs = arCols[13]
+                   // let note = arCols[14]
+                    dg.diff.push(ed)
+
+                }
+
+
+
+            },
 
             getVersions : function (pgId) {
                 let deferred = $q.defer()

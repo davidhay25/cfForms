@@ -255,7 +255,7 @@
 
                     <uib-tabset  active="input.selectTabActive">
 
-                        <uib-tab heading="List" select="setSelectTab(0)">
+                        <uib-tab heading="List of DataGroups" select="setSelectTab(0)">
 
                             <div style="padding: 8px">
                                 <div class="row">
@@ -264,7 +264,7 @@
                                                ng-model="input.dgFilter"/>
                                     </div>
                                     <div class="col-md-6">
-                                        <button ng-if = "user.email" class="btn btn-link  pull-right" ng-click="newModel('dg')">New</button>
+                                        <button ng-if = "user.email" class="btn btn-link  pull-right" ng-click="newModel('dg')">New DG</button>
                                         <!--
                                         <button class="btn btn-link pull-right" ng-click="listAllDG()">List all</button>
                                         -->
@@ -299,10 +299,8 @@
 
                         </uib-tab>
 
-                        <uib-tab heading = "Tree"  select="setSelectTab(1)">
+                        <uib-tab ng-if = "false" heading = "Tree"  select="setSelectTab(1)">
                             <div>
-
-
 
 
                                 <div class="pull-right clickable spacer"
@@ -616,8 +614,6 @@
 
                         </td>
                         </tr>
-
-
 
                         <tr><td>Description</td><td><textarea
                                 ng-disabled="! canEdit()"
