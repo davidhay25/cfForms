@@ -13,7 +13,7 @@
 
             <div class="col-md-3">
 
-                <button ng-show = "model.name && model.title"
+                <button ng-show = "model.name && model.title && !isComponent && !importError"
                         class="btn btn-primary pull-right" ng-click="save()">Save</button>
 
                 <button  class="btn btn-link pull-right" ng-click="cancel()">Cancel</button>
@@ -37,11 +37,13 @@
                                 <input type="text"
                                        ng-disabled = "! isNew"
                                        ng-change="checkName(input.newModelName)"
-                                       ng-blur = "checkExpand()"
+                                       ng-blurX = "checkExpand()"
+                                       ng-blur = "checkName(input.newModelName,true)"
                                        class = "form-control" ng-model="input.newModelName"/>
 
-                                <div style="color: green" ng-show="isNew && isUnique">Name is unique</div>
-                                <div style="color: red "ng-show="isNew && input.newModelName && ! isUnique">Name already in use</div>
+                                <div style="color: green" ng-show="isNew && isUnique">Name is unique in this Collection</div>
+                                <div style="color: red " ng-show="isNew && input.newModelName && ! isUnique && ! isComponent">Name already in use.</div>
+                                <div style="color: red " ng-show="isComponent"> There is a Component with this name. You cannot use it for a new DG.</div>
 
                             </div>
                             <div class="col-md-6">
@@ -757,9 +759,10 @@
                             <uib-tab>
                                 <uib-tab-heading>Log <span class="badge">{{importLog.length}}</span> </uib-tab-heading>
                                 <table class="table table-bordered">
-                                    <tr><th>Path</th><th>Error</th></tr>
+                                    <tr><th>Path</th><th>Severity</th><th>Message</th></tr>
                                     <tr ng-repeat="item in importLog">
                                         <td>{{item.path}}</td>
+                                        <td>{{item.severity}}</td>
                                         <td>{{item.msg}}</td>
                                     </tr>
                                 </table>

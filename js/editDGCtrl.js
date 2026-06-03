@@ -1,10 +1,12 @@
 angular.module("pocApp")
     .controller('editDGCtrl',
         function ($scope,model,hashTypes,hashValueSets,isNew,modelsSvc,snapshotSvc,parent,$localStorage,
-                  utilsSvc, modelDGSvc,$http,userMode,$uibModal,$timeout,$filter,viewVS,modelReviewSvc, url, playgroundsSvc) {
+                  utilsSvc, modelDGSvc,$http,userMode,$uibModal,$timeout,$filter,viewVS,modelReviewSvc,
+                  url, playgroundsSvc,worldDG) {
 
 
-            //if parent is set, then 'isNew' will be also...
+            $scope.worldDG = worldDG    //a hash of all DG's in the collection. Used in the SS importer
+
 
             $scope.model =  angular.copy(model)     //edit a copy of teh DG
             $scope.input = {}
@@ -12,6 +14,19 @@ angular.module("pocApp")
             $scope.isNew = isNew        //if new, then allow the model metadata to be set
             $scope.userMode = userMode
             $scope.url = url
+
+            $scope.componentDG = {}     //a hash of all components. Used in the SS importer
+            $http.get('allfrozenSummary').then(
+                function (data) {
+                    data.data.forEach(function (lne) {
+                        $scope.componentDG[lne.name] = true
+                    })
+
+                }, function (err) {
+                    console.log('Unable to get list of components')
+                }
+            )
+
 
             let snomed = "http://snomed.info/sct"
 
@@ -38,6 +53,9 @@ angular.module("pocApp")
             )
 
             //------------ functions for importing from a Spreadsheet
+            //todo - automatically import missing components into collection
+            //todo - check that paths are consistent - no dups, levels 2 & 3 have apprpriate parents
+            //todo - missing path or incomplete path prevents saving
 
             $scope.input.pastedSSDG = $localStorage.pastedSSDG      //temp while developing
 
@@ -53,12 +71,61 @@ angular.module("pocApp")
                 });
             };
 
+
+            //perform the actual parsing
+            function performParse(raw) {
+                $scope.importError = false
+                let vo = playgroundsSvc.parseSSDG(raw,$scope.worldDG,$scope.componentDG)
+                $scope.importLog = vo.log
+
+
+                //if there are any log errors then set importError true
+                for (const lne of vo.log) {
+                    if (lne.severity == 'error') {
+                        $scope.importError = true
+                        break
+                    }
+                }
+
+
+                //$scope.model is the internal representation of the DG
+                $scope.model = vo.DG //$scope.importedDG
+                $scope.input.newModelName = $scope.model.name
+
+                //$scope.isNew = true
+                $scope.checkName($scope.input.newModelName,true)
+                $scope.input.newModelTitle= $scope.model.title
+
+                //generate the tree
+                $scope.makeTreeFromSS($scope.model)
+            }
+
             //parse the pasted spreadsheet
             $scope.parseSS = function (text) {
                 let raw = text || $localStorage.pastedSSDG
 
-                $localStorage.pastedSSDG = raw
+                $localStorage.pastedSSDG = raw      //just while developing
                 //console.log(raw)
+                performParse(raw)
+
+/*
+                //we want to get the list of components. That way we know if an 'unknown' datatype in the import
+                //is actually a component. That way we could automatically import it into the collection (if not already there)
+                $http.get('playgroundSummary').then(
+                    function (data) {
+                        performParse(raw,data.data)
+console.log(data.data)
+
+
+                    }, function (err) {
+
+                        performParse(raw)
+                        alert(angular.toJson(err.data))
+                    }
+                )
+*/
+                /*
+
                 let vo = playgroundsSvc.parseSSDG(raw)
                 $scope.importLog = vo.log
                 //$scope.importedDG = vo.DG
@@ -69,11 +136,12 @@ angular.module("pocApp")
                 $scope.input.newModelName = $scope.model.name
 
                 //$scope.isNew = true
-                $scope.checkName($scope.input.newModelName)
+                $scope.checkName($scope.input.newModelName,true)
                 $scope.input.newModelTitle= $scope.model.title
 
                 //generate the tree
                 $scope.makeTreeFromSS($scope.model)
+                */
 
             }
             /* let treeData = modelsSvc.makeTreeFromElementList($scope.fullElementList)
@@ -173,10 +241,8 @@ angular.module("pocApp")
 
 
             $scope.input.pastedProfile = $localStorage.sdString
+
             $scope.pasteProfile = function (sdString) {
-
-
-
 
                 $localStorage.sdString = sdString
                 let profile = angular.fromJson(sdString)
@@ -190,10 +256,10 @@ angular.module("pocApp")
                 $scope.input.newModelName = $scope.model.name
 
                 //$scope.isNew = true
-                $scope.checkName($scope.input.newModelName)
+                $scope.checkName($scope.input.newModelName,true)
                 $scope.input.newModelTitle= $scope.model.title
 
-               // $scope.checkName()
+
 
 
             }
@@ -212,7 +278,7 @@ angular.module("pocApp")
                     //console.log(vo1.dg)
                     $scope.model = vo1.dg
                     $scope.input.newModelName = $scope.model.name
-                    $scope.checkName($scope.input.newModelName)
+                    $scope.checkName($scope.input.newModelName,true)
                     $scope.input.newModelTitle= $scope.model.title
 
                     $localStorage.pastedQ = Qstring //todo just when developing
@@ -476,6 +542,7 @@ angular.module("pocApp")
                     $scope.input.qVersion = model.qVersion
                     $scope.input.qUrl = model.qUrl
 
+                    //todo - not sure if this is used any more
                     if (model.linkedDG) {
                         //set the 'linkedDG' control to the selected model
 
@@ -536,7 +603,7 @@ angular.module("pocApp")
 
             //called for name onBlur to expand the DG if there is a parent.
             //mainly needed when a DG child is created and there's a parent before a name
-            $scope.checkExpand = function () {
+            $scope.checkExpandDEP = function () {
 
                 $scope.model.name = $scope.input.newModelName
                 $scope.model.title = $scope.model.title || $scope.model.name
@@ -545,8 +612,10 @@ angular.module("pocApp")
 
             }
 
-            $scope.checkName = function (name) {
 
+
+            $scope.checkName = function (name,checkComponentLibrary) {
+                delete $scope.isComponent
                 if (name) {
                     if (name.indexOf(" ") > -1) {
                         alert("Name cannot contain spaces")
@@ -563,9 +632,28 @@ angular.module("pocApp")
                     $scope.model.name = name  //we can use the 'isUnique' to know if the model can be added
 
                     $scope.isUnique = true
+
+                    //this checks that the name is unique in the Collection (as hashTypes includes the DG names)
                     if (hashTypes[name]) {
                         $scope.isUnique = false
                     }
+
+                    //Check in the component library as well. Used after the name has been entered & the various import routines
+                    //this is async, but shouldn't be an issue
+                    if (checkComponentLibrary) {
+                        let qry = `frozen/${name}`     
+                        $http.get(qry).then(
+                            function () {
+                                //a component was found
+                                $scope.isUnique = false
+                                $scope.isComponent = true
+                            }
+                        )
+                        
+
+                    }
+
+
                 }
             }
 
@@ -750,24 +838,61 @@ angular.module("pocApp")
                 }
 
                 if (isNew) {
+                    //if isUnique is true, then this DG is not present in the Collection or Component library.
+                    //todo - should this only be checking the collection? Need to think more about components...
+                    //all we do is make sure there's a diff array as there's no point in merging existing elements in the DG
                     if ($scope.isUnique) {
                         $scope.model.diff = $scope.model.diff || []
 
                       //  $scope.$close($scope.model)
                     } else {
-                        let msg = "There is already a DG with this name. If you proceed, the existing one will be replaced. Do you still wish to save?"
+                        //todo actually if the name exists as a component as well. Haven't really thougt
+                        let msg = "There is already a DG with this name in this Collection. If you proceed, the existing one will be replaced. "
 
+                        msg += "Do you still wish to save?"
                         if (! confirm(msg)) {
                             return
                         }
 
-                       // alert("The name is not valid - likely a duplicate")
-                       // return
+
+
+                        //adjust any conditionals from an existing DG with the same name. THis will only work for conditionals within the elements
+                        //defined in this DG. Contained DG conditionals will likely break and need manual fixing
+                        //it also 'merges' specific values from elements in an exisitng model - eg ['controlHint','definition','prePop','hiddenInQ'])
+                        //and extensions
+                        playgroundsSvc.fixConditionals($scope.model)
+
+                        //importFomCollection
+
+                        //--- todo examine log for components to import (not in collection)
+                        //download all comontnnts
+
+                        //have function in service to get components and add to vo.
+                        //async - need to call service and close dialog in callback
+
+                        //let vo = {model:$scope.model} //not sure...
+                       // $scope.$close(vo)
+
+                        //
+
+
+                        console.log($scope.model)
+
+
+
+
                     }
+                } else {
+                    //this is an update
+                    let vo = {model:$scope.model} //not sure...
+                    $scope.$close(vo)
+
                 }
 
                 //always pass back the model
-                $scope.$close($scope.model)
+                //let vo = {model:$scope.model} //not sure...
+               // $scope.$close(vo)
+
             }
 
 

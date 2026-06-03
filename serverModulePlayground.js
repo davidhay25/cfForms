@@ -1,13 +1,14 @@
 //Playground routines
 //note re-labelled as collections
 
-
+// playgound == collection
+// frozen == component
 
 async function setup(app,database) {
 
 
 
-    //key is the DG name - whether from LIM or Collection
+    //key is the DG name . frozen is now a component
     app.get('/frozen/:name', async function(req,res) {
         let name = req.params.name
 
@@ -65,6 +66,23 @@ async function setup(app,database) {
             res.status(500).json(ex.message)
         }
     })
+
+    app.get('/allfrozenSummary', async function(req, res) {
+        try {
+            let qry = { deleted: { $ne: true } };
+
+            const cursor = await database
+                .collection("frozenDG")
+                .find(qry, { projection: { name: 1, _id: 0 } })
+                .toArray();
+
+            res.json(cursor);
+
+        } catch (ex) {
+            console.log(ex);
+            res.status(500).json(ex.message);
+        }
+    });
 
 
     app.post('/playground/unlock',async function(req,res) {

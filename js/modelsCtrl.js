@@ -2266,6 +2266,11 @@ angular.module("pocApp")
 
 
 
+
+
+
+
+
             //edit an existing model (DG) or add a new one
             $scope.editModel = function (model,isNew, parent) {
 
@@ -2306,11 +2311,26 @@ angular.module("pocApp")
                             }
                             return url
 
+                        },
+                        worldDG : function () {
+                            //a hash of all the DG names in the world (collection)
+                            let hash = {}
+                            for (const key of Object.keys($scope.world.dataGroups)) {
+                                hash[key] = true
+                            }
+                            return hash
                         }
 
                     }
 
-                }).result.then(function (newModel) {
+                }).result.then(function (vo) {
+                    //}).result.then(function (newModel) {
+
+                    let newModel = vo?.model
+                    let autoImport = vo?.autoImport     //a list of Components to import
+
+
+
                    // $scope.selectedModel.dirty = true
                     if (newModel) {
                         //a model object is always returned for update or new
@@ -2378,9 +2398,13 @@ angular.module("pocApp")
                             //a hash by type of all elements that reference it
                             //$scope.analysis = modelsSvc.analyseWorld($localStorage.world,$scope.input.types)
 
+                            if (autoImport) {
+                                alert(autoImport)
+                            }
+
+
                             $scope.makeAllDTList()      //updated
                             $scope.makeSnapshots()
-
                             $scope.selectModel(newModel)
 
 
