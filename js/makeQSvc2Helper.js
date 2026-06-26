@@ -63,8 +63,15 @@ angular.module('pocApp')
                 let concept = ed.fixedCoding
                 delete concept.fsn
                 item.initial = [{valueCoding:concept}]
-                hideItem(item)
+                // don't automatically hide - hideItem(item)
+            }
 
+            if (ed.defaultCoding) {
+                //the definition must be to the .coding - even if category is multiple
+                let concept = ed.defaultCoding
+                delete concept.fsn
+                item.initial = [{valueCoding:concept}]
+                // don't automatically hide - hideItem(item)
             }
 
         }
@@ -72,7 +79,7 @@ angular.module('pocApp')
         function processCode(item,ed) {
             if (ed.fixedCode) {
                 item.initial = [{valueString:ed.fixedCode}]
-                hideItem(item)
+                // don't automatically hide hideItem(item)
 
             }
         }

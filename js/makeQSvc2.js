@@ -238,6 +238,7 @@ angular.module('pocApp')
                 if (ed.options && ed.options.length > 0) {
                     let options = []
                     for (const opt of ed.options) {
+                        delete opt.pt   //pt (preferred term) is added when pasting a list of options when editing an item
                         options.push({valueCoding: opt})
                     }
 

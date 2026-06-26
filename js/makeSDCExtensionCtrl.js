@@ -19,6 +19,9 @@ angular.module("pocApp")
             $scope.extTypes.push({name:'defextract',display:"Definition extract"})
             $scope.extTypes.push({name:'defextractvalue',display:"Definition extract value"})
             $scope.extTypes.push({name:'calc',display:"Calculated expression"})
+
+            //$scope.extTypes.push({name:'xhtml',display:"Rendering XHTML"})
+
             $scope.extTypes.push({name:'item-control',display:"Item control codes"})
 
             $scope.selectType = function (type) {

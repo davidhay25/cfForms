@@ -104,6 +104,9 @@ angular.module("pocApp")
             //display the current form in the rendered forms panel
             $scope.previewQ = function () {
                 let model = $scope.selectedModel
+                if (! model) {
+                    return
+                }
                 //let qName = model.name
                 let allElements = snapshotSvc.getFullListOfElements(model.name)
 
@@ -1490,16 +1493,7 @@ angular.module("pocApp")
                         let vo1 = modelDGSvc.makeTreeViewOfDG($scope.hashAllDG)
                         showAllDGTree(vo1.treeData)         //this is the inheritance
 
-                        /*
-                        try {
-                            //the tree data for the sections branch of DG
-                            let sections = modelDGSvc.makeSectionsTree($scope.hashAllDG)
-                            showAllDGTree(sections.treeData,'#sectionDGTree')
-                        } catch (ex) {
-                            console.log(ex)
-                            alert("Error building sections tree")
-                        }
-*/
+
 
 
                     } catch (ex) {
@@ -2329,83 +2323,48 @@ angular.module("pocApp")
                     let newModel = vo?.model
                     let autoImport = vo?.autoImport     //a list of Components to import
 
-
+//console.log('---------> ',vo)
 
                    // $scope.selectedModel.dirty = true
                     if (newModel) {
                         //a model object is always returned for update or new
 
                         if (isNew) {
-                            //this is a new model
+                            //this is a new model - or potentially an imported DG with the same name as the existing
                             newModel.id = utilsSvc.getUUID()
                             newModel.source = $scope.userMode
 
-                            //Only update the Library (LIM) in LIM mode...
-                            if ($scope.user && $scope.userMode == 'library') {
-                                newModel.author = $scope.user.email
-                                librarySvc.checkOut(newModel, $scope.user)
-                            }
-
-
-                            //----
-                            //if it's a new child and the parent has any enableWhens that they will
-                            // have the root segment in the source as the parent dh name so a diff is needed that replaces
-                            // it with the new name. The same thing happens with clone...
-                            //Mar28 - not needed with the change to using id's in the enableWhens..
-                            if (false && newModel.parent) {
-                                let parentDG = $scope.hashAllDG[newModel.parent]
-                                if (parentDG && parentDG.diff) {
-                                    newModel.diff = newModel.diff || []
-
-                                    parentDG.diff.forEach(function (ed) {
-
-                                        if (ed.enableWhen || (ed.conditionalVS && ed.conditionalVS.length > 0)) {
-                                            let newEd = angular.copy(ed)
-
-                                            if (newEd.enableWhen) {
-                                                newEd.enableWhen.forEach(function (ew) {
-                                                    let ar = ew.source.split('.')
-                                                    if (ar[0] == parentDG.name) {
-                                                        ar[0] = newModel.name
-                                                        ew.source = ar.join('.')
-                                                    }
-                                                })
-                                            }
-
-                                            if (newEd.conditionalVS) {
-                                                newEd.conditionalVS.forEach(function (cvs) {
-                                                    let ar = cvs.path.split('.')
-                                                    if (ar[0] == parentDG.name) {
-                                                        ar[0] = newModel.name
-                                                        cvs.path = ar.join('.')
-                                                    }
-                                                })
-                                            }
-
-
-                                            newModel.diff.push(newEd)
-                                        }
-
-                                    })
-                                }
-                            }
 
 
                             $scope.hashAllDG[newModel.name] = newModel
-                            sortDG()    //make a sorted list for the UI
+                            //sortDG()    //make a sorted list for the UI
                             $scope.input.types[newModel.name] = newModel    //todo - this is a duplicate of hashAllDG
 
                             //a hash by type of all elements that reference it
                             //$scope.analysis = modelsSvc.analyseWorld($localStorage.world,$scope.input.types)
 
                             if (autoImport) {
-                                alert(autoImport)
+                                //This is a list of components to add to the Collection
+                                for (let lne of autoImport) {
+                                    let DG = lne.resource
+                                    DG.isComponent = true //should be set
+                                    $scope.hashAllDG[DG.name] = DG
+
+                                }
+                              //  sortDG()    //created the sortedDG list used for the list of DG in the left panel
+
                             }
 
+                            $timeout(function(){
+                                sortDG()    //created the sortedDG list used for the list of DG in the left panel
+                                $scope.makeAllDTList()      //updated
+                                $scope.makeSnapshots()
+                                $scope.selectModel(newModel)
+                            },100)
 
-                            $scope.makeAllDTList()      //updated
-                            $scope.makeSnapshots()
-                            $scope.selectModel(newModel)
+                            //$scope.makeAllDTList()      //updated
+                            //$scope.makeSnapshots()
+                           // $scope.selectModel(newModel)
 
 
                         } else {
@@ -2419,9 +2378,6 @@ angular.module("pocApp")
                             angular.extend($scope.hashAllDG[newModel.name], newModel);
 
 
-                          //  $scope.hashAllDG[newModel.name] = newModel  //so it gets updated in the browser cache
-
-                           // $localStorage.world.dataGroups = $scope.hashAllDG //Apr202026
 
                             $scope.selectedModel = newModel             //the currently selected DG
 

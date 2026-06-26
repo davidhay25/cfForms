@@ -1,6 +1,7 @@
 
 <div>
 
+
     <div class="modal-header">
         <div class="row">
             <div class="col-md-9">
@@ -408,9 +409,9 @@
                             </span>
 
 
-                                <span ng-show="$index > 0">
+                                <span>
                                 <i class="glyphicon glyphicon-move  pull-right  clickable"
-                                   ng-click="moveAfter($index,element)"></i>
+                                   ng-click="moveTo($index,element)"></i>
                             </span>
 
                                 <span ng-show="$index > 0">
@@ -731,6 +732,9 @@
                     </div>
 
                     <div class="col-md-6">
+                        <div ng-show="importError" class="alert alert-danger">
+                            There are errors that prevent this DG being imported. Details in the Log.
+                        </div>
                         <uib-tabset>
                             <uib-tab heading="Tree">
                                 <div ng-show="importLog.length > 0" class="rounded-box-filled">
@@ -760,7 +764,7 @@
                                 <uib-tab-heading>Log <span class="badge">{{importLog.length}}</span> </uib-tab-heading>
                                 <table class="table table-bordered">
                                     <tr><th>Path</th><th>Severity</th><th>Message</th></tr>
-                                    <tr ng-repeat="item in importLog">
+                                    <tr ng-class="{'alert-danger':item.severity == 'error'}" ng-repeat="item in importLog">
                                         <td>{{item.path}}</td>
                                         <td>{{item.severity}}</td>
                                         <td>{{item.msg}}</td>

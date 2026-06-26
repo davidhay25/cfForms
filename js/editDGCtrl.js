@@ -75,10 +75,36 @@ angular.module("pocApp")
             //perform the actual parsing
             function performParse(raw) {
                 $scope.importError = false
+
+                //$scope.componentDG is a hashbyname of all the components in the library. Used by the parser to
+                //determine if a component nat already in the collection is a type in the SS. Does not include the
+                //actual component (to reduce response size)
+
+
                 let vo = playgroundsSvc.parseSSDG(raw,$scope.worldDG,$scope.componentDG)
-                $scope.importLog = vo.log
 
 
+                console.log(vo)
+
+                $scope.importLog = vo.log   //to display the parse log
+
+                //create a list of components that need to be imported from dataTypes in the imported SS. these will be retrieved in
+                //this controller before returning them to the caller (modelsCtrl) to be added to the library
+                //this is only the names of those components. It's not recursive (todo but then, should a component have contained DG? - adds complexity...
+                $scope.componentsToImport = []
+
+                for (const lne of vo.log) {
+                    if (lne.severity == 'error') {
+                        $scope.importError = true
+                    }
+
+                    if (lne.importFomComponent) {
+                        $scope.componentsToImport.push({type:lne.type})
+                    }
+                }
+
+
+/*
                 //if there are any log errors then set importError true
                 for (const lne of vo.log) {
                     if (lne.severity == 'error') {
@@ -86,7 +112,7 @@ angular.module("pocApp")
                         break
                     }
                 }
-
+*/
 
                 //$scope.model is the internal representation of the DG
                 $scope.model = vo.DG //$scope.importedDG
@@ -108,44 +134,8 @@ angular.module("pocApp")
                 //console.log(raw)
                 performParse(raw)
 
-/*
-                //we want to get the list of components. That way we know if an 'unknown' datatype in the import
-                //is actually a component. That way we could automatically import it into the collection (if not already there)
-                $http.get('playgroundSummary').then(
-                    function (data) {
-                        performParse(raw,data.data)
-console.log(data.data)
-
-
-                    }, function (err) {
-
-                        performParse(raw)
-                        alert(angular.toJson(err.data))
-                    }
-                )
-*/
-                /*
-
-                let vo = playgroundsSvc.parseSSDG(raw)
-                $scope.importLog = vo.log
-                //$scope.importedDG = vo.DG
-
-
-                //$scope.model is the internal representation of the DG
-                $scope.model = vo.DG //$scope.importedDG
-                $scope.input.newModelName = $scope.model.name
-
-                //$scope.isNew = true
-                $scope.checkName($scope.input.newModelName,true)
-                $scope.input.newModelTitle= $scope.model.title
-
-                //generate the tree
-                $scope.makeTreeFromSS($scope.model)
-                */
-
             }
-            /* let treeData = modelsSvc.makeTreeFromElementList($scope.fullElementList)
-                drawDGTree(treeData)*/
+
 
 
             //Create the tree view from a pasted SS
@@ -609,12 +599,13 @@ console.log(data.data)
                 $scope.model.title = $scope.model.title || $scope.model.name
                 $scope.input.newModelTitle = $scope.model.title
                 getFullElementList()
-
             }
 
-
-
             $scope.checkName = function (name,checkComponentLibrary) {
+
+                //for now, don't
+                //checkComponentLibrary = false
+
                 delete $scope.isComponent
                 if (name) {
                     if (name.indexOf(" ") > -1) {
@@ -649,8 +640,6 @@ console.log(data.data)
                                 $scope.isComponent = true
                             }
                         )
-                        
-
                     }
 
 
@@ -838,18 +827,53 @@ console.log(data.data)
                 }
 
                 if (isNew) {
+                    //The dialog was invoked to create a new DG
+
                     //if isUnique is true, then this DG is not present in the Collection or Component library.
                     //todo - should this only be checking the collection? Need to think more about components...
-                    //all we do is make sure there's a diff array as there's no point in merging existing elements in the DG
+
                     if ($scope.isUnique) {
+                        //First make sure there's a diff array as there's no existing DG to merge into
                         $scope.model.diff = $scope.model.diff || []
 
-                      //  $scope.$close($scope.model)
-                    } else {
-                        //todo actually if the name exists as a component as well. Haven't really thougt
-                        let msg = "There is already a DG with this name in this Collection. If you proceed, the existing one will be replaced. "
 
-                        msg += "Do you still wish to save?"
+                        if ($scope.componentsToImport) {
+                            playgroundsSvc.getComponents($scope.componentsToImport)
+                                .then(function(resources) {
+                                    console.log(resources);
+                                    let vo = {model:$scope.model,autoImport:resources}
+                                    $scope.$close(vo)
+                                })
+                                .catch(function(err) {
+                                    //If there's an error then continue without autoimport
+                                    console.error(err);
+                                    let vo = {model:$scope.model}
+                                    $scope.$close(vo)
+                                });
+                        } else {
+                             let vo = {model:$scope.model}
+                            $scope.$close(vo)
+                        }
+
+                        //close the dialog passing back the new DG
+                      //  let vo = {model:$scope.model}
+                     //   $scope.$close(vo)
+
+
+                        //  $scope.$close($scope.model)
+                    } else {
+                        //If is does exist in the collection then ask whether to overwrite/merge and bring in dependencies,
+                        //todo actually if the name exists as a component as well. Haven't really thougt
+                        let msg = "There is already a DG with this name in this Collection. If you proceed, the existing one will be replaced. Some changes will be retained, namely:"
+                        msg += "\n  Conditionals and AdHoc extensions"
+                        msg += "\n  Control hint (eg checkboxes), Cardinality and hidden elements"
+                        msg += "\n  Extraction and pre-population instructions"
+                        //msg += "\n  Hidden elements"
+                        msg += "\n  CodeableConcept options"
+
+                        //['controlHint','definition','prePop','hiddenInQ','options']) + extension + conditional
+
+                        msg += "\n\nDo you still wish to save?"
                         if (! confirm(msg)) {
                             return
                         }
@@ -862,36 +886,37 @@ console.log(data.data)
                         //and extensions
                         playgroundsSvc.fixConditionals($scope.model)
 
-                        //importFomCollection
 
-                        //--- todo examine log for components to import (not in collection)
-                        //download all comontnnts
+                        console.log($scope.componentsToImport)
 
-                        //have function in service to get components and add to vo.
-                        //async - need to call service and close dialog in callback
+                        if ($scope.componentsToImport) {
+                            playgroundsSvc.getComponents($scope.componentsToImport)
+                                .then(function(resources) {
+                                    console.log(resources);
+                                    let vo = {model:$scope.model,autoImport:resources}
+                                    $scope.$close(vo)
+                                })
+                                .catch(function(err) {
+                                    //If there's an error then continue without autoimport
+                                    console.error(err);
+                                    let vo = {model:$scope.model}
+                                    $scope.$close(vo)
+                                });
 
-                        //let vo = {model:$scope.model} //not sure...
-                       // $scope.$close(vo)
-
-                        //
-
-
-                        console.log($scope.model)
-
-
-
+                        } else {
+                            let vo = {model:$scope.model}
+                            $scope.$close(vo)
+                        }
 
                     }
                 } else {
-                    //this is an update
-                    let vo = {model:$scope.model} //not sure...
+                    //this is an update. Just retrun the DG
+                    let vo = {model:$scope.model}
                     $scope.$close(vo)
 
                 }
 
-                //always pass back the model
-                //let vo = {model:$scope.model} //not sure...
-               // $scope.$close(vo)
+
 
             }
 
@@ -963,38 +988,43 @@ console.log(data.data)
                 viewVS(url)
             }
 
-            $scope.moveAfter = function (pos,element) {
+
+            //move to a specific position (1 - based)
+            $scope.moveTo = function (pos,element) {
+
                 let path = $filter('lastInPath')(element.path)
-                let msg = `This is row ${pos+1} (${path}). Enter the row number to move this row to.`
+                let msg = `This is row ${pos + 1} (${path}). Enter the row number to move this row to.`
                 const input = prompt(msg);
 
                 if (input !== null) {
                     let newPos = Number(input);
                     if (!isNaN(newPos)) {
                         //alert(`You entered: ${newPos}`);
-                        newPos--
-                        //if (newPos > 0 && newPos < $scope.model.diff.length-1) {
-                        if (newPos > 1 && newPos < $scope.model.diff.length-1) {
-                            const [row] = $scope.model.diff.splice(pos,1)
-                            if (newPos > pos) (
-                                newPos--
-                            )
+                        newPos--    //make newpos 0 based
 
-                           // $timeout(() => {
-                                $scope.model.diff.splice(newPos,0,row)
-                          //  });
-
-
-
+                        if (newPos >= $scope.model.diff.length) {
+                            alert(`That is past the end of the number of elements `)
+                            return
                         }
+                        if (newPos <= -1 ) {
+                            alert(`Minimum position is 1`)
+                            return
+                        }
+
+                        if (newPos == pos) {
+                            alert(`You are already at position ${newPos + 1}! `)
+                            return
+                        }
+
+                        const ed = $scope.model.diff.splice(pos, 1)[0];
+
+                        $scope.model.diff.splice(newPos,0,ed)
 
 
                     } else {
                         alert("That's not a valid number!");
                     }
                 }
-
-
             }
 
 

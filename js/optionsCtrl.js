@@ -27,8 +27,13 @@ angular.module("pocApp")
                     system = ar[1]
                 }
 
+                if (! system) {
+                    alert("Can't lookup a concept without a system value.")
+                    return
+                }
 
-                system = system || snomed
+
+               // system = system || snomed
                 let qry = `CodeSystem/$lookup?system=${system}&code=${code}`
                 let encodedQry = encodeURIComponent(qry)
                 $scope.showWaiting = true
@@ -68,11 +73,15 @@ angular.module("pocApp")
                 console.log(txt)
                 let lines = txt.split('\n')
                 lines.forEach(function (lne) {
-                    let option = {}
-                    option.pt = lne
-                    option.code = lne
-                    option.display = lne
-                    $scope.ed.options.push(option)
+                    if (lne) {
+                        let option = {}
+                        option.pt = lne
+                        option.code = lne.replace(/ /g, '_')
+                        option.display = lne
+                        $scope.ed.options.push(option)
+
+                    }
+
 
                 })
                 $scope.input.dirty = true

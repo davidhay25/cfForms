@@ -16,7 +16,7 @@ angular.module("pocApp")
 
             if (fhirDataTypes.indexOf(type) == -1) {
                 //This is not a FHIR datatype. It could be DG from the collection or a component
-                console.log(worldDG)
+                //console.log(worldDG)
 
                 //is it in the current collection
                 if (worldDG[type]) {
@@ -25,7 +25,7 @@ angular.module("pocApp")
                     log.push({severity:'info',path: ed.path,line:lineNumber,msg:msg})
                 } else if (componentDG[type]) {
                     let msg = `The type ${type} is a Component not yet in the Collection`
-                    log.push({severity:'info',path: ed.path,line:lineNumber,msg:msg,importFomCollection:true})
+                    log.push({severity:'info',path: ed.path,line:lineNumber,msg:msg,importFomComponent:true,type:type})
                     //is it in the component store
                     //if it is, it would be nice to import it directly into the collection - but should be a recursive function
                 } else {
@@ -138,6 +138,10 @@ angular.module("pocApp")
             },
 */
             parseSSDG: function (text,worldDG,componentDG) {
+                //let defer = $q.defer()
+
+
+
                 //parse from a spreadsheet into a DG
 
                 let arTable = []
@@ -155,7 +159,7 @@ angular.module("pocApp")
                 let levelPath = {}
 
                 for (let lne of arLines) {
-                    console.log(JSON.stringify(lne));
+                    //console.log(JSON.stringify(lne));
                     let arCols = lne.split('\t')
                     lineNumber++
 
@@ -209,7 +213,7 @@ angular.module("pocApp")
                         if (! path) {
                             log.push({severity:'error',path: "path is missing",line:lineNumber,msg:`The Path is missing in the spreadsheet`})
                         }
-                        console.log('new ED - level 0', eleTitle, path)
+                        //console.log('new ED - level 0', eleTitle, path)
                         levelPath[0] = path     //save the path at this level
                         addEd(currentDG, arCols, path, lineNumber,log,worldDG,componentDG)
                         continue
@@ -217,7 +221,7 @@ angular.module("pocApp")
 
                     if (eleTitle1) {
                         //this is a child off a root
-                        console.log('new ed - level 1', eleTitle)
+                        //console.log('new ed - level 1', eleTitle)
                         if (! arCols[9]) {
                             log.push({severity:'error',path: "path is missing",line:lineNumber,msg:`The Path is missing for ${eleTitle1}`})
                         }
@@ -230,7 +234,7 @@ angular.module("pocApp")
 
                     if (eleTitle2) {
                         //this is grandchild
-                        console.log('new ed - level 2', eleTitle)
+                        //console.log('new ed - level 2', eleTitle)
                         //let path = `${levelPath[0]}.${levelPath[1]}.${arCols[9]}`
                         if (! arCols[9]) {
                             log.push({severity:'error',path: "path is missing",line:lineNumber,msg:`The Path is missing for ${eleTitle2}`})
@@ -247,95 +251,19 @@ angular.module("pocApp")
 
                 console.log(currentDG)
 
-                return {DG:currentDG,log:log}
-
-            },
-
-            fixConditionals : function (newDG) {
-                //when a DG is replaced during SpreadSheet importing, this will copy the conditionals from old
-                //to new. The source(path) of the ed will be the same, but the id will be different
-                // THis will only work for conditionals within the elements
-                // defined in this DG. Contained DG references will likely break and need manual fixing
-
-                //the DG with the same name in the current collection
-                let oldDG = snapshotSvc.getDG(newDG.name)
-                //console.log(oldDG)
-                if (! oldDG) {
-                    //Shouldn't actually happen...
-                    alert("Current DG not found. Can't update the conditionals")
-                    return
-                }
-
-
-                //create hash of ED in the old DG.
-                let hashOldED = {}     //hash of ED by path
-                for (const ed of oldDG.diff) {
-                    hashOldED[ed.path] = ed
-                }
-
-                //create hash of ED in the new DG.
-                let hashNewED = {}     //hash of ED by path
-                for (const ed of newDG.diff) {
-                    hashNewED[ed.path] = ed
-                }
-
-
-//console.log(hashOldED)
-                //now update the EWs
-                for (const ed of newDG.diff) {
-                    //console.log(ed.path)
-                    if (hashOldED[ed.path]) {
-                        //found the corresponding ED in the old DG
-                        let edFromOld = hashOldED[ed.path]
-                        //console.log(` --> found ${edFromOld.enableWhen}`)
-
-                        // are there any conditionals?
-                        if (edFromOld.enableWhen) {
-
-                            for (let ew of edFromOld.enableWhen) {
-                                let source = ew.source //The source item path
-
-                                //drop the first segment - the DG name. The EW source path includes the DG name
-                                source = $filter('dropFirstInPath')(source)
-
-                                //look in the hash for the new DG to locate the element by path (so we can get the id)
-                                if (hashNewED[source]) {
-                                    // found it! Copy the EW to the new ED with an updated sourceId
-                                    ed.enableWhen = ed.enableWhen || []
-                                    ew.sourceId = hashNewED[source].id
-                                    ed.enableWhen.push(ew)
-                                    //console.log(`Changed id for ${ew.sourceId}`)
-                                } else {
-                                    console.error(`source path ${source} not found`)
-                                }
-                            }
-
-                        }
-
-                        //Other elements from the old that copy across
-                        for (const eleName of  ['controlHint','definition','prePop','hiddenInQ']) {
-                            if (edFromOld[eleName]) {
-                                ed[eleName] = edFromOld[eleName]
-                            }
-                        }
-
-                        //any extensions? Note that these are adHoc extensions
-                        if (edFromOld.extension) {
-                            ed.extension = edFromOld.extension
-                        }
-
-
-
-
-
-
+                //now check for duplicate pathe
+                let hashPath = {}
+                for (const [index, ed] of currentDG.diff.entries()) {
+                    if (hashPath[ed.path]) {
+                        log.push({severity:'error',path: ed.path ,line:index,msg:`The Path is duplicated.`})
 
                     }
-
-
+                    hashPath[ed.path] = true
                 }
 
 
+
+                return {DG:currentDG,log:log}
 
             },
 
@@ -418,6 +346,119 @@ angular.module("pocApp")
                    // let vs = arCols[13]
                    // let note = arCols[14]
                     dg.diff.push(ed)
+
+                }
+
+
+
+            },
+
+            getComponents : function (lst) {
+                //retrieve all the named components in the list
+
+                //generate the queries from the list of names
+                let queries = []
+                for (let entry of lst) {
+                    queries.push(`frozen/${entry.type}`)
+                }
+
+                let promises = queries.map(function(query) {
+
+                    return $http({
+                        method: 'GET',
+                        url: query
+                    }).then(function(response) {
+
+                        return {
+                            query: query,
+                            resource: response.data
+                        };
+                    });
+                });
+
+                return $q.all(promises);
+
+            },
+
+            fixConditionals : function (newDG) {
+                //when a DG is replaced during SpreadSheet importing, this will copy the conditionals from old
+                //to new. The source(path) of the ed will be the same, but the id will be different
+                // THis will only work for conditionals within the elements
+                // defined in this DG. Contained DG references will likely break and need manual fixing
+                //it also copies specific other elements from the existing DG
+
+                //the DG with the same name in the current collection
+                let oldDG = snapshotSvc.getDG(newDG.name)
+                //console.log(oldDG)
+                if (! oldDG) {
+                    //Shouldn't actually happen...
+                    alert("Current DG not found. Can't update the conditionals")
+                    return
+                }
+
+                //if the DG has extensions copy them over
+                if (oldDG.adHocExtension) {
+                    newDG.adHocExtension = oldDG.adHocExtension
+                }
+
+                //create hash of ED in the old DG.
+                let hashOldED = {}     //hash of ED by path
+                for (const ed of oldDG.diff) {
+                    hashOldED[ed.path] = ed
+                }
+
+                //create hash of ED in the new DG.
+                let hashNewED = {}     //hash of ED by path
+                for (const ed of newDG.diff) {
+                    hashNewED[ed.path] = ed
+                }
+
+
+                //now update the EWs and other key attributes from the 'old' DG
+                for (const ed of newDG.diff) {
+                    //console.log(ed.path)
+                    if (hashOldED[ed.path]) {
+                        //found the corresponding ED in the old DG
+                        let edFromOld = hashOldED[ed.path]
+                        //console.log(` --> found ${edFromOld.enableWhen}`)
+
+                        // are there any conditionals?
+                        if (edFromOld.enableWhen) {
+
+                            for (let ew of edFromOld.enableWhen) {
+                                let source = ew.source //The source item path
+
+                                //drop the first segment - the DG name. The EW source path includes the DG name
+                                source = $filter('dropFirstInPath')(source)
+
+                                //look in the hash for the new DG to locate the element by path (so we can get the id)
+                                if (hashNewED[source]) {
+                                    // found it! Copy the EW to the new ED with an updated sourceId
+                                    ed.enableWhen = ed.enableWhen || []
+                                    ew.sourceId = hashNewED[source].id
+                                    ed.enableWhen.push(ew)
+                                    //console.log(`Changed id for ${ew.sourceId}`)
+                                } else {
+                                    console.error(`source path ${source} not found`)
+                                }
+                            }
+
+                        }
+
+                        //Other elements from the old that copy across
+                        for (const eleName of  ['controlHint','definition','prePop','hiddenInQ','options','mult']) {
+                            if (edFromOld[eleName]) {
+                                ed[eleName] = edFromOld[eleName]
+                            }
+                        }
+
+                        //any extensions? Note that these are adHoc extensions
+                        if (edFromOld.adHocExtension) {
+                            ed.adHocExtension = edFromOld.adHocExtension
+                        }
+
+                    }
+
 
                 }
 

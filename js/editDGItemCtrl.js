@@ -1239,11 +1239,15 @@ angular.module("pocApp")
                 console.log(txt)
                 let lines = txt.split('\n')
                 lines.forEach(function (lne) {
-                    let option = {}
-                    option.pt = lne
-                    option.code = lne
-                    option.display = lne
-                    $scope.options.push(option)
+                    if (lne) {
+                        let option = {}
+                        option.pt = lne
+                        option.code = lne.replace(/ /g, '_')
+                        option.display = lne
+                        $scope.options.push(option)
+                    }
+
+
 
                 })
                 alert("Options have been updated")
