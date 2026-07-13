@@ -505,7 +505,9 @@ angular.module("pocApp")
 
                         //need to create a Q name that is unique
                         let qName = `${$scope.world.name}-${model.name}`
-                        qName = qName.replace(/\s+/g, "");
+                        //qName = qName.replace(/\s+/g, "");
+                       // remove space, / & \
+                        qName = qName.replace(/[\s/\\]+/g, "");
 
                         let config = {expandVS:true,enableWhen:true}
                         config.namedQueries = hashNamedQueries
@@ -2156,8 +2158,10 @@ angular.module("pocApp")
                     resolve: {
                         url: function () {
                             return url
-                        }, refsetId : function () {
-                            return refsetId
+                        }, termServer : function () {
+
+                            return $scope.selectedModel.termSvr
+
                         }
                     }
 

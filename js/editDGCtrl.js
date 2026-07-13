@@ -450,8 +450,9 @@ angular.module("pocApp")
             //actually a proxy to the termserver - needed for the Q renderer
             $scope.nzTermServer = 'https://canshare.co.nz/canshare/proxy'
 
-            $scope.setTermServer = function () {
-                $scope.input.termSvr = $scope.nzTermServer
+            $scope.setTermServer = function (svr) {
+                let svr1 = svr || $scope.nzTermServer
+                $scope.input.termSvr = svr1
             }
 
             //create the list of DG's that can be added as child elements. Don't include this one...

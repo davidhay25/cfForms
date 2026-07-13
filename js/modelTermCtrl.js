@@ -13,6 +13,8 @@ angular.module("pocApp")
                     resolve: {
                         url: function () {
                             return item     //just looks at the .options property
+                        }, termServer : function () {
+                            return ""
                         }
                     }
 

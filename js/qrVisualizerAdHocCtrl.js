@@ -14,12 +14,20 @@ angular.module("pocApp")
 
             $scope.input.changingFormManager = false
 
-            $scope.input.adHocQR =  $localStorage.adHocQR
+            //$scope.input.adHocQR =  $localStorage.adHocQR
 
             $scope.setFormManager = function (url) {
                 $localStorage.formManager = url
                 alert("The default Form Manager url has been updated.")
             }
+
+            utilsSvc.getConfig().then(
+                function (config) {
+                    $scope.systemConfig = config
+                    console.log($scope.systemConfig)
+                }
+            )
+
 
             $scope.copyQRToClipboard = function () {
 
@@ -299,7 +307,7 @@ angular.module("pocApp")
                     resolve: {
                         url: function () {
                             return url
-                        }, refsetId: function () {
+                        }, termServer : function () {
                             return ""
                         }
                     }

@@ -835,7 +835,7 @@ alert("Creating override - shouldn't really need to do this so there is somethin
 
             //return true if the ed has a fixed value
             $scope.hasFixedType = function (ed) {
-                if (ed?.fixedRatio?.numerator || ed?.fixedQuantity?.value || ed?.fixedCoding?.code) {
+                if (ed?.fixedRatio?.numerator || ed?.fixedQuantity?.value || ed?.fixedCoding?.code || ed?.fixedCode) {
                     return true
                 }
 

@@ -78,7 +78,43 @@ angular.module('pocApp')
 
         function processCode(item,ed) {
             if (ed.fixedCode) {
-                item.initial = [{valueString:ed.fixedCode}]
+
+
+                /* a fixed code needs more thought. initial doesn't work, nor does setting a fixed value.
+
+                really needs to be attached to the 'parent' - eg works from when setting Observation.ststus
+
+                May be best not to have it on the item at all, but an
+
+
+                if (ed.definition) {
+                    let ar = ed.definition.split('.')
+                    let type = ar[0]        //the expression always starts with the type - eg Patient.name.given
+
+
+                    let ext = {url: extInitialExpressionUrl}
+                    ext.valueExpression = {language: "text/fhirpath", expression: `${ed.prePop}`}
+                    item.extension = item.extension || []
+                    item.extension.push(ext)
+
+
+
+
+                    let canonical = `http://hl7.org/fhir/StructureDefinition/${type}#${ed.definition}`
+                    addFixedValue(item,canonical,'Code',ed.fixedCode)
+                    delete item.definition
+                    hideItem(item)
+
+                }
+
+
+*/
+
+
+               // item.initial = [{valueString:ed.fixedCode}]
+                //item.answerOption = [{valueString:ed.fixedCode}]
+
+
                 // don't automatically hide hideItem(item)
 
             }

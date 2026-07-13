@@ -1111,8 +1111,8 @@ angular.module("pocApp")
                     resolve: {
                         url: function () {
                             return item
-                        }, refsetId : function () {
-                            return refsetId
+                        }, termServer : function () {
+                            return ""
                         }
                     }
 

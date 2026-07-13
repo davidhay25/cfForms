@@ -108,11 +108,15 @@
             </div>
 
             <div class="col-md-1">
+                <div class="navbar-text">
+                <a target="_blank"
+                   href="https://docs.google.com/document/d/169XfHeDaYUk1EdwABpsvYYWKTJonOE5RTm3Cpf57Gj0/">Documentation</a>
+                </div>
 
             </div>
 
             <div class="col-md-2">
-                <a href="https://teaho.govt.nz/" target="_blank">
+                <a  ng-if = "systemConfig.environment == 'canshare'" href="https://teaho.govt.nz/" target="_blank">
                     <img width="150" height="auto" class="pull-right"
                          style="padding: 3px"
                          src="images/TAK-logo-midgreen.png"/>
@@ -155,6 +159,23 @@
                     <div class="btn btn-primary pull-right" ng-click="parseAdHocQR(input.adHocQR)">Parse</div>
                     -->
                 </div>
+            </div>
+
+            <div>
+                <strong>Instructions</strong>
+                <ol>
+                    <li>Paste the <Json></Json> contents of a QuestionnaireResponse resource into the text box.</li>
+                    <li>Set the url in the Form Manager Url input to a server that contains the Associated
+                        Questionnaire (based on the QR.questionnaire element) and should include the version. You can save this
+                        url for later use.</li>
+                    <li>Click the parse link. If the Questionnaire can be retrieved from the Form Manager then the
+                    QuestionnaireResponse will be decoded and the results shown to the right</li>
+                </ol>
+
+                <strong>Notes</strong>
+                <br/>
+                <em>Currently there's an issue with multiple items not showing correctly in the report view</em>
+
             </div>
         </div>
 

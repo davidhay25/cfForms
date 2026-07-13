@@ -174,7 +174,7 @@ angular.module('pocApp')
                 //console.log('apply',ed)
 
                 //extensions go at the top
-                if (ed.adHocExtension) {
+                if (ed.adHocExtension && ed.adHocExtension.length > 0) {
                     item.extension = ed.adHocExtension
                 }
 
@@ -331,16 +331,8 @@ angular.module('pocApp')
                         let ar1 = item.definition.split('.')
                         ar1[ar1.length - 1] = "url"
 
-                        //  if (ar.length > 2) {
-                        // ar.splice(-2,2)    //remove the 2 on the end
-
-                        // let url = `${canonical}#${ar.join('.')}.extension.url`
-
-
                         makeQSvc2Helper.addFixedValue(item, ar1.join('.'), "String", ed.extractExtensionUrl)
-                        //  } else {
-                        //errorLog.push({msg:`${ed.path} has an incorrect definition`})
-                        //  }
+
 
                     }
 
@@ -776,7 +768,6 @@ angular.module('pocApp')
 
                             //use the addFixedValue routine to set the value of Observation.code
                             let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.code.coding`
-
                             makeQSvc2Helper.addFixedValue(item, definition, 'Coding', dg.itemCode)
 
                         }

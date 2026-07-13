@@ -451,7 +451,7 @@ angular.module("pocApp")
                     resolve: {
                         url: function () {
                             return url
-                        }, refsetId: function () {
+                        }, termServer : function () {
                             return ""
                         }
                     }

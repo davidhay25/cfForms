@@ -339,7 +339,11 @@
                                 <!-- changed ts from backup - doesn't work with poc.canshare..  - why?-->
                                 <span class="clickable"
                                       ng-click="setTermServer()">
-                            Set to the National New Zealand Terminology Server.</span>
+                            Set to the National New Zealand Terminology Server</span>
+                                or <span class="clickable"
+                                ng-click="setTermServer('https://r4.ontoserver.csiro.au/fhir')">OntoServer</span>
+                                (Generally Ontoserver is better in clinFHIR)
+
                             </div>
                         </div>
                         <br/>

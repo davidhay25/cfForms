@@ -1,12 +1,15 @@
 angular.module("pocApp")
     .controller('viewVSCtrl',
-        function ($scope,url,refsetId,$http,$uibModal) {
-            //refsetId no longer used - todo go through codebase and edit...
+        function ($scope,url,termServer,$http,$uibModal) {
+
+
+
+
 
             $scope.url = url
             $scope.input = {}
 
-            console.log(refsetId)
+
 
             let snomed = "http://snomed.info/sct"
 
@@ -26,7 +29,15 @@ angular.module("pocApp")
 
 
 
+
             $scope.expandVSInTS = function (url) {
+
+                //If there is no termSvr, or there is and it contains 'canshare.co.nz' then use the
+                //proxy to the NZHTS. Otherwise call the server directly
+                //Could be tidied - eg use a server side proxy, or allow
+
+
+
                 delete $scope.expandedVS
                 let qry = `ValueSet/$expand?url=${url}&_summary=false`
 
@@ -37,21 +48,59 @@ angular.module("pocApp")
                 if ($scope.input.filter) {
                     qry += `&filter=${$scope.input.filter}`
                 }
-
                 $scope.expandQry = qry
-                let encodedQry = encodeURIComponent(qry)
-                $scope.showWaiting = true
-                $http.get(`nzhts?qry=${encodedQry}`).then(
-                    function (data) {
-                        $scope.expandedVS = data.data
-                    }, function (err) {
-                        alert(`There was no ValueSet with the url:${url}`)
+
+
+
+
+
+                if (! termServer || termServer.indexOf("canshare.co.nz") > -1) {
+                    //this tries to go to the NZ term server using a local proxy.
+                    //in canshare it works fine as the config is set correctly - in clinfhir it will fail.
+                    // I think that's correct as clinfhir shouldn't be going to the NZ server
+                    // so in clinfhir it should be set to a ts like ontoserver
+                    //note that the actual value of the TS is used by the Questionnaire renderer
+                    let encodedQry = encodeURIComponent(qry)
+                    $scope.showWaiting = true
+                    $http.get(`nzhts?qry=${encodedQry}`).then(
+                        function (data) {
+                            $scope.expandedVS = data.data
+                        }, function (err) {
+                            alert(`There was no ValueSet with the url:${url}`)
+                        }
+                    ).finally(
+                        function () {
+                            $scope.showWaiting = false
+                        }
+                    )
+
+                } else {
+                    //call the specified term server directly
+                    //ensure trailing slash
+                    let ts = termServer
+                    if (!ts.endsWith('/')) {
+                        ts += '/';
                     }
-                ).finally(
-                    function () {
-                        $scope.showWaiting = false
-                    }
-                )
+
+                    let fullQry = `${ts}${qry}`
+                    $http.get(fullQry).then(
+                        function (data) {
+                            $scope.expandedVS = data.data
+                        }, function (err) {
+                            alert(`There was no ValueSet with the url:${url}`)
+                        }
+                    ).finally(
+                        function () {
+                            $scope.showWaiting = false
+                        }
+                    )
+
+                }
+
+
+
+
+
 
             }
 
@@ -69,6 +118,7 @@ angular.module("pocApp")
 
                 let encodedQry = encodeURIComponent(qry)
                 $scope.showWaiting = true
+
                 $http.get(`nzhts?qry=${encodedQry}`).then(
 
                     //$http.get(url).then(

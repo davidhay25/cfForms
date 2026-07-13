@@ -148,8 +148,8 @@ angular.module("pocApp")
                     resolve: {
                         url: function () {
                             return vs
-                        }, refsetId : function () {
-                            return "unknown"
+                        }, termServer : function () {
+                            return ""
                         }
                     }
 

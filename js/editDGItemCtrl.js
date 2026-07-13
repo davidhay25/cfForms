@@ -509,8 +509,8 @@ angular.module("pocApp")
                     resolve: {
                         url: function () {
                             return vsName
-                        }, refsetId : function () {
-                            return null
+                        }, termServer : function () {
+                            return ""
                         }
                     }
 
