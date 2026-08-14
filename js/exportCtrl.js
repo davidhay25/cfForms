@@ -22,6 +22,7 @@ angular.module("pocApp")
 
             //variables for the spreadsheet downlaod
             let download = exportSvc.makeDGSimpleExport(hashAllDG)
+
             $scope.downloadLinkSS = window.URL.createObjectURL(new Blob([download ],{type:"application/json"}))
 
             $scope.downloadLinkSSName = `allDataGroups.tsv`

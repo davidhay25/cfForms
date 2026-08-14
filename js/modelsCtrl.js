@@ -123,15 +123,18 @@ angular.module("pocApp")
 
                 //config.url = qName
 
-                let voQ = makeQSvc.makeHierarchicalQFromDG(model,allElements,config)
-                let Q = voQ.Q
+                vsSvc.getAllVS(allElements, function () {
+                    let voQ = makeQSvc.makeHierarchicalQFromDG(model,allElements,config)
+                    let Q = voQ.Q
 
-                $scope.qErrorLog = voQ.errorLog
+                    $scope.qErrorLog = voQ.errorLog
 
-                $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:Q});
+                    $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:Q});
 
-                $scope.fullQ = Q //for the display
-                console.log(voQ)
+                    $scope.fullQ = Q //for the display
+                    console.log(voQ)
+
+                })
 
             }
 
@@ -164,9 +167,88 @@ angular.module("pocApp")
 
             //----------------------------------
 
+            $scope.canExtractAsDG = function (ed) {
+
+                if (! $scope.canEdit() ) {return false}
+                if (! ed ) {return false}
+
+                let type = ed?.type?.[0]
+                if (! type ) {return false}
+                if ( type == 'Group') {return true}
+
+                if ($scope.fhirDataTypes.indexOf(type) >-1) {return false}    //a standard FHIR DT
+
+                if (type != $scope.selectedModel.name) { return true}   //if not the current model/ dg
+
+            }
+
+            $scope.extractAsDG = function (ed) {
+                let msg = "This will create a newDG from this point, and embed the new DG into this one. What name do you want for the new DG"
+                let ar  = ed?.path.split('.')
+                let name = ar[ar.length-1]
+
+                //the path in the ed is prefixed by the dgname - in the diff the paths are not
+                ar.splice(0,1)
+                let pathToCompare = ar.join('.')
 
 
-            // $scope.fhirBase = "http://hl7.org/fhir/R4B/"
+                name = prompt(msg,name)
+
+                if (!name ) {return}
+                if ($scope.allTypes[name]) {
+                    alert("Sorry, that name is already in use in this collection")
+                    return false
+                }
+
+                //create the new DG
+                let newDG = modelDGSvc.makeDGFromGroup(ed,name,$scope.fullElementList)
+                $scope.hashAllDG[name] = newDG
+
+
+
+
+                //update the current model
+                //let pathLength = ed.path.length
+                //let ar =
+                let newModel = angular.copy($scope.selectedModel)
+                newModel.diff = []
+                for (let existingEd of $scope.selectedModel.diff) {
+                    let path = existingEd.path
+
+                    if (path === pathToCompare) {
+                        //this is the point where the new DG is being created from. Change the type and add
+                        existingEd.type=[name]
+                        newModel.diff.push(existingEd)
+                    } else if (path.startsWith(pathToCompare)) {
+                        //this is a child of the new DG. Don't add it back
+console.log(`Not adding ${path}`)
+                    } else {
+                        //return it to the current DG
+                        newModel.diff.push(existingEd)
+                    }
+                }
+
+                //finally update the current model (this keeps the internal references to $localstore
+                Object.keys($scope.hashAllDG[newModel.name]).forEach(k => {
+                    delete $scope.hashAllDG[newModel.name][k];
+                });
+
+                angular.extend($scope.hashAllDG[newModel.name], newModel);
+
+
+
+
+
+                $timeout(function(){
+                    sortDG()    //created the sortedDG list used for the list of DG in the left panel
+                    $scope.makeAllDTList()      //updated
+                    $scope.makeSnapshots()
+                    $scope.selectModel(newDG)
+                },100)
+
+            }
+
+
 
 
 
@@ -179,13 +261,6 @@ angular.module("pocApp")
                 )
             },500)
 
-
-
-            $scope.splitBranch = function (ed) {
-                console.log(ed)
-
-
-            }
 
 
             //these are collections in the browser cache
@@ -416,7 +491,7 @@ angular.module("pocApp")
                     makeQSvc.getNamedQueries(function (hashNamedQueries) {
 
 
-                        //need to create a Q name that is unique - todo get this from dg so can update independantly of name
+                        //need to create a Q name that is unique - todo get this from dg so can update independently of name
 
 
                         let qName = `${$scope.world.name}-${dg.name}`
@@ -686,22 +761,7 @@ angular.module("pocApp")
                             }
                             alert(msg)
 
-/*
-                            if (both) {
-                                //update repo and local
-                                $scope.savePGtoLocal(true,true,function () {
-                                    alert("Repository has been updated.")
-                                })
 
-                            } else {
-
-                                let msg = "The Collection has been updated."
-                                if (! $localStorage.world.description) {
-                                    msg += " You can edit the description in this page."
-                                }
-                                alert(msg)
-                            }
-                            */
 
                         }, function (err) {
                             alert(angular.toJson(err.data))
@@ -767,7 +827,7 @@ angular.module("pocApp")
                 if (newName) {
                     newName = newName.replace(/\s/g, '')    //remove any spaces
                     dg.name = newName
-
+                    dg.isComponent = true
                     if (newName !== name) {
                         //this is a new component - check to see if there is already one with  that name
                         $http.get(`frozen/${newName}`).then(
@@ -787,6 +847,7 @@ angular.module("pocApp")
                         )
                     } else {
                         //if the name is not being changed, then don't need to check (we know it's there and accept that it can be updated!)
+
                         $scope.hashAllDG[dg.name] = dg
                         $scope.init()
                         alert(`DG has been imported`)
@@ -909,15 +970,7 @@ angular.module("pocApp")
 
             })
 */
-/*
-            $localStorage.selectedTag = $localStorage.selectedTag || 'main'
-            $scope.input.selectedTag = $localStorage.selectedTag       //default tag for tag filtered list
 
-            let tagSystem = {}
-            tagSystem.bespoke = {code:'bespoke'}
-            tagSystem.dgcategory = {code:'dgcategory'}
-
-*/
             //was the page called with a DG name?
             let search = $window.location.search;
             if (search) {
@@ -1045,8 +1098,19 @@ angular.module("pocApp")
 
                 //the 'saveTo' attribute governs where the collection is saved to - browser or library
 
+                //called before the systemConfig is known
+                if (! $scope.systemConfig) {
+                    return false
+                }
+
                 if (! $scope.world) {
                     //if there's no current collection (world) then can edit - don't think this can happen... theres' always one even if empty
+                    return true
+                }
+
+                //if this is clinfhir, then can always edit and always save to the local cache - ie no access to collection ATM
+                if ($scope.systemConfig.environment == 'clinfhir') {
+                    $scope.world.saveTo = 'browser'
                     return true
                 }
 
@@ -1199,8 +1263,10 @@ angular.module("pocApp")
                         }
                     }
 */
-                    if (vo && vo.dg) {
+                    if (vo?.dg) {
                         //A DG was selected
+                        vo.dg.isComponent = true
+
                         $scope.hashAllDG[vo.dg.name] = vo.dg
                         sortDG()
                         alert("DG has been downloaded. Please refresh the browser.")
@@ -1208,6 +1274,7 @@ angular.module("pocApp")
 
                     if (vo?.selectedDG) {
                         for (let dg of vo.selectedDG) {
+                            dg.isComponent = true
                             $scope.hashAllDG[dg.name] = dg
                         }
                         sortDG()
@@ -1878,6 +1945,7 @@ angular.module("pocApp")
                                 ed1.description = ed.description
                                 ed1.mult = ed.mult
                                 ed1.valueSet = ed.valueSet
+                                ed1.expandValueSet = ed.expandValueSet
                                 ed1.sourceReference = ed.sourceReference
 
                                 ed1.insertAfter = ed.insertAfter
@@ -2002,6 +2070,9 @@ angular.module("pocApp")
 
                     //rebuild fullList and re-draw the tree
                     $scope.refreshFullList($scope.selectedModel)
+
+                    //redraw the Q
+                    $scope.previewQ()
 
 
 
@@ -2348,7 +2419,7 @@ angular.module("pocApp")
                             //$scope.analysis = modelsSvc.analyseWorld($localStorage.world,$scope.input.types)
 
                             if (autoImport) {
-                                //This is a list of components to add to the Collection
+                                //This is a list of components to add to the Collection. From the SS creation
                                 for (let lne of autoImport) {
                                     let DG = lne.resource
                                     DG.isComponent = true //should be set
@@ -2558,9 +2629,6 @@ console.log($scope.SDfromDG)
 
                     clearB4Select()
                     $scope.selectedModel = dg
-
-
-
 
                     $scope.fhirResourceType = igSvc.findResourceType(dg,$scope.hashAllDG)   //not sure if this is used wo fsh stuff
 

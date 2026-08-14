@@ -18,7 +18,6 @@ angular.module("pocApp")
                         lst.push(vs)
                     }
 
-
                 }
 
                 that.updateCacheFromList(lst, cb)
@@ -84,10 +83,10 @@ angular.module("pocApp")
 
             getAllVS : function(allElements, cb) {
                 let that = this
-            //return
-            //a function that will get all of the valuesets in the list of elements and populate a hash cache
-            // - like the concept map does. This will be memory intensive (may need to re-factor) but the intent
-            //is to be able to avoid the async stuff
+                //return
+                //a function that will get all of the valuesets in the list of elements and populate a hash cache
+                // - like the concept map does. This will be memory intensive (may need to re-factor) but the intent
+                //is to be able to avoid the async stuff
 
             let lst = []
 

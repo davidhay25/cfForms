@@ -731,19 +731,24 @@
             <uib-tab ng-show="isNew" heading="Import from SpreadSheet">
                 <div class="row">
                     <div class="col-md-6">
-                        <textarea class="form-control" rows="10" ng-model="input.pastedSSDG" ng-paste="onPaste($event)"></textarea>
-                        <button class="btn btn-link" ng-click="parseSS(input.pastedSSDG)">Parse</button>
+                        <br/>
+                        <textarea class="form-control" rows="10"
+                                  placeholder="Paste the Spreadsheet rows that represent this DG into this textbox"
+                                  ng-model="input.pastedSSDG" ng-paste="onPaste($event)"></textarea>
+                        <button ng-show="input.pastedSSDG" class="btn btn-link pull-right" ng-click="parseSS(input.pastedSSDG)">Parse</button>
                     </div>
 
                     <div class="col-md-6">
+                        <br/>
                         <div ng-show="importError" class="alert alert-danger">
                             There are errors that prevent this DG being imported. Details in the Log.
                         </div>
                         <uib-tabset>
                             <uib-tab heading="Tree">
-                                <div ng-show="importLog.length > 0" class="rounded-box-filled">
-                                    There were parsing errors (see the log for details). These should be corrected before saving,
-                                    though can generally be fixed in the editor.
+
+                                <div ng-show="importLog.length > 0 && ! importError" class="rounded-box-filled">
+                                    There were parsing issues (see the log for details). These should be corrected before saving,
+                                    though sometimes can be fixed in the editor.
 
                                 </div>
                                 <br/>

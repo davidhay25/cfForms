@@ -1,6 +1,6 @@
 angular.module('pocApp')
     .service('makeQSvc2',
-        function (utilsSvc, snapshotSvc, makeQSvc2Helper) {
+        function (utilsSvc, snapshotSvc, makeQSvc2Helper,vsSvc) {
 
             /* ================================================================
              * Public API
@@ -60,7 +60,7 @@ angular.module('pocApp')
             }
 
 
-            this.buildQuestionnaireFromFlat = function (inItems, dg, config) {
+            this.buildQuestionnaireFromFlat =  function (inItems, dg, config) {
                 const warnings = [];
                 const pathIndex = new Map();    //a hash of item by path
                 const idIndex = {}                 //hash by id - used for conditionals
@@ -90,9 +90,110 @@ angular.module('pocApp')
                         ed.type = ['display']
                         ed._isMainDG = dg
                     }
-                    items.push(ed)
+
+                    //if the ed has a conditional then add a cloned copy for each conditional and don't add the original to the list
+                    //the EW processing further on will set it correctly
+                    //? todo not sure what to do about the id - does it need to be reset??
+                    //todo - not supporting displayBefore / After on conditional ATM
+                    if (ed.conditionalVS?.length > 0 ) {
+                        ed.conditionalVS.forEach(function (conditionalVS,inx) {
+                            //for each condition, create a copy of the ed that has the conditional
+                            let edClone = angular.copy(ed)
+                            //edClone.enableWhen = []
+                            edClone.id = utilsSvc.getUUID()
+                            edClone.path = `${edClone.path}-${inx}`
+                            delete edClone.conditionalVS
+
+                            //set the valueSet to the one specified in the condition
+                            let vsUrl = conditionalVS.valueSet
+                            if (vsUrl.substring(0,4) !== 'http') {
+                                vsUrl = `https://nzhts.digital.health.nz/fhir/ValueSet/${vsUrl}`
+                            }
+                            edClone.valueSet = vsUrl
+
+                            let ew = {source:conditionalVS.path,sourceId:conditionalVS.sourceId,operator:'='}
+                            ew.value = conditionalVS.value  //the value of the source that enables this item
+
+                            edClone.enableWhen = [ew] //any other enableWhen is removed. todo should the UI enforce this
+                            items.push(edClone)
+                        })
+
+                    } else {
+                        //provided this ed has no conditionalVS then just add it
+
+                        if (ed.displayBefore) {
+                            let edDa = {id:utilsSvc.getUUID(),path:`${ed.path}db`, type:['display'],title:ed.displayBefore}
+                            items.push(edDa)
+                        }
+
+                        items.push(ed)
+
+                        if (ed.displayAfter) {
+                            let edDa = {id:utilsSvc.getUUID(),path:`${ed.path}da`, type:['display'],title:ed.displayAfter}
+                            items.push(edDa)
+                        }
+                    }
+
+                    //if othertype is set, may need to add a textbox for the other type
+                    //todo - do need to think about extraction. we'd want this to extract to something like cc.text
+                    //so might want to look at any extract instructions on this ed - might be as simple as having /text on the end...
+                    if (ed.otherType) {
+                        switch (ed.otherType) {
+
+                            case "sometimes" :
+                                //assumes there is an 'other' option in the VS/Options of this ED.
+                                //add a text box with a dependency
+
+                                let newEd = {id:utilsSvc.getUUID(),path:`${ed.path}-other`, type:['string'],title:`Other ${ed.title}`}
+
+                                newEd.enableWhen = ed.enableWhen || [] //same hide/show as 'parent'
+                                let ew = {source:ed.path,operator:'='}
+                                //hard code the 'trigger' to the snomed term for other
+                                ew.value = {code:"74964007",system:'http://snomed.info/sct',display:`Other` }
+                                ew.sourceId = ed.id
+                                newEd.enableWhen.push(ew)
+                                items.push(newEd)
+
+                                break
+                            case "always" :
+                                //always add the 'other' option
+                                let newEd1 = {id:utilsSvc.getUUID(),path:`${ed.path}-other`, type:['string'],title:`Other ${ed.title}`}
+                                items.push(newEd1)
+                                break
+
+                        }
+                    }
+
+
+                    if (ed.expandValueSet && ed.valueSet) {
+                        //Expand the ValueSet, and append any options to it. The results are in options
+                        //which means that the valueSet will be ignored when the Q item is created
+                        try {
+                            let options = vsSvc.getOneVS(ed.valueSet)   //all VS in the model are expanded before the build Q function is called
+                            if (options.length) {
+                                //append
+                                ed.options = ed.options || []
+                                ed.options.unshift(...options) //insert the concepts from the VS before the existing ones
+
+                                //delete ed.valueSet - don't delete the ValueSet!
+
+
+
+                                console.log(options)
+                            }
+
+
+                        } catch (ex) {
+                            console.log(ex)
+                            // do nothing - happens when called with an empty url
+                        }
+
+                    }
+
 
                 })
+
+                console.log(items)
 
                 // 1. Build hierarchy + index
                 items.forEach(src => insertItem(questionnaire.item, src, pathIndex, idIndex, warnings));
@@ -103,6 +204,8 @@ angular.module('pocApp')
 
                 // 3. Clean out synthetic/underscore properties and empty items
                 const cleanQ = cleanQuestionnaire(questionnaire);
+
+
 
                 return {questionnaire: cleanQ, warnings};
             };
@@ -195,12 +298,25 @@ angular.module('pocApp')
                 } else {
                     //there's a bug in the modeller where valueset can accidentally be added to a group (when a type is changed from cc to a DT)
 
+
                     if (ed.valueSet) {
-                        let vs = ed.valueSet
-                        if (vs.indexOf('http') == -1) {
-                            vs = `https://nzhts.digital.health.nz/fhir/ValueSet/${vs}`
+                        if (ed.options?.length > 0) {
+                            if (! ed.expandValueSet) {
+                                //if we're expanding a vs then there will be both, but it isn't an error
+                                warnings.push({lvl: 'err', msg: `${ed.path} has both options and valueSet. ValueSet will be ignored.`});
+                            }
+
+                        } else {
+                            let vs = ed.valueSet
+                            if (vs.indexOf('http') == -1) {
+                                vs = `https://nzhts.digital.health.nz/fhir/ValueSet/${vs}`
+                            }
+                            item.answerValueSet = vs
                         }
-                        item.answerValueSet = vs
+
+
+
+
 
                     }
 
@@ -417,7 +533,7 @@ angular.module('pocApp')
 
                         if (resolved.length) {
                             item.enableWhen = resolved;
-                            item.enableBehavior = item._source.enableBehavior || 'all';
+                            item.enableBehavior = item._source.enableBehavior || 'any';
                         }
                     }
 

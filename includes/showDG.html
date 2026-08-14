@@ -58,7 +58,7 @@
           <span ng-if = "false" class="clickable spacer"
               ng-click="cloneDG(selectedModel)">Make a copy</span>
 
-          <span ng-if="user && user.email" class="clickable spacer"
+          <span ng-if="user && user.email && world.canCreateComponents" class="clickable spacer"
               ng-click="updateComponent('dg',selectedModel)">Update component</span>
         </span>
 
@@ -71,9 +71,7 @@
 
         <div class="pull-right">
           <button class="btn btn-link" ng-click="loadReview('dg')">Generate questionnaire</button>
-          <!--
-          <button class="btn btn-link" ng-click="showLink('dg')">Link to viewer</button>
-          -->
+
           <button class="btn btn-link"
                   ng-if = "user.email && canEdit(selectedModel)"
                   ng-click="publishQ(selectedModel)">Release</button>
@@ -151,9 +149,6 @@
 
         </div>
 
-
-
-
       </div>
     </div>
   </div>
@@ -184,6 +179,16 @@
                 <span ng-if="selectedNode">to <strong>{{selectedNode.data.ed.title}}</strong></span>
 
               </div>
+              <div class="clearfix"></div>
+
+              <div class="clickable pull-right"
+                   ng-if="canExtractAsDG(selectedNode.data.ed)"
+                   ng-click="extractAsDG(selectedNode.data.ed)">
+                <br/>
+                <div>Extract Group as DG</div>
+              </div>
+
+
             </div>
             <div class="clearfix"></div>
 
@@ -205,7 +210,7 @@
 
 
           </div>
-          <br/><br/>
+          <br/>
         <div><em>Legend:</em></div>
           <div><strong style="margin-left: 8px">Bold</strong> elements are required</div>
           <div><span style="color: blue; margin-left: 8px">Blue</span>  elements have a fixed value</div>
@@ -488,7 +493,9 @@
 
                       </div>
                       <div>{{selectedNode.data.ed.valueSet}}</div>
-
+                      <div class = "alert alert-warning" ng-show="selectedNode.data.ed.options.length > 0 && !selectedNode.data.ed.expandValueSet">
+                        There are options defined. When the Questionnaire is generated, the ValueSet will not be included.
+                      </div>
                     </td>
                   </tr>
 
@@ -629,6 +636,13 @@
                   </tr>
 
 
+                  <tr ng-if="selectedNode.data.ed.otherType">
+                    <td class="detailName">'Other' type</td>
+                    <td>
+
+                      {{selectedNode.data.ed.otherType}}
+                    </td>
+                  </tr>
 
                   <tr ng-if="isFixedType(selectedNode.data.ed)">
                     <td class="detailName">Default value</td>

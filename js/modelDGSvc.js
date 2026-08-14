@@ -8,6 +8,46 @@ angular.module("pocApp")
 
         return {
 
+            makeDGFromGroup(parentEd,name,lstAllElements){
+                let path = parentEd.path
+                let pathLength = path.length  //used for adjusting the path
+
+                let arNewElements = []
+
+                let dg = {kind:'dg',id:utilsSvc.getUUID(), diff:[],name:name,title:name,source:'playground'}
+
+                let first = true
+                for (const item of lstAllElements) {
+                    if (item?.ed.path?.startsWith(path)) {
+                        let newEd = angular.copy(item.ed)
+                        let newPath = newEd.path.substring(pathLength) //split off the 'parent' path
+
+                        let ar = newPath.split('.')
+                        ar.splice(0,1)
+                        //ar[0] = name
+                        if (first) {
+                            newEd.kind = "root"
+                            first = false
+                        } else {
+                            newEd.path = ar.join('.')
+                            dg.diff.push(newEd)
+                        }
+
+
+                       // arNewElements.push(angular.copy(item?.ed))
+                    }
+                }
+
+
+
+                console.log(dg)
+
+
+                return dg
+
+
+
+            },
             makeSD : function (dg) {
                 //construct an SD version of a DG
 
@@ -80,11 +120,6 @@ angular.module("pocApp")
                     SD.snapshot.element.push(newED)
 
                 }
-                
-
-
-
-
 
                 return SD
 
@@ -115,15 +150,7 @@ angular.module("pocApp")
 
             },
 
-            splitDG : function (DG,splitPointED) {
-                //create a new DG from the split point
-                let path = splitPointED.path
 
-
-
-
-
-            },
 
             copyDG : function (DG,vo) {
                 //create a copy of a DG - updating the ids and any ews...
@@ -208,7 +235,7 @@ angular.module("pocApp")
             },
 
 
-            auditDGDiff : function (dg,hashAllDG) {
+            auditDGDiffDEP : function (dg,hashAllDG) {
                 //locate any 0..0 diff elements in the DG that do not correspond with parents. Occurs when parents are updated
 
                 //first, go through the parental hierarchy and assemble a list of all elements in the hierarchy
@@ -393,34 +420,8 @@ angular.module("pocApp")
                 return allDependencies
 
             },
-            auditDGDEP : function (hashAllDG) {
-                //compare the DG hash with $localStorage. There could be a bug where localStorage is not being updated
-                Object.keys(hashAllDG).forEach(function (key) {
-                    let dg = hashAllDG[key]
-                    if (angular.toJson(dg) !== $localStorage.world.dataGroups[dg.name]) {
-                        alert(`Warning! the Browser copy of the DG ${dg.name} doesn't match the copy in memory! You should re-load the page and check it. From modelDGSvc`)
 
 
-                    }
-                })
-            },
-
-            checkAllDGDEP : function (hashAllDG) {
-                //check DG for invalid construction that can crash the browser
-                let that = this
-                Object.keys(hashAllDG).forEach(function (key) {
-                    let dg = hashAllDG[key]
-
-                    if (that.hasDuplicatedParent(dg,hashAllDG)){
-                        //oops - there's a loop!
-                        delete dg.parent
-                        alert(`The DG: ${key} has a duplicated parent in the inheritance chain. The parent has been removed.`)
-                    }
-
-                })
-
-
-            },
 
             hasDuplicatedParent : function(dg,hashAllDG) {
                 //is there a repeated parent in the inheritance chain (will crash the browser
@@ -447,7 +448,7 @@ angular.module("pocApp")
             },
 
 
-            expandEdValues : function (ed) {
+            expandEdValuesDEP : function (ed) {
                 let deferred = $q.defer()
                 //return the list of possible options for en ed. There are 2 sources:
                 //the 'options' array or the valueSet. The valueSet has precedence
@@ -487,7 +488,7 @@ angular.module("pocApp")
                 return deferred.promise
             },
 
-            makeTreeViewOfCategories: function(hashCategories) {
+            makeTreeViewOfCategoriesDEP: function(hashCategories) {
                 let treeData = []
                 let root = {id:"root",text: "Categories",parent:'#',data:{}}
                 treeData.push(root)
@@ -507,7 +508,7 @@ angular.module("pocApp")
 
             },
 
-            analyseCategories: function(hashAllDG) {
+            analyseCategoriesDEP: function(hashAllDG) {
                 //create a hash by category of all DG
                 let hashCategory = {}       //the return - keyed by categort code
                 let hashDG = {}         //working - category for a DG keyed by DG name
@@ -619,7 +620,7 @@ angular.module("pocApp")
 
             },
 
-            makeSectionsTree : function(hashAllDG) {
+            makeSectionsTreeDEP : function(hashAllDG) {
                 //oMake a tree that contains only the sections branch - ie all DG where the ultimate parent is "Section"
 
                 let branchName = "Section"        //we want all DG's whose ultimate paretn is this one
@@ -665,29 +666,7 @@ angular.module("pocApp")
                 }
 
 
-/*
-                try {
-                    Object.keys(hashAllDG).forEach(function (key) {
-                        if (key !== branchName) {
-                            let dgToFindUltimateParent = hashAllDG[key]
-                            //console.log(key,dgToFindUltimateParent)
-                            //findUltimateParent can throw an exception - let it bubble up
-                            let ultimateParent = findUltimateParent(dgToFindUltimateParent)
 
-                            if (ultimateParent.name == branchName) {
-
-                                let sectionNode = {id:dgToFindUltimateParent.name,
-                                    text:dgToFindUltimateParent.title,
-                                    parent:dgToFindUltimateParent.parent,data:{dg:dgToFindUltimateParent}}
-                                sectionTreeData.push(sectionNode)
-                            }
-                        }
-
-                    })
-                } catch (ex) {
-                    alert(ex)
-                }
-*/
 
                 return {treeData: sectionTreeData}
 
@@ -862,45 +841,10 @@ angular.module("pocApp")
 
                 return {graphData:graphData}
 
-            },
-
-            updateChangesDEP : function (DG,change,scope) {
-                DG.changes = DG.changes || []
-                DG.changes.push(change)
-               // console.log('emitting')
-                scope.$emit("dgUpdated",{})
-
-            },
-
-
-
-            makeUpdateListDEP: function (allDG,xref) {
-                //create a list of all DG updates
-                //let report = {newDG:[],newElement:[],changedElement:[]}
-                let report = []
-
-              //  console.log(xref)
-
-                Object.keys(allDG).forEach(function (key) {
-                    let dg = allDG[key]
-                    if (dg.status == 'new') {
-                        let item = {DGName:dg.name,msg:"New DataGroup",xref:xref[dg.name]}
-                        report.push(item)
-
-                    } else {
-                        if (dg.changes) {
-                            dg.changes.forEach(function (change) {
-                                //{edPath: msg: }
-                                let item = {DGName:dg.name,msg:change.msg,path:change.edPath,xref:xref[dg.name]}
-                                report.push(item)
-                            })
-                        }
-
-                    }
-                })
-
-                return report
-
             }
+
+
+
+
         }
     })

@@ -95,10 +95,11 @@
             <td>Code
 
               <i class="glyphicon glyphicon-info-sign pull-right"
-                 uib-popover="Useful for Observation extraction or non-extracted items"
+                 uib-popover="The Observable Entity. Useful for Observation extraction."
                  popover-placement="right"
-                 popover-trigger="'mouseenter'"
-                 ></i>
+                 popover-trigger="'mouseenter'">
+
+              </i>
 
 
             </td>
@@ -133,6 +134,10 @@
                 <div class="col-sm-10">
                   <input type="text"
                          class="form-control" ng-model="input.valueSet"/>
+
+
+
+
                 </div>
                 <div class="col-sm-2">
                   <button ng-if="input.valueSet" class="btn-link btn" ng-click="viewVS(input.valueSet)">View VS</button>
@@ -140,23 +145,37 @@
                 </div>
               </div>
 
+              <div class = "alert alert-warning" ng-show="options.length > 0 && !input.expandValueSet">
+                There are options defined. When the Questionnaire is generated, the ValueSet will not be included.
+                If you do want both, then check the 'expand ValueSet in Q' check box, and the contents of the ValueSet
+                will be retrieved and included in the list of options in the Questionnaire.
+              </div>
+
             </td>
 
           </tr>
 
-          <tr>
-            <td>Notes</td>
+          <tr ng-if="input.valueSet">
+            <td>Expand ValueSet in Q
+
+
+              <i class="glyphicon glyphicon-info-sign pull-right"
+                 uib-popover="If set, the ValueSet is expanded and the contents place in the Q item answerOptions including any options defined here"
+                 popover-placement="right"
+                 popover-trigger="'mouseenter'">
+
+              </i>
+
+
+            </td>
+
             <td>
-              <textarea ng-model="input.notes" class="form-control"></textarea>
+              <checkbox ng-model="input.expandValueSet"></checkbox>
             </td>
           </tr>
 
-          <tr>
-            <td>Rules</td>
-            <td>
-              <textarea ng-model="input.rules" class="form-control"></textarea>
-            </td>
-          </tr>
+
+
 
 
 
@@ -181,13 +200,19 @@
           </tr>
 
           <tr  ng-if="input.selectedType == 'CodeableConcept'">
-            <td>'Other' type</td>
+            <td>'Other' type
+              <i class="glyphicon glyphicon-info-sign pull-right"
+                 uib-popover="Will add an 'Other' textbox. 'Sometimes' will show only when the selected value is the SNOMED code 74964007"
+                 popover-placement="right"
+                 popover-trigger="'mouseenter'"
+              ></i>
+            </td>
             <td>
-              <span ng-repeat = "opt in ['sometimes','textonly','never']">
+              <span ng-repeat = "opt in ['sometimes','always']">
                   <input type="radio"
-
                          ng-model="input.otherType" value="{{opt}}"> {{opt}} &nbsp;
                 </span>
+
 
               <span class="pull-right clickable" ng-click = "deleteOtherOption()">Clear </span>
 
@@ -217,6 +242,21 @@
 
             </td>
           </tr>
+
+          <tr>
+            <td>Notes</td>
+            <td>
+              <textarea ng-model="input.notes" class="form-control"></textarea>
+            </td>
+          </tr>
+
+          <tr>
+            <td>Rules</td>
+            <td>
+              <textarea ng-model="input.rules" class="form-control"></textarea>
+            </td>
+          </tr>
+
 
           <tr>
             <td>Source reference</td>
@@ -635,11 +675,6 @@
 
                       ng-options = "concept.display for concept in conditionalVSOptions"></select>
 
-
-
-
-
-
             </td>
             <td style="width: 45%"><input type="text" class="form-control" ng-model="input.conditionalVSValueSet"/> </td>
 
@@ -655,7 +690,7 @@
       <uib-tab ng-if="input.selectedType == 'CodeableConcept'">
         <uib-tab-heading>Options <span class="badge">{{options.length}}</span> </uib-tab-heading>
 
-        <uib-tabset>
+        <uib-tabset active="input.conceptTabActive">
           <br/>
           <uib-tab heading="Current List">
 
@@ -669,14 +704,16 @@
             </div>
 
             <table class="table table-bordered">
-              <tr><th>Code</th><th>Display</th><th>FSN</th><th></th></tr>
+              <tr><th>Code</th><th>Display</th><th>FSN</th><th>System</th><th></th></tr>
               <tr ng-repeat="row in options">
                 <td>{{row.code}}</td>
                 <td>{{row.display}}</td>
                 <td>{{row.fsn}}</td>
+                <td>{{row.system}}</td>
                 <td><i class="glyphicon glyphicon-remove pull-right clickable"
                        ng-click="deleteOption($index)"></i></td>
               </tr>
+
               <tr>
                 <td>
                   <div class="row">
@@ -693,41 +730,38 @@
                 <td><input type="text" class="form-control" ng-model="input.newOptionDisplay"/> </td>
                 <td><input type="text" class="form-control" ng-model="input.newOptionFSN"/> </td>
                 <td><i class="glyphicon glyphicon-plus-sign pull-right clickable"
+                       ng-show="input.newOptionCode && input.newOptionDisplay"
                        ng-click="addOption()"></i></td>
               </tr>
             </table>
 
+            <div class="pull-right">
+              <div ng-click="addOther()" ng-show = "canAddOther()" class="clickable">Add 'Other' option</div>
+
+            </div>
+
           </uib-tab>
 
-          <uib-tab heading="Update list (SNOMED)" >
-            <div class="row">
-              <div class="col-sm-1 col-md-1">
+          <uib-tab heading="Coded list from spreadsheet" >
 
-              </div>
-              <div class="col-sm-10 col-md-10">
-                <em>Paste in selection from spreadsheet. 3 cols: code, display, FSN.</em>
-                <br/>
-                <textarea class="form-control" rows = "8" ng-model="input.optionsSnomed"></textarea>
+              <em>Paste in selection from spreadsheet. 4 cols: code, display, FSN, system. FSN can be empty.
+              System defaults to SNOMED</em>
+              <br/>
+              <textarea class="form-control" rows = "8" ng-model="input.optionsSnomed"></textarea>
 
-                <button class="btn-link btn pull-right" ng-click="parseSnomed(input.optionsSnomed)">Parse SNOMED</button>
+              <button class="btn-link btn pull-right" ng-click="parseSnomed(input.optionsSnomed)">Parse list</button>
 
-              </div>
-            </div>
           </uib-tab>
 
-          <uib-tab heading="Update list (text)">
-            <div class="row">
-              <div class="col-sm-1 col-md-1">
+          <uib-tab heading="Example codes">
 
-              </div>
-              <div class="col-sm-10 col-md-10">
-                <em>A simple list of terms</em>
-                <textarea class="form-control"
-                          rows = "8" ng-model="input.optionsText"></textarea>
+              <em>A simple list of terms - one per line. code and display set to the line. System set to example.com.
+              Should only be used for examples.</em>
+              <textarea class="form-control"
+                        rows = "8" ng-model="input.optionsText"></textarea>
 
-                <button class="btn-link btn pull-right" ng-click="parseList(input.optionsText)">Parse Text</button>
-              </div>
-            </div>
+              <button class="btn-link btn pull-right" ng-click="parseList(input.optionsText)">Parse Text</button>
+
           </uib-tab>
 
         </uib-tabset>
@@ -751,6 +785,7 @@
                      ng-click="addUnit(input.unit)"></i></td>
             </tr>
           </table>
+        <div><em>Enter units as <a href="https://hl7.org/fhir/R4/valueset-ucum-common.html" target="_blank">UCUM </a> units</em></div>
       </uib-tab>
 
       <uib-tab ng-if="false" heading="Profiling">

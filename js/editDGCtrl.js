@@ -57,7 +57,7 @@ angular.module("pocApp")
             //todo - check that paths are consistent - no dups, levels 2 & 3 have apprpriate parents
             //todo - missing path or incomplete path prevents saving
 
-            $scope.input.pastedSSDG = $localStorage.pastedSSDG      //temp while developing
+            //$scope.input.pastedSSDG = $localStorage.pastedSSDG      //temp while developing
 
             //move the cursor to the top after pasting...
             $scope.onPaste = function ($event) {
@@ -104,26 +104,21 @@ angular.module("pocApp")
                 }
 
 
-/*
-                //if there are any log errors then set importError true
-                for (const lne of vo.log) {
-                    if (lne.severity == 'error') {
-                        $scope.importError = true
-                        break
-                    }
-                }
-*/
 
                 //$scope.model is the internal representation of the DG
-                $scope.model = vo.DG //$scope.importedDG
-                $scope.input.newModelName = $scope.model.name
+                if (vo.DG) {
+                    $scope.model = vo.DG //$scope.importedDG
 
-                //$scope.isNew = true
-                $scope.checkName($scope.input.newModelName,true)
-                $scope.input.newModelTitle= $scope.model.title
+                    $scope.input.newModelName = $scope.model.name
 
-                //generate the tree
-                $scope.makeTreeFromSS($scope.model)
+                    //$scope.isNew = true
+                    $scope.checkName($scope.input.newModelName,true)
+                    $scope.input.newModelTitle= $scope.model.title
+
+                    //generate the tree
+                    $scope.makeTreeFromSS($scope.model)
+                }
+
             }
 
             //parse the pasted spreadsheet

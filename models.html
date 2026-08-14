@@ -91,7 +91,7 @@
         <div class="container-fluid">
             <div class="col-md-3">
 
-                <a class="navbar-brand" href="#">
+                <a class="navbar-brand" href="https://clinfhir.com">
                     Questionnaire editor
 
                     <div style="padding-top: 8px">{{world.name}}</div>
@@ -113,11 +113,9 @@
             <div class="col-md-1 col-sm-1">
                 <div class="navbar-text btn">
                     <button class="btn btn-primary pull-right"
-                            ng-hide = "systemConfig.environment == 'canshare' && ! user.email"
+                            ng-hideOrig = "systemConfig.environment == 'clinfhir' || (systemConfig.environment == 'canshare' && ! user.email)"
+                            ng-show="systemConfig.environment == 'canshare' &&  user.email"
                             ng-click="openPlaygrounds()">Collections</button>
-
-
-
                 </div>
             </div>
 
@@ -136,7 +134,7 @@
 
             <div class="col-md-1">
                 <div class="navbar-text">
-                    <div class="btn btn-link pull-right" ng-click="toggleLeftPanel()">Toggle DG list</div>
+                    <div style="padding-top: 12px" class="btn btn-link pull-right" ng-click="toggleLeftPanel()">Toggle DG list</div>
                 </div>
             </div>
 
@@ -161,7 +159,7 @@
             </div>
 
             <div class="col-md-1 ">
-                <div class="navbar-text " ng-hide="user">
+                <div class="navbar-text " ng-hide="user" style="padding-top: 12px">
                     <span style="font-size:1.2em; cursor: pointer" uib-popover="Click to log in"
                           popover-placement="left"
                           popover-trigger="'mouseenter'">
@@ -171,7 +169,7 @@
                     </span>
                 </div>
 
-                <div class="navbar-text"  ng-if="user">
+                <div class="navbar-text"  ng-if="user" style="padding-top: 12px">
                     <span class="btn" style="font-size:1.2em;  cursor: pointer" uib-popover="{{user.email}}"
                           popover-placement="left"
                           popover-trigger="'mouseenter'">
@@ -209,11 +207,13 @@
 
 
         <div class="btn btn-primary pull-right"
-             ng-if = "world.saveTo == 'library' && world.lockedTo == user.email"
+             ng-if = "systemConfig.environment == 'canshare' && world.saveTo == 'library' && world.lockedTo == user.email"
              ng-click="updatePlayground(true)">Update Collections Library</div>
 
+
         <div class="btn btn-primary pull-right"
-             ng-if = "world.saveTo == 'browser' && systemConfig.environment !== 'canshare'"
+             ng-ifOrig = "world.saveTo == 'browser' && systemConfig.environment !== 'canshare'"
+             ng-if = "systemConfig.environment == 'clinfhir'"
              ng-click="updateBrowserCache()">Update Local Store</div>
 
         <div  ng-if = "world.lockedTo && (world.lockedTo !== user.email)" class="btn btn-warning pull-right">
@@ -264,10 +264,9 @@
                                                ng-model="input.dgFilter"/>
                                     </div>
                                     <div class="col-md-6">
-                                        <button ng-if = "user.email" class="btn btn-link  pull-right" ng-click="newModel('dg')">New DG</button>
-                                        <!--
-                                        <button class="btn btn-link pull-right" ng-click="listAllDG()">List all</button>
-                                        -->
+                                        <button ng-if = "systemConfig.environment == 'clinfhir' || user.email"
+                                                class="btn btn-link  pull-right" ng-click="newModel('dg')">New DG</button>
+
                                     </div>
                                 </div>
 
@@ -398,166 +397,12 @@
 
                     </ng-include>
 
-
-
-
-
                     <div ng-show="!showDGList && selectedModel.kind == 'dg'">
                         <ng-include src="'includes/showDG.html'"></ng-include>
                     </div>
 
 
-                    <div ng-hide = "selectedModel">
-<!--
-                        <uib-tabset>
 
-                            <uib-tab heading="Model summary">
-                                <br/>
-                                <table class="table table-bordered">
-                                    <tr><td style="width: 15%">Mode</td><td>{{userMode}}</td></tr>
-                                    <tr><td>Name</td><td>
-                                        <input class="form-control" type="text" ng-model="world.name"/>
-                                    </td></tr>
-                                    <tr ng-if="false"><td>Id</td><td>{{world.id}}</td></tr>
-                                    <tr><td>Description</td><td><textarea class="form-control" ng-model="world.description"></textarea></td></tr>
-                                    <tr>
-                                        <td>Container DGs</td>
-                                        <td>
-                                            <div ng-repeat="(k,v) in hashAllDG">
-
-
-                                                <div ng-if="v.isContainer">
-                                                    {{k}}
-
-                                                    <div class="btn btn-link"
-                                                         ng-click="selectModel(hashAllDG[k])">
-                                                        Select
-                                                    </div>
-
-                                                     <div class="btn btn-link"
-                                                         ng-click="showContainerQ(k)">
-                                                        Questionnaire
-                                                     </div>
-                                                </div>
-
-
-                                            </div>
-                                        </td>
-                                    </tr>
-
-
-                                </table>
-
-                                <div>
-                                    <div class="btn btn-primary pull-right" ng-click="updatePlayground(true)">Update both Model Repository and Local Store</div>
-                                    <div class="btn btn-link pull-right" ng-click="savePGtoLocal()">Update to Local Store</div>
-                                    <div class="btn btn-link pull-right" ng-click="updatePlayground()">Update to Model Repository</div>
-
-                                </div>
-
-
-                                <br/> <br/>
-
-
-
-                            </uib-tab>
-
-                            <uib-tab heading="Resource types">
-                                <br/>
-                                <em>List of DataGroups with resource types </em>
-                                <br/>
-                                <div class="tableFixHead">
-                                    <table class="table table-condensed table-bordered">
-                                        <thead>
-                                        <tr><th>Title</th><th>Resource type</th><th>Description</th></tr>
-                                        </thead>
-                                        <tbody>
-
-
-                                        <tr ng-repeat="v in sortedDGList">
-                                            <td>
-                                                <div class="clickable" ng-click="selectModelFromList(v.name,v.kind)">{{v.title}}</div>
-                                            </td>
-                                            <td><div >{{v.type}}</div></td>
-                                            <td>{{v.description}}</td>
-
-                                        </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-
-
-                            </uib-tab>
-
-                            <uib-tab ng-if="userMode == 'playground'" heading="Import Component">
-                                <br/>
-                                <table class="table table-bordered">
-                                    <tr><th>Title</th><th>Name</th><th>Type</th><th>Description</th><th># diff</th><th></th></tr>
-                                    <tr ng-repeat="dg in importableDG">
-                                        <td>{{dg.title}}</td>
-                                        <td>{{dg.name}}</td>
-                                        <td>{{dg.type}}</td>
-                                        <td>{{dg.description}}</td>
-
-                                        <td>{{dg.diff.length}}</td>
-
-                                        <td>
-                                            <div ng-if="dg.nameExists" class="clickable" ng-click="updateDG($index)">Update</div>
-                                            <div ng-if="!dg.nameExists"class="clickable" ng-click="importDG($index)">Import</div>
-                                        </td>
-                                    </tr>
-                                </table>
-
-                            </uib-tab>
-
-
-                            <uib-tab heading="Graph" select="fitAllDGGraph()">
-                                <br>
-                                <div>
-                                    <div class="clickable pull-right" ng-click="createAllDGGraph()">
-                                        Create graph
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-8">
-                                        <div id="graphAllDG"></div>
-                                    </div>
-                                    <div class="col-md-4">
-
-                                        <button class="btn-link btn pull-right"
-                                                ng-click="selectModel(selectedNodeFromFull.dg )">Select</button>
-
-                                        <uib-tabset>
-                                            <uib-tab heading="Tree">
-                                                <div id="dgFromAllGraph"></div>
-                                            </uib-tab>
-                                            <uib-tab heading="Json">
-                                                <div class="myScroll">
-                                                    <pre>{{selectedNodeFromFull.dg | json}}</pre>
-                                                </div>
-
-                                            </uib-tab>
-                                        </uib-tabset>
-
-                                    </div>
-                                </div>
-
-
-
-                            </uib-tab>
-
-
-                            <uib-tab ng-if="userMode == 'library'" heading="CanShare Data Model">
-                                <div class="banner">CanShare Data Model</div>
-                                <img width="100%" src="images/LIM-org.png" usemap="#image_map"/>
-
-                            </uib-tab>
-
-                        </uib-tabset>
-
-                        -->
-                    </div>
 
                 </div>
             </div>
@@ -619,6 +464,10 @@
                                 ng-disabled="! canEdit()"
                                 class="form-control" ng-model="world.description"></textarea>
                         </td></tr>
+
+                        <tr><td>Can create Components</td>
+                        <td><checkbox ng-model="world.canCreateComponents"></checkbox> If checked, DGs in this Collection can create or update components. Regardless, components can always be imported.</td>
+                        </tr>
 
                         <tr>
                             <td>Container DGs</td>

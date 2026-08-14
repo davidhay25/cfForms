@@ -28,7 +28,17 @@ angular.module("pocApp")
 
             let snomed = "http://snomed.info/sct"
 
+            //add 'Other' option to options list
+            $scope.addOther = function () {
+                $scope.options = $scope.options || []
+                $scope.options.push({code:"74964007",system:'http://snomed.info/sct',display:`Other` })
+            }
 
+            //show the 'add other' link if there isn't already one in the list...
+            $scope.canAddOther = function () {
+                let ar = $scope.options.filter(c => c.code == '74964007')
+                if (ar.length == 0) {return true}
+            }
 
             $scope.fullElementList = fullElementList
             let dgName = fullElementList[0].ed.path     //it's aways the first element in the list...
@@ -219,32 +229,7 @@ angular.module("pocApp")
 
             $scope.fhirResourceType = igSvc.findResourceType(hashAllDG[dgName],hashAllDG)
 
-/*
-            //parentEd is the ed to which the new one is going to be added. It's ignored during editing existing
-            //we want to be sure that any path added at this level is unique (but OK at other levels)
-            let posOfChildren = 1  //by default, will look for dups in the first segment. Don't always have a selected element - eg when a DG is first selected
-            let hashChildNames = {} //all the existing child path names
-            if (parentEd && parentEd.path) {
-                let ar = parentEd.path.split('.')
-                posOfChildren = ar.length     //this is where all the direct children will sit - 0 based
-            }
 
-
-            //used to detect duplicate path names
-            //Issue is that it won't include deleted items (mult = 0..0) as they are no linger in the list...
-            //this isn't an issue in collections
-            fullElementList.forEach(function (item) {
-                let ed = item.ed
-                if (ed && ed.path) {
-                    let ar = ed.path.split('.')
-                    if (ar.length >= posOfChildren) {
-                        //this is a child - or a child of a child
-                        let segmentName = ar[posOfChildren]
-                        hashChildNames[segmentName] = true
-                    }
-                }
-            })
-*/
 
             //update the coded list for the optional valueSet feature. A separate routine to make the logic clearer
             $scope.codedElements = []
@@ -271,6 +256,10 @@ angular.module("pocApp")
                 $scope.input.notes = item.ed.notes
                 $scope.input.rules = item.ed.rules
                 $scope.input.valueSet = item.ed.valueSet
+
+                $scope.input.expandValueSet = item.ed.expandValueSet
+
+
                 $scope.input.sourceReference = item.ed.sourceReference
 
                 $scope.input.insertAfter = item.ed.insertAfter
@@ -324,7 +313,7 @@ angular.module("pocApp")
                 //set the options list
                 if (item.ed.options) {
                     $scope.options = item.ed.options
-                    makeOptionsText()
+                  //  makeOptionsText()
                 }
 
                 //set the options list
@@ -449,7 +438,20 @@ angular.module("pocApp")
             }
 
             $scope.addConditionalVS = function (path,value,valueSet) {
-                $scope.conditionalVS.push({path:path,value:value,valueSet:valueSet})
+
+                //we also want the id of the path - this will become the source of the 'enableWhen' in the Q
+                let id
+
+                for (const item of fullElementList) {
+                    if (item.ed.path == path) {
+                        id = item.ed.id
+                        break
+                    }
+                }
+
+                $scope.conditionalVS.push({path:path,sourceId:id,value:value,valueSet:valueSet})
+
+                console.log(path,id)
 
                 delete $scope.input.conditionalVSPath
                 delete $scope.input.conditionalVSValue
@@ -636,14 +638,7 @@ angular.module("pocApp")
 
             }
 
-            function deleteOtherConditional(ed) {
-                //remove any conditionals related to the 'otherType' - 74964007
-                if (ed.enableWhen) {
-                    let ar = []
-                    //will hold new enable when
 
-                }
-            }
 
             $scope.validateJson = function(value,displayErr) {
                 //let v = value
@@ -716,12 +711,15 @@ angular.module("pocApp")
 
                 ed.conditionalVS = $scope.conditionalVS
 
+                ed.expandValueSet = $scope.input.expandValueSet
+
 
                 if ($scope.input.otherType) {
                     ed.otherType = $scope.input.otherType
                 } else {
                     //delete any otherType conditional that may be present
-                    //deleteOtherConditional()
+                    delete ed.otherType
+
                 }
 
                 ed.sourceReference = $scope.input.sourceReference
@@ -878,6 +876,11 @@ angular.module("pocApp")
                     //check that there are no spaces in the path
                     if ($scope.input.path.indexOf(" ") > -1) {
                         alert("The path cannot contain spaces")
+                        return
+                    }
+
+                    if ($scope.input.path.indexOf(".") > -1) {
+                        alert("The path cannot contain dots (.)")
                         return
                     }
 
@@ -1093,20 +1096,25 @@ angular.module("pocApp")
 
             //------------ functions for options list ------------
 
+            //only called when code & display are not empty
             $scope.addOption = function () {
                 $scope.options = $scope.options || []
 
-
                 let code = $scope.input.newOptionCode
-                if (code) {
-                    code = code.replace(/ /g, "");
-                } else {
-                    code = ""
+                code = code.replace(/ /g, "");
+
+                let concept = {
+                    code:code,
+                    display:$scope.input.newOptionDisplay
                 }
 
-                let concept = {code:code,
-                    display:$scope.input.newOptionDisplay,
-                    fsn:$scope.input.newOptionFSN}
+                if ($scope.input.newOptionFSN) {
+                    concept.fsn = $scope.input.newOptionFSN
+                }
+
+                concept.system = $scope.input.newOptionSystem || snomed
+
+                /* - why did i do this?
                 if ($scope.input.newOptionSystem) {
 
                     //set all the options to the same system
@@ -1114,14 +1122,15 @@ angular.module("pocApp")
                         option.system = $scope.input.newOptionSystem
                     })
 
-
                     concept.system = $scope.input.newOptionSystem
                 }
+                */
 
                 $scope.options.push(concept)         //was adding snomed here...
                 delete $scope.input.newOptionCode
                 delete $scope.input.newOptionDisplay
                 delete $scope.input.newOptionFSN
+
                // delete $scope.input.newOptionSystem - don't delete
             }
 
@@ -1221,7 +1230,7 @@ angular.module("pocApp")
             }
 
             //Make a text list from the ed.options
-            function makeOptionsText() {
+            function makeOptionsTextDEP() {
                 let txt = ""
                 $scope.options.forEach(function (opt) {
                     txt += opt.display + "\n"
@@ -1241,16 +1250,19 @@ angular.module("pocApp")
                 lines.forEach(function (lne) {
                     if (lne) {
                         let option = {}
-                        option.pt = lne
+                        //option.pt = lne
                         option.code = lne.replace(/ /g, '_')
                         option.display = lne
+                        option.system = "http://example.com"
                         $scope.options.push(option)
                     }
 
 
 
                 })
-                alert("Options have been updated")
+                alert("Example options have been created from the list")
+                delete $scope.input.optionsText
+                $scope.input.conceptTabActive = 0
             }
 
 
@@ -1265,14 +1277,23 @@ angular.module("pocApp")
                     option.code = ar[0]
                     option.pt = ar[1]       //set the pt (preferred term) and the display the same. Not sure if we should be using pt anyway...
                     option.display = ar[1]
+
                     if (ar.length > 2) {
                         option.fsn = ar[2]
+                    }
+
+                    if (ar.length > 3) {
+                        option.system = ar[3] || snomed
+                    } else {
+                        option.system =  snomed // "http://snomed.info/sct"
                     }
 
                     $scope.options.push(option)
 
                 })
-                alert("Options have been updated")
+                alert("Options have been updated with the parsed list.")
+                delete $scope.input.optionsSnomed
+                $scope.input.conceptTabActive = 0
 
             }
 

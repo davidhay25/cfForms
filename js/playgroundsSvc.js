@@ -250,16 +250,21 @@ angular.module("pocApp")
                 }
 
                 console.log(currentDG)
+                if (currentDG) {
+                    //now check for duplicate pathe
+                    let hashPath = {}
+                    for (const [index, ed] of currentDG.diff.entries()) {
+                        if (hashPath[ed.path]) {
+                            log.push({severity:'error',path: ed.path ,line:index,msg:`The Path is duplicated.`})
 
-                //now check for duplicate pathe
-                let hashPath = {}
-                for (const [index, ed] of currentDG.diff.entries()) {
-                    if (hashPath[ed.path]) {
-                        log.push({severity:'error',path: ed.path ,line:index,msg:`The Path is duplicated.`})
-
+                        }
+                        hashPath[ed.path] = true
                     }
-                    hashPath[ed.path] = true
+                } else {
+                    log.push({severity:'error',path: 'Unknown' ,msg:`Unable to parse input. Is it a pasted spreadsheet segment`})
                 }
+
+
 
 
 
@@ -446,7 +451,7 @@ angular.module("pocApp")
                         }
 
                         //Other elements from the old that copy across
-                        for (const eleName of  ['controlHint','definition','prePop','hiddenInQ','options','mult']) {
+                        for (const eleName of  ['controlHint','definition','prePop','hiddenInQ','options','mult','otherType']) {
                             if (edFromOld[eleName]) {
                                 ed[eleName] = edFromOld[eleName]
                             }
