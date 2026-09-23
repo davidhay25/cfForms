@@ -101,9 +101,57 @@
 
 
               </div>
+
+              <div ng-if="selectedType.name == 'popContext'">
+                  <em>Population context</em>
+                  <br/><br/>
+                  <div class="row">
+
+                      <div class="col-md-3">
+                          Type
+                      </div>
+                      <div class="col-md-9">
+                          <input type = 'radio' value="fhirpath" ng-model="input.vType"/> fhirPath &nbsp;&nbsp;&nbsp;
+                          <input type = 'radio' value="query" ng-model="input.vType"/> x-fhir-query
+                      </div>
+                  </div>
+                  <br/>
+                  <div class="row">
+
+                      <div class="col-md-3">
+                          Name
+                      </div>
+                      <div class="col-md-4">
+                          <input class="form-control" ng-model="input.vName" placeholder="Spaces will be removed"/>
+                      </div>
+                      <div class="col-md-5">
+                          <em>To insert a linkId, use the elements tab to copy it to the clipboard then paste in here</em>
+                      </div>
+                  </div>
+                  <br/>
+                  <div class="row">
+
+                      <div class="col-md-3">
+                          Expression
+                      </div>
+                      <div class="col-md-9">
+                          <textarea class="form-control" rows = 4  ng-model="input.vExpression"></textarea>
+                      </div>
+                  </div>
+
+                  <br/>
+
+
+                  <button class="btn btn-primary pull-right"
+                          ng-if="input.vName && input.vExpression"
+                          ng-click="save('popContext')">Save</button>
+
+
+              </div>
+
               <div ng-if="selectedType.name == 'allocateId'">
                   <em>Allocate an Id for use later in a definitionExtract extension. Commonly used
-                  when setting up references.</em>
+                  when setting up references. Any references to this variable should be preceeded by a %</em>
                   <br/><br/>
                   <div class="row">
 
@@ -183,6 +231,7 @@
                           <input class="form-control" ng-model="input.deVariable" placeholder="Spaces will be removed"/>
                           <div><em>
                               The variable created by the allocateId extension that will be the fullUrl value of the extracted resource in the output bundle.
+                              Include the % in front of the variable.
 
                           </em></div>
 
@@ -212,7 +261,8 @@
                       <div class="col-md-10">
                           <input class="form-control" ng-model="input.devCanonical" placeholder="Spaces will be removed"/>
                           <div><em>
-                              The full url of the path that will be populated by the value. eg Patient.birthDate
+                              The full url of the path that will be populated by the value. eg Patient.birthDate.
+                              If this is a reference then remember the '.reference' - eg Condition.subject.reference
                           </em></div>
                       </div>
 
@@ -226,7 +276,9 @@
                       </div>
                       <div class="col-md-10">
                           <input class="form-control" ng-model="input.devExpression" />
-                          <div><em>If an expression is used to calculate the value to insert</em></div>
+                          <div><em>If an expression is used to calculate the value to insert. If using a
+                          variable remember to add the '%' in front of the variable name. If to the
+                          Patient, then the variable will be %patientID</em></div>
                       </div>
                   </div>
 

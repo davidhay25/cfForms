@@ -16,9 +16,11 @@ angular.module("pocApp")
             $scope.extTypes.push({name:'variable',display:"Variable"})
             $scope.extTypes.push({name:'allocateId',display:"AllocateId"})
             $scope.extTypes.push({name:'initialexp',display:"Initial expression"})
-            $scope.extTypes.push({name:'defextract',display:"Definition extract"})
+            $scope.extTypes.push({name:'defextract',display:"Definition extract","spec":"https://www.hl7.org/fhir/uv/sdc/en/StructureDefinition-sdc-questionnaire-definitionExtract.html"})
             $scope.extTypes.push({name:'defextractvalue',display:"Definition extract value"})
             $scope.extTypes.push({name:'calc',display:"Calculated expression"})
+            $scope.extTypes.push({name:'popContext',display:"Population context"})
+
 
             //$scope.extTypes.push({name:'xhtml',display:"Rendering XHTML"})
 
@@ -127,6 +129,15 @@ angular.module("pocApp")
                         break
                     case "variable" :
                         ext.url= "http://hl7.org/fhir/StructureDefinition/variable"
+                        ext.valueExpression = {name: $scope.input.vName.replace(/\s+/g, "")}
+                        ext.valueExpression.expression = $scope.input.vExpression
+                        ext.valueExpression.language = "text/fhirpath"
+                        if ($scope.input.vType == 'query') {
+                            ext.valueExpression.language = "application/x-fhir-query"
+                        }
+                        break
+                    case "popContext" :
+                        ext.url= "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-itemPopulationContext"
                         ext.valueExpression = {name: $scope.input.vName.replace(/\s+/g, "")}
                         ext.valueExpression.expression = $scope.input.vExpression
                         ext.valueExpression.language = "text/fhirpath"

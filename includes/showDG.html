@@ -58,6 +58,8 @@
           <span ng-if = "false" class="clickable spacer"
               ng-click="cloneDG(selectedModel)">Make a copy</span>
 
+
+
           <span ng-if="user && user.email && world.canCreateComponents" class="clickable spacer"
               ng-click="updateComponent('dg',selectedModel)">Update component</span>
         </span>
@@ -162,7 +164,7 @@
     <uib-tab heading="Tree">
       <br/>
       <div class="row">
-        <div class="col-md-6" >
+        <div class="col-md-5" >
           <div class="background">
             <div class="pull-right">
               <div class="clickable myIcon" ng-click="expandDTTree()">Expand all ({{fullElementList.length -1}})</div>
@@ -221,7 +223,7 @@
               Dotted underline</span> indicates the element is subject to conditional show in the Q</div>
           </div>
         </div>
-        <div class="col-md-6 ">
+        <div class="col-md-7 ">
 
           <div class="background" ng-if="selectedNode.data.ed">
           <div ng-if="selectedNode.data.ed">
@@ -300,7 +302,7 @@
                       <td class="detailName">Ad hoc extension</td>
                       <td>
                         <div class="pull-right">
-                          <div class="btn btn-link" ng-click="editAdHocExtension(null,selectedModel)">Edit</div>
+                          <div class="btn btn-link" ng-click="editAdHocExtension(null,selectedModel)">Edit Ext</div>
                         </div>
 
                         <div ng-if="selectedModel.adHocExtension.length > 0"
@@ -330,17 +332,37 @@
                 </uib-tab>
                 <uib-tab heading="Ext">
 
+
+                  <div class="pull-right">
+                    <div class="btn btn-link" ng-click="editAdHocExtension(null,selectedModel)">Edit Ext</div>
+                  </div>
+                  <br/>
+
                   <div ng-repeat="ext in selectedModel.adHocExtension">
                     <strong>{{ ext.url | lastInUrl}}</strong>
                     <div>{{ ext | stripExtUrl}}</div>
                   </div>
 
                   <br/>
+
+
                   <div ng-show="snapshotSvc.getDG(selectedNode.data.ed.type[0]).type">
                     Extract to: {{snapshotSvc.getDG(selectedNode.data.ed.type[0]).type}}</div>
                   <div ng-show="snapshotSvc.getDG(selectedNode.data.ed.type[0]).extractId">
                     Allocated Id: {{snapshotSvc.getDG(selectedNode.data.ed.type[0]).extractId}}</div>
 
+
+                </uib-tab>
+
+                <uib-tab heading="Q Item">
+
+
+                  <div class="clickable pull-right" ng-click="showQItemHierarchy(selectedNode.data.ed.path)">Detailed view</div>
+                  <div class="clearfix"></div>
+                  <div class="myScroll">
+                    <pre>{{getItemForPath(selectedNode.data.ed.path) | json}}</pre>
+                  </div>
+                  <em>Any child items removed</em>
 
                 </uib-tab>
               </uib-tabset>
@@ -379,11 +401,7 @@
                         <span ng-hide="selectedNode.data.ed.hideInQ || selectedNode.data.ed.hiddenInQ">Appears in Q</span>
                       </span>
 
-
-
                     </td>
-
-
                   </tr>
 
                   <tr><td class="detailName" style="width : 20%">Title</td>
@@ -431,9 +449,6 @@
                         <div ng-show="fhirDataTypes.indexOf(type) > -1 || type == 'display'">
                           {{type}}&nbsp;
                         </div>
-
-
-
 
 
                       <div ng-if="selectedNode.data.ed.type[0] == 'CodeableConcept'">
@@ -521,12 +536,14 @@
                     </td>
                   </tr>
 
+                  <!--
                   <tr ng-if="selectedNode.data.ed.autoPop">
                     <td class="detailName">Auto populated</td>
                     <td>
                       Yes
                     </td>
                   </tr>
+                  -->
 
                   <tr ng-if="selectedNode.data.ed.type[0] == 'CodeableConcept' && selectedNode.data.ed.options.length > 0">
                     <td class="detailName">Options</td>
@@ -717,7 +734,6 @@
                     </td>
                   </tr>
 
-
                   <tr ng-if="selectedNode.data.ed.definition">
                     <td class="detailName">Extraction</td>
                     <td>
@@ -725,16 +741,12 @@
                     </td>
                   </tr>
 
-
-
-
                   <tr ng-if="selectedNode.data.ed.identifierSystem">
                     <td class="detailName">Identifier system</td>
                     <td>
                       {{selectedNode.data.ed.identifierSystem}}
                     </td>
                   </tr>
-
 
                   <tr ng-if="selectedNode.data.ed.extractExtensionUrl">
                     <td class="detailName">Extension Url</td>
@@ -751,9 +763,6 @@
                     </td>
                   </tr>
 
-
-
-
                   <tr ng-if="selectedNode.data.ed.collapsible">
                     <td class="detailName">Collapsible</td>
                     <td>
@@ -762,10 +771,17 @@
                     </td>
                   </tr>
 
+                  <tr ng-if="selectedNode.data.ed.gTable">
+                    <td class="detailName">Table layout</td>
+                    <td>
+                      For repeating groups (like a spreadsheet). Child nodes in columns
+                    </td>
+                  </tr>
+
                   <tr ng-if="selectedNode.data.ed.sdcGrid">
                     <td class="detailName">Grid layout</td>
                     <td>
-                      Child nodes in columns
+                      To position grandchild nodes in columns (child is a group)
                     </td>
                   </tr>
 
@@ -810,7 +826,13 @@
                     <td>
 
                       <div class="pull-right">
-                        <div class="btn btn-link" ng-click="editAdHocExtension(selectedNode.data.ed)">Edit</div>
+                        <div ng-show="selectedNode.data.ed.sourceModelName == selectedModel.name">
+                          <div class="btn btn-link" ng-click="editAdHocExtension(selectedNode.data.ed)">Edit Ext</div>
+                        </div>
+                        <div ng-hide="selectedNode.data.ed.sourceModelName == selectedModel.name">
+                          <div>(Update Ext on component)</div>
+                        </div>
+
                       </div>
 
                       <span ng-if="selectedNode.data.ed.adHocExtension.length > 0"
@@ -945,6 +967,10 @@
                   <div>{{ ext | stripExtUrl}}</div>
                 </div>
                 <br/>
+                <div class="pull-right">
+                  <div class="btn btn-link" ng-click="editAdHocExtension(selectedNode.data.ed)">Edit Ext</div>
+                </div>
+                <br/>
                 <div ng-show="snapshotSvc.getDG(selectedNode.data.ed.type[0]).type">
                   Extract to: {{snapshotSvc.getDG(selectedNode.data.ed.type[0]).type}}</div>
                 <div ng-show="snapshotSvc.getDG(selectedNode.data.ed.type[0]).extractId">
@@ -953,7 +979,19 @@
               </uib-tab>
 
 
-              <uib-tab heading="Element Json">
+              <uib-tab heading="Q Item">
+
+
+                <div class="clickable pull-right" ng-click="showQItemHierarchy(selectedNode.data.ed.path)">Show hierarchy</div>
+                <div class="clearfix"></div>
+                <div class="myScroll">
+                  <pre>{{getItemForPath(selectedNode.data.ed.path) | json}}</pre>
+                </div>
+                <em>Any child items removed</em>
+
+              </uib-tab>
+
+              <uib-tab heading="Json">
                 <div class="myScrollSmall">
                   <pre>{{edForJsonDisplay | json}}</pre>
                 </div>
@@ -965,19 +1003,41 @@
 
             <br/><br/>
             <div ng-hide="selectedNode.data.ed.kind == 'root' || ! canEdit(selectedModel)">
-              {{selectedNode.data.ed.title}}
-              <button class="btn-link btn"
+              <strong>{{selectedNode.data.ed.title}}</strong>
 
+              <button class="btn-link btn"
                       ng-click="deleteDGItem(selectedNode.data.ed)">
                 Delete this item
               </button>
-<!--
-              <button ng-show = "selectedNode.data.ed.type[0] == 'Group'" class="btn-link btn"
 
-                      ng-click="splitBranch(selectedNode.data.ed)">
-                Split branch
+              <!-- not sure whether to allow override elements. I can see the value but worry about the complexity
+              <button ng-show="selectedModel.name == selectedNode.data.ed.sourceModelName" class="btn-link btn"
+                      ng-click="deleteDGItem(selectedNode.data.ed)">
+                Delete this item
               </button>
+
+              <span ng-hide="selectedModel.name == selectedNode.data.ed.sourceModelName">
+                <em>
+                To delete this element, remove it from the
+                  <span class="clickable" ng-click="termSelectDG({DGName:selectedNode.data.ed.sourceModelName},selectedModel.name)">
+                    {{selectedNode.data.ed.sourceModelName}}</span>
+                  DG
+                </em>
+              </span>
+
               -->
+
+
+
+
+
+
+              <br/>
+              <!--
+              {{selectedNode.data.ed.sourceModelName}}
+              {{selectedModel.name}}
+              -->
+
 
             </div>
 
@@ -990,6 +1050,43 @@
       </div>
 
     </uib-tab>
+
+
+    <uib-tab heading="Rendered form">
+      <div ng-controller = "qViewerCtrl">
+
+        <div ng-show="input.renderIssues.length > 0">
+
+          <div class="row">
+            <div class="col-md-11">
+              <table class="table-bordered table">
+                <tr ng-repeat = "iss in input.renderIssues">
+                  <td>{{iss.severity}}</td>
+                  <!--<td>{{iss.code}}</td>-->
+                  <td>
+                    {{iss.diagnostics}}
+                    {{iss.details.text}}
+                  </td>
+                </tr>
+
+              </table>
+            </div>
+            <div class="col-md-1">
+              <div class="clickable pull-right" ng-click="input.renderIssues = null">Clear</div>
+            </div>
+          </div>
+
+
+
+        </div>
+
+        <ng-include src="'includes/qViewer.html'"></ng-include>
+
+      </div>
+
+    </uib-tab>
+
+
 
 
     <uib-tab heading="Views">
@@ -1589,7 +1686,7 @@
     </uib-tab>
 
 
-    <uib-tab ng-if ="false">
+    <uib-tab ng-if ="true">
       <uib-tab-heading>Elements <span class="badge">{{selectedModel.diff.length}}</span> </uib-tab-heading>
       <em>The element definitions in the .diff element. ie directly defined in the DG. </em>
       <br/><br/>
@@ -1730,13 +1827,13 @@
     </uib-tab>
 
 
-    <uib-tab heading="Rendered form">
-      <ng-include src="'includes/qViewer.html'"></ng-include>
-    </uib-tab>
-
-
 
     <uib-tab heading="Q Json">
+      <div class="row">
+        <div class="col-md-12">
+          <button class="btn btn-link pull-right" ng-click="localCopyToClipboard(fullQ)">Copy to clipboard</button>
+        </div>
+      </div>
       <pre>{{fullQ | json}}</pre>
     </uib-tab>
 

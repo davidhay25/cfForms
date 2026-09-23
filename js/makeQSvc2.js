@@ -123,6 +123,7 @@ angular.module('pocApp')
 
                         if (ed.displayBefore) {
                             let edDa = {id:utilsSvc.getUUID(),path:`${ed.path}db`, type:['display'],title:ed.displayBefore}
+
                             items.push(edDa)
                         }
 
@@ -134,6 +135,7 @@ angular.module('pocApp')
                         }
                     }
 
+                    //used when a CC based ed defines an 'other' option - for answers not in the list
                     //if othertype is set, may need to add a textbox for the other type
                     //todo - do need to think about extraction. we'd want this to extract to something like cc.text
                     //so might want to look at any extract instructions on this ed - might be as simple as having /text on the end...
@@ -176,9 +178,6 @@ angular.module('pocApp')
                                 ed.options.unshift(...options) //insert the concepts from the VS before the existing ones
 
                                 //delete ed.valueSet - don't delete the ValueSet!
-
-
-
                                 console.log(options)
                             }
 
@@ -193,7 +192,7 @@ angular.module('pocApp')
 
                 })
 
-                console.log(items)
+                //console.log(items)
 
                 // 1. Build hierarchy + index
                 items.forEach(src => insertItem(questionnaire.item, src, pathIndex, idIndex, warnings));
@@ -207,7 +206,7 @@ angular.module('pocApp')
 
 
 
-                return {questionnaire: cleanQ, warnings};
+                return {questionnaire: cleanQ, warnings,pathIndex};
             };
 
             /* ================================================================
@@ -281,7 +280,13 @@ angular.module('pocApp')
                     item.extension = ed.adHocExtension
                 }
 
-                item.linkId = utilsSvc.getUUIDHash(ed.id) //ed.linkId || item.linkId;
+                //check if the ed.display is html (crude - has both > and < ) if so, add the rendering-xhtml extension
+                makeQSvc2Helper.checkForHtml(ed,item)
+
+
+
+                // temp item.linkId = ed.linkId || utilsSvc.getUUIDHash(ed.id) //ed.linkId || item.linkId;
+                item.linkId = ed.linkId || utilsSvc.getUUIDHash(ed.path) //ed.linkId || item.linkId;
 
                 item.text = ed.title;
 
@@ -305,7 +310,6 @@ angular.module('pocApp')
                                 //if we're expanding a vs then there will be both, but it isn't an error
                                 warnings.push({lvl: 'err', msg: `${ed.path} has both options and valueSet. ValueSet will be ignored.`});
                             }
-
                         } else {
                             let vs = ed.valueSet
                             if (vs.indexOf('http') == -1) {
@@ -313,10 +317,6 @@ angular.module('pocApp')
                             }
                             item.answerValueSet = vs
                         }
-
-
-
-
 
                     }
 
@@ -355,6 +355,7 @@ angular.module('pocApp')
                     let options = []
                     for (const opt of ed.options) {
                         delete opt.pt   //pt (preferred term) is added when pasting a list of options when editing an item
+                        delete opt.fsn
                         options.push({valueCoding: opt})
                     }
 
@@ -478,6 +479,11 @@ angular.module('pocApp')
                     addItemControl(item, 'gtable')
                 }
 
+                if (ed.sdcGrid) {
+                    addItemControl(item, 'grid')
+                }
+
+
                 if (ed.units && ed.units.length > 0) {
                     //only add the first one ATM
                     let ext = {url: extUnit, valueCoding:{code:ed.units[0],system:'http://unitsofmeasure.org'}}
@@ -486,7 +492,7 @@ angular.module('pocApp')
                 }
 
                 if (ed.hiddenInQ) {
-                    hideItem(item)
+                    makeQSvc2Helper.hideItem(ed,item)
                 }
 
 
@@ -530,6 +536,19 @@ angular.module('pocApp')
                         const resolved = item._source.enableWhen
                             .map(cond => resolveEnableWhenCondition(cond, pathIndex, idIndex, warnings))
                             .filter(Boolean);
+
+                        console.log(resolved)
+
+                        //sep 3 2026
+                        if (resolved.length > 0) {
+                            for(let item of resolved) {
+                                if (item.answerCoding) {
+                                    console.log(item.answerCoding)
+                                    delete item.answerCoding.fsn
+                                }
+                            }
+                        }
+
 
                         if (resolved.length) {
                             item.enableWhen = resolved;
@@ -625,9 +644,19 @@ angular.module('pocApp')
 
                             let cleaned = {}
                             for (const key of Object.keys(i)) {
+
                                 if (!key.startsWith("_") && (key !== 'item')) {
                                     cleaned[key] = i[key]
                                 }
+
+                                //_text is specifically allowed, in retrospect using '_' was a mistake as that is used for extensions on primatives...
+                                if (key == '_text') {
+                                    cleaned[key] = i[key]
+                                }
+
+
+
+
                             }
 
                             if (childItems.length) cleaned.item = childItems;
@@ -642,106 +671,9 @@ angular.module('pocApp')
                 return cleanQ;
             }
 
-            function getControlDetailsDEP(ed) {
-
-                let containedDG = null
-
-                //return the control type & hint based on the ed
-                let controlHint = "string"            //this can be any value - it will be an extension in the Q - https://hl7.org/fhir/R4B/extension-questionnaire-itemcontrol.html
-                let controlType = "string"          //this has to be one of the defined type values
-
-                if (ed.options && ed.options.length > 0) {
-                    controlHint = "drop-down"
-                    controlType = "choice"
-                }
-
-                if (ed.type) {
-                    let type = ed.type[0]
-
-                    containedDG = snapshotSvc.getDG(ed.type[0])
-                    if (containedDG) {
-                        //this is a contained DG
-                        controlHint = "group"
-                        controlType = "group"
-                    } else {
-                        switch (type) {
-                            case 'display' :
-                                controlType = "display"
-                                controlHint = "display"
-                                break
-                            case 'string' :
-                                controlType = "string"      //default to single text box
-                                if (ed.controlHint == 'text') {
-                                    controlType = "text"
-                                }
-                                break
-                            case 'boolean' :
-                                controlHint = "boolean"
-                                controlType = "boolean"
-                                break
-                            case 'decimal' :
-                                controlHint = "decimal"
-                                controlType = "decimal"
-                                break
-                            case 'integer' :
-                                controlHint = "integer"
-                                controlType = "integer"
-                                break
-                            case 'Quantity' :
-                                controlHint = "quantity"
-                                controlType = "quantity"
-                                if (ed.units) {
-                                    //p
-                                    //console.log(ed.units)
-                                }
-                                break
-                            case 'dateTime' :
-                                controlHint = "dateTime"
-                                controlType = "dateTime"
-                                break
-                            case 'date' :
-                                controlHint = "date"
-                                controlType = "date"
-                                break
-                            case 'CodeableConcept' :
-                            case 'code' :
-                                //  controltype is always choice. May want typeahead later
-
-                                controlHint = "drop-down"
-                                controlType = "choice"
-
-                                if (ed.controlHint) {
-                                    controlHint = ed.controlHint
-                                    //csiro only supports autocomplete on open-choice
-                                    if (controlHint == 'autocomplete') {
-                                        controlType = "open-choice"
-                                    }
-                                }
-                                break
-                            case 'Group' :
-                            case 'group' :
-
-                                controlHint = "group"
-                                controlType = "group"
-
-                                break
-                            /*
-                            case 'Identifier' :
-                                controlHint = "Identifier"
-                                controlType = "Identifier"
-        */
-
-                        }
-
-                    }
-                }
 
 
-                return {controlType: controlType, controlHint: controlHint, dg: containedDG}
-            }
-
-
-            function addIfNotEmpty(item, eleName, obj) {
+            function addIfNotEmptyDEP(item, eleName, obj) {
                 if (obj) {
                     // console.log(item,obj)
                     item[eleName] = obj
@@ -755,14 +687,13 @@ angular.module('pocApp')
                     status: 'draft'
                 };
 
+                questionnaire.id = config.id
                 questionnaire.name = config.name || dg.name //firstElement.ed.path
                 questionnaire.title = dg.title //firstElement.title
                 questionnaire.status = config.status || 'draft'
                 questionnaire.title = dg.title
                 questionnaire.date = new Date().toISOString()
                 questionnaire.url = config.url
-
-
 
                 questionnaire.version = config.version // || 'draft'
                 questionnaire.description = dg.description
@@ -929,7 +860,7 @@ angular.module('pocApp')
 
             }
 
-            function hideItem(item) {
+            function hideItemDEP(item) {
                 //create a hidden extension and add to the item
                 let ext = {url: extHidden, valueBoolean: true}
                 addExtension(item, ext)

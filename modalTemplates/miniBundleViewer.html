@@ -1,0 +1,155 @@
+<div>
+  <!--<div ng-controller="qViewerCtrl">-->
+
+  <style>
+    #resourceGraph {
+      width: 100%;
+      height: 550px;
+      border: 1px solid lightgray;
+    }
+  </style>
+
+  <div class="modal-header">
+    <div class="row">
+      <div class="col-md-8 col-sm-8">
+        <h3 class="modal-title">
+          View bundle
+        </h3>
+      </div>
+
+
+      <div class="col-md-4 col-sm-4">
+        <button class="btn btn-link pull-right" ng-click="$dismiss()">Close</button>
+        <!--
+      <button ng-show = "input.name"
+              class="btn btn-primary pull-right" ng-click="save()">Close</button>
+        -->
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-body">
+
+    <uib-tabset>
+      <uib-tab heading="Graph">
+        <div class="row">
+          <div class="col-md-6">
+            <div id="resourceGraph"></div>
+          </div>
+          <div class="col-md-6">
+            <uib-tabset>
+              <uib-tab heading="Json">
+                <pre>{{selectedResourceFromGraph | json}}</pre>
+              </uib-tab>
+              <uib-tab heading="Validation">
+              <!--  <div>
+                  <div class="clickable pull-right" ng-click="validate(selectedResourceFromGraph)">Perform validation</div>
+                </div>
+                <div class="clearfix"></div>
+
+                -->
+                <br/>
+                <div class="myScroll">
+                  <table class="table-bordered table">
+                    <tr ng-repeat="iss in OO.issue">
+                      <td>{{iss.severity}}</td>
+                      <td>
+                        {{iss.diagnostics}}
+                        <div><em>{{iss.location[0]}}</em></div>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+
+
+
+<!--
+                <pre>{{OO | json}}</pre>
+                -->
+
+              </uib-tab>
+            </uib-tabset>
+
+
+
+
+
+
+          </div>
+        </div>
+      </uib-tab>
+
+      <uib-tab heading="Validate Bundle">
+        <div>
+          <div class="clickable pull-right" ng-click="validate()">Perform validation</div>
+        </div>
+        <div class="clearfix"></div>
+
+
+
+
+
+
+      </uib-tab>
+
+      <uib-tab heading="Upload Bundle">
+
+        <div class="row">
+          <div class="col-md-6">
+            <em>Select list</em>
+            <table class="table table-bordered">
+              <tr><th>Name</th><th>Description</th></tr>
+
+              <tr ng-repeat="list in lists"
+                  style="cursor: pointer"
+                  ng-class="{listItemSelected:list==selectedList}"
+                  ng-click="selectList(list)">
+                <td>{{list.name}}</td>
+                <td>{{list.description}}</td>
+              </tr>
+            </table>
+
+          </div>
+
+          <div ng-show="selectedList" class="col-md-6">
+            <em>Select Bundles from this list</em>
+            <table class="table table-bordered">
+              <tr><th>Name</th><th>Description</th></tr>
+              <tr ng-repeat="entry in selectedList.entries"
+                  style="cursor: pointer"
+                  ng-class="{listItemSelected:entry==selectedBundleEntry}"
+                  ng-click="selectBundleEntry(entry)"
+                  ng-if="entry.type == 'bundle'" >
+                <td>{{entry.name}}</td>
+                <td>{{entry.description}}</td>
+                <td><div class="clickable" ng-click="updateBundle(entry)">Update</div> </td>
+                <!--
+                <td><div class="clickable" ng-click="selectBundleEntry(entry)">Select</div> </td>
+                -->
+              </tr>
+            </table>
+
+
+          </div>
+        </div>
+      </uib-tab>
+
+      <uib-tab heading="Bundle Json">
+        <div>
+          <div class="clickable pull-right" ng-click="copyToClipboard()">Copy to clipboard</div>
+        </div>
+        <div class="clearfix"></div>
+        <pre>{{bundle | json}}</pre>
+      </uib-tab>
+
+    </uib-tabset>
+
+
+
+
+  </div>
+
+  <div class="modal-footer">
+    <em>Upload the bundle to the clinFHIR Bundle Viewer library</em>
+  </div>
+</div>

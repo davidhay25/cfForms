@@ -6,6 +6,8 @@ const path = require('path');
 const axios = require("axios");
 const { ObjectId } = require("mongodb");
 
+const resourceConfig = require("./artifacts/resourceElementsR4.json")
+
 //async function setup(app,mongoDbName,uri) {
 async function setup(app,database) {
 
@@ -35,7 +37,9 @@ async function setup(app,database) {
     }
 
 
-
+    app.get('/q/resourceConfig', function (req,res) {
+        res.json(resourceConfig)
+    })
 
 
     app.get('/q/getQFromUrl',async function(req,res) {

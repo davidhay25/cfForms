@@ -959,7 +959,7 @@ angular.module("pocApp")
 
 
 
-                return {Q:vo2.questionnaire,hashEd:{},hashVS:{},errorLog:vo2.warnings}
+                return {Q:vo2.questionnaire,hashEd:{},hashVS:{},errorLog:vo2.warnings,pathIndex:vo2.pathIndex}
 
                 //==============  replacing code below with updated code =====================
 

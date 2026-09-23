@@ -247,6 +247,7 @@ angular.module("formsApp")
 
 
                 addQToTree(Q)
+
 /*
                 //now that we have completed the tree array (and populated hashItem)
                 //we can make the conditional display a bit nicer by adding the text for the question

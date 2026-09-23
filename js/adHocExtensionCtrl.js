@@ -1,13 +1,16 @@
 angular.module("pocApp")
     .controller('adHocExtensionCtrl',
-        function ($scope,currentExt,$uibModal,fullElementList,currentPath,canEdit,snapshotSvc) {
+        function ($scope,currentExt,$uibModal,fullElementList,currentPath,canEdit,DG) {
 
             $scope.currentExt = angular.copy(currentExt)
             $scope.currentPath = currentPath
             $scope.canEdit = canEdit
+            $scope.input = {}
 
-            $scope.selectExt = function (ext) {
+            $scope.selectExt = function (ext,inx) {
                 $scope.selectedExt = ext
+                $scope.input.selectedExt = angular.toJson(ext,true)
+                $scope.input.selectedInx = inx
             }
 /* still not sure
             //determine all the active variables at this point
@@ -73,6 +76,33 @@ console.log(hash)
                 $scope.$close($scope.currentExt)
             }
 
+            $scope.addExtSet = function () {
+                $uibModal.open({
+                    templateUrl: 'modalTemplates/makeSDCExtensionSet.html',
+                    backdrop: 'static',
+                    size : 'lg',
+                    controller: 'makeSDCExtensionSetCtrl',
+                    resolve: {
+                        elements: function () {
+                            return fullElementList
+                            //return []
+                        },currentPath : function () {
+                            return currentPath
+                            //return item.ed.path
+                        }
+                    }
+                }).result.then(function (arExt) {
+                    //returns a set of extensions
+                    if (arExt) {
+                        $scope.currentExt = $scope.currentExt || []
+                        $scope.currentExt = $scope.currentExt.concat(arExt);
+                      //  $scope.currentExt.push(ext)
+                        $scope.selectExt($scope.currentExt[$scope.currentExt.length -1])
+                    }
+                })
+            }
+
+
             $scope.addExt = function () {
                 $uibModal.open({
                     templateUrl: 'modalTemplates/makeSDCExtension.html',
@@ -89,18 +119,35 @@ console.log(hash)
                         }
                     }
                 }).result.then(function (ext) {
-
                     if (ext) {
-                        $scope.currentExt = currentExt || []
+                        $scope.currentExt = $scope.currentExt || []
                         $scope.currentExt.push(ext)
                         $scope.selectExt($scope.currentExt[$scope.currentExt.length -1])
                     }
                 })
             }
 
+            //when the extension is manually changed
+            $scope.saveChanges = function (str) {
+                try {
+                    let ext = JSON.parse(str)
+
+                    //$scope.selectedExt = ext
+                    $scope.currentExt.splice($scope.input.selectedInx,1,ext)
+
+
+                    delete $scope.input.isEdited
+
+                } catch (ex) {
+                    alert("Error saving. Is the Json formatted correctly")
+                }
+            }
+
             $scope.deleteExt = function (inx) {
                 $scope.currentExt.splice(inx,1)
                 delete $scope.selectedExt
+                delete $scope.input.selectedExt
+                delete $scope.input.selectedInx
 
             }
 

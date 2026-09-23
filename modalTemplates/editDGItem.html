@@ -42,6 +42,9 @@
                        ng-disabled="! isNew" class="form-control" ng-model="input.path"/> </td>
 
           </tr>
+
+
+
           <tr>
             <td>Type</td>
             <td>
@@ -49,6 +52,7 @@
                 <div class="col-md-10">
                   <input type="text" ng-model="input.selectedType"
                          typeahead-editable = "false"
+                         ng-blur="setControlOptions(input.selectedType)"
                          uib-typeahead="type for type in allTypes | filter:$viewValue"
                          class="form-control" />
 
@@ -65,13 +69,38 @@
 
           <tr>
             <td>Title</td>
-            <td><input type="text" class="form-control" ng-model="input.title"/> </td>
+            <td>
+              <div class="row">
+                <div class="col-md-6">
+                  <input type="text" class="form-control" ng-model="input.title"/>
+                </div>
+                <div class="col-md-6">
+
+
+
+
+
+
+                </div>
+              </div>
+
+
+            </td>
           </tr>
           <tr>
             <td>Description</td>
             <td><textarea class="form-control"
                           ng-style="textareaStyles"
                           ng-model="input.description"></textarea> </td>
+          </tr>
+
+          <tr>
+            <td>LinkId</td>
+
+            <td>
+              <input type="text" class="form-control" ng-model="input.linkId"/>
+              <div><em>Optional. If specified, must be unique across the full DG.</em></div>
+            </td>
           </tr>
 
           <tr>
@@ -182,14 +211,16 @@
           <tr>
             <td>Control Hint</td>
             <td>
-              <span class="hintTextWidth">Style:</span>  <span ng-repeat = "opt in qControlOptions">
-                  <input type="radio"
+              <span ng-show="qControlOptions.length > 0" class="hintTextWidth">Style:</span>
 
+              <span ng-repeat = "opt in qControlOptions">
+                  <input type="radio"
                          ng-model="input.controlHint" value="{{opt}}"> {{opt}}
                 </span>
 
               <div style="margin-top: 8px" ng-show="input.selectedType == 'CodeableConcept'">
                 <span class="hintTextWidth">Orientation:</span>
+
                 <input type="radio" ng-model="input.choiceOrientation" value="vertical"> Vertical
 
                 <input style="padding-left: 8px" type="radio" ng-model="input.choiceOrientation" value="horizontal"> Horizontal
@@ -228,7 +259,7 @@
               <div style="margin-right: 8px" class="clickable pull-right" ng-click="clearFixedValue('fixed')">Clear</div>
 
               {{fixedDisplay}}
-
+              <div><em>Currently not copied to Q - use an adHoc extension <strong>on the parent</strong></em></div>
             </td>
           </tr>
           <tr ng-if="isFixedType(input.selectedType)">
@@ -239,6 +270,8 @@
               <div style="margin-right: 8px" class="clickable pull-right" ng-click="clearFixedValue('default')">Clear</div>
 
               {{defaultDisplay}}
+              <br/>
+              <div><em>Default only works with answerOption (not ValueSet) ATM. The value will be added to answerOptions automatically if not already present.</em></div>
 
             </td>
           </tr>
@@ -379,22 +412,24 @@
             </td>
           </tr>
 
-
-          <tr ng-show="false">
-            <td>Grid layout</td>
+          <tr>
+            <td>Table layout</td>
             <td>
-              <checkbox ng-model="input.sdcGrid"></checkbox> Lay out children in columns
-              <div><em>Note if multi row, then each column in each row must have the same title</em></div>
+              <checkbox ng-model="input.gTable"></checkbox> Lay out repetitions in a table like a spreadsheet (will usually also be multiple)
+              <div><em>Should be applied to a Group. Children will be the columns. Use for pre-pop of multiple items.</em></div>
             </td>
           </tr>
 
           <tr>
-            <td>Table layout</td>
+            <td>Grid layout</td>
             <td>
-              <checkbox ng-model="input.gTable"></checkbox> Lay out repetitions in a table
-              <div><em>Should be applied to a Group. Children will be the columns.</em></div>
+              <checkbox ng-model="input.sdcGrid"></checkbox> Lay out grandchildren in columns for positioning.
+              <div><em>The child of this element should be a Group. It's the children of that element
+                that will be the columns. Note if multi row, then each column in each row must have the same title</em></div>
             </td>
           </tr>
+
+
 
           <tr>
             <td>PrePop expression</td>
@@ -410,29 +445,34 @@
                   </div>
 
                   <div class="col-md-4">
+                    <!--
                     <strong>Contexts in scope</strong>
                     <div ng-repeat="ctx in contextAtPath"
                          class="clickable"
                          ng-click="testxquery(ctx.name)">
                       {{ctx.itemName}} ({{ctx.source}})
                     </div>
+                    -->
                     <!--
                     <a style="display:block ; margin-top: 8px" href="https://hl7.org/fhir/fhirpath.html" target="_blank">Spec</a>
                     -->
                   </div>
                 </div>
 
-
-
-
+<!--
                 <div ng-if="testPPResult" ng-class="testPPResultOutcome">
                   {{testPPResult}}
                 </div>
+
+                -->
+
+
               </div>
 
-              <div ng-if = "! dg.namedQueries || dg.namedQueries.length < 1">
-                <em>If not pre-popping from standard variable (%patient %user) or a user defined variable, you need to select a named query for this DG. This is
-                  done from the main DG editor (the link at the top of the DG display page).</em>
+              <div>
+                <em>This value will be expressed as an initialExpression extension in the Q. If not pre-popping from a standard variable (%patient %user),
+                  you need to ensure the variable is created on an ancestor using an adHoc query.
+                  The DG states that the variable should be <strong>{{dg.prepopName}}</strong> but that's a recommendation only.</em>
               </div>
 
             </td>
@@ -448,9 +488,17 @@
 
 
                   <div>
+                    <!--
                     <input type="text"
                            placeholder="FHIRPath extraction expression - eg Specimen.collection.bodySite.coding"
                            class="form-control" ng-model="input.definition"/>
+                    -->
+
+                    <input type="text" ng-model="input.definition"
+                           uib-typeahead="path for path in allPaths | filter:$viewValue"
+                           class="form-control" />
+
+
 
                   </div>
                   <!-- need to think about this...
@@ -617,6 +665,16 @@
             <h5>Text to display after the item</h5>
 
             <textarea class="form-control" ng-model="input.displayAfter"></textarea>
+
+            <br>
+            You can add html tags to change the appearance. Any html should work. Examples
+            <table>
+              <tr ng-repeat="ht in helpHtmlText">
+                <td><pre ng-bind="ht.html"></pre></td>
+                <td>{{ht.display}}</td>
+              </tr>
+            </table>
+
           </uib-tab>
 
 

@@ -1,18 +1,25 @@
 angular.module("pocApp")
     .controller('editDGItemCtrl',
         function ($scope,$filter,item,allTypes,hashAllDG,fullElementList,$uibModal,$http,parentEd,
-                  igSvc,initialTab,vsSvc,utilsSvc,snapshotSvc) {
+                  igSvc,initialTab,vsSvc,utilsSvc,snapshotSvc,resourceTypeSvc,DG) {
             $scope.item = item      //will be {ed:} if editing an existing item
             $scope.allTypes = allTypes  //DGs only
             $scope.input = {}
+
+            $scope.dg = DG
 
             //specific to Q
 
             //changed on Apr 8
             $scope.allTypes = angular.copy(allTypes)
             $scope.allTypes.push('display')
-
-
+            
+            $scope.helpHtmlText = []
+            $scope.helpHtmlText.push({html:"<strong>MyText</strong>",display:"Bolded text. Can surround words within the text"})
+            $scope.helpHtmlText.push({html:"<em>MyText</em>",display:"Italic text. Can surround words within the text"})
+            $scope.helpHtmlText.push({html:"<span style='color:red'>MyText</span>",display:"Red text. Can surround words within the text"})
+            $scope.helpHtmlText.push({html:"<span style='font-size: 20px'>MyText</span>",display:"Larger text"})
+            $scope.helpHtmlText.push({html:"<em style='font-size: 20px'>My </em><strong style='color:green'>weird</strong> text",display:"Combination"})
 
             $scope.textareaStyles = {
                 'background-color': '#f9f9f9',
@@ -28,6 +35,13 @@ angular.module("pocApp")
 
             let snomed = "http://snomed.info/sct"
 
+            if (DG.type) {
+                $scope.allPaths = resourceTypeSvc.getPathsForType([DG.type])
+                let baseFhirUrl = "http://hl7.org/fhir/R4B/"     //hard code to R4B. may need to become a parameter...
+                $scope.linkToSpec = `${baseFhirUrl}${DG.type.toLowerCase()}.html`
+            }
+
+
             //add 'Other' option to options list
             $scope.addOther = function () {
                 $scope.options = $scope.options || []
@@ -39,12 +53,14 @@ angular.module("pocApp")
                 let ar = $scope.options.filter(c => c.code == '74964007')
                 if (ar.length == 0) {return true}
             }
-
+/*
             $scope.fullElementList = fullElementList
             let dgName = fullElementList[0].ed.path     //it's aways the first element in the list...
             let dg = hashAllDG[dgName]
             $scope.dg = dg
 
+            */
+/*
             let extractType = snapshotSvc.getExtractResource(dg.name)
 
              if (extractType) {
@@ -52,8 +68,9 @@ angular.module("pocApp")
                  $scope.linkToSpec = `${baseFhirUrl}${extractType.toLowerCase()}.html`
              }
 
+             */
              //all the named queries used by any inherited or referenced DG
-             $scope.allNamedQueries = snapshotSvc.getNamedQueries(dg.name)      //an Array of named queries
+            // $scope.allNamedQueries = snapshotSvc.getNamedQueries(dg.name)      //an Array of named queries
 
 
 
@@ -76,6 +93,8 @@ angular.module("pocApp")
 
                         }, canEdit : function () {
                             return true
+                        }, DG : function () {
+                            return DG
                         }
                     }
                 }).result.then(function (ext) {
@@ -227,7 +246,7 @@ angular.module("pocApp")
             $scope.options = []     //a list of options. Will be saved as ed.options
             $scope.units = [] //a list of units. Will be saved as ed.units
 
-            $scope.fhirResourceType = igSvc.findResourceType(hashAllDG[dgName],hashAllDG)
+            //$scope.fhirResourceType = igSvc.findResourceType(hashAllDG[dgName],hashAllDG)
 
 
 
@@ -247,7 +266,19 @@ angular.module("pocApp")
             //conditional ValueSet options that apply to this item
             $scope.conditionalVS = []
 
+            $scope.setControlOptions = function(type) {
+                $scope.qControlOptions = []
+                switch (type) {
+                    case "string" :
+                        $scope.qControlOptions =  ["string","text"]
+                        break
+                    case "CodeableConcept" :
+                        $scope.qControlOptions =  ["drop-down","autocomplete","lookup","radio","check-box"]
+                        break
+                }
 
+
+            }
 
             //when an item is passed in for editing
             if (item && item.ed) {
@@ -304,11 +335,12 @@ angular.module("pocApp")
                 $scope.input.identifierSystem = item.ed.identifierSystem
 
                 $scope.input.itemCode = item.ed.itemCode
+                $scope.input.linkId = item.ed.linkId
                 $scope.input.extractAsObservation = item.ed.extractAsObservation
 
                 $scope.input.selectedType = item.ed.type[0]
 
-                setControlOptions($scope.input.selectedType)
+                $scope.setControlOptions($scope.input.selectedType)
 
                 //set the options list
                 if (item.ed.options) {
@@ -376,7 +408,7 @@ angular.module("pocApp")
                         $scope.input.type = typ
                     }
                 }
-
+/*
                 //If there's a selected named query, set the dropdown
                 if (item.ed.selectedNQ) {
                     for (const nq of $scope.allNamedQueries) {
@@ -387,7 +419,7 @@ angular.module("pocApp")
                     }
 
                 }
-
+*/
 
 
                 $scope.input.gTable = item.ed.gTable
@@ -531,7 +563,7 @@ angular.module("pocApp")
 
 
 
-            $scope.selectElementPath = function () {
+            $scope.selectElementPathDEP = function () {
                 //select an element path from the fhirPath profiling dialog
                 $uibModal.open({
                     templateUrl: 'modalTemplates/selectResourcePath.html',
@@ -582,6 +614,8 @@ angular.module("pocApp")
                 })
             }
 
+
+
             $scope.changeType = function (){
                 $uibModal.open({
                     templateUrl: 'modalTemplates/changeType.html',
@@ -610,7 +644,7 @@ angular.module("pocApp")
                         $scope.input.selectedType = vo.value
                     }
 
-                    setControlOptions($scope.input.selectedType)
+                    $scope.setControlOptions($scope.input.selectedType)
 
                 })
             }
@@ -624,19 +658,7 @@ angular.module("pocApp")
                 $scope.input.title = $scope.input.title || title
             }
 
-            function setControlOptions(type) {
 
-                switch (type) {
-                    case "string" :
-                        $scope.qControlOptions =  ["string","text"]
-                        break
-                    case "CodeableConcept" :
-                        $scope.qControlOptions =  ["drop-down","autocomplete","lookup","radio","check-box"]
-                        break
-                }
-
-
-            }
 
 
 
@@ -687,6 +709,8 @@ angular.module("pocApp")
                 ed.instructions = $scope.input.instructions
                 ed.helpText = $scope.input.helpText
                 ed.collapsible = $scope.input.collapsible
+
+                ed.linkId = $scope.input.linkId
 
                 ed.prePop = $scope.input.prePop
                 ed.definition = $scope.input.definition

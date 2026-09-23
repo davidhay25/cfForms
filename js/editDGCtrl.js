@@ -512,6 +512,7 @@ angular.module("pocApp")
                     $scope.input.namedQueries = model.namedQueries          //the array of named queries this DG requires...
                     $scope.input.extractType = model.type       //the type that this model extracts to, if any should rename...
                     $scope.input.extractId = model.extractId
+                    $scope.input.prepopName = model.prepopName
                     if (model.parent) {
                         $scope.input.newModelParent = model.parent
                     }
@@ -765,6 +766,7 @@ angular.module("pocApp")
                 $scope.model.type = $scope.input.extractType
 
                 $scope.model.extractId = $scope.input.extractId
+                $scope.model.prepopName = $scope.input.prepopName
 
                 //todo - should this be $scope - need to re-write so cancel works properly!!!
                 $scope.model.fixedValues = $scope.input.fixedValues

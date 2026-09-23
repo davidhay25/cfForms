@@ -6,7 +6,7 @@ angular.module("pocApp")
         function ($scope,$http,$localStorage,modelsSvc,$window,
                   snapshotSvc,vsSvc,makeQSvc,playgroundsSvc,$localForage, reportSvc,
                   $timeout,$uibModal,$filter,modelTermSvc,modelDGSvc,igSvc,librarySvc,
-                  utilsSvc,$location,documentSvc) {
+                  utilsSvc,$location,documentSvc,makeQHelperSvc,resourceTypeSvc) {
 
 
             //change the background colour of the DG summary according to the environment
@@ -76,12 +76,11 @@ angular.module("pocApp")
             $scope.userMode = "playground"      //actually the collections mode
 
 
-
             //--------- setup the form viewer
             function formViewerSetup() {
                 $scope.messageCounter = 0
                 let url = "https://dev.fhirpath-lab.com/swm-csiro-smart-forms"
-                // let url = "https://dev.fhirpath-lab.com/swm-csiro-smart-forms"
+
 
                 const iframe = document.getElementById('formPreview');
                 if ( iframe) {
@@ -91,8 +90,75 @@ angular.module("pocApp")
                     //need to pass the messaging handle & origin when initializing the iFrame
                     let fullUrl = `${url}?messaging_handle=${encodeURIComponent($scope.messagingHandle)}&messaging_origin=${encodeURIComponent($scope.messagingOrigin)}`
                     iframe.src = fullUrl
+
+                    window.addEventListener('message',function (data) {
+                        let msg = data.data
+                        let msgType = msg.messageType
+
+
+
+                        if (msg.responseToMessageId) {
+
+                            if (msg.payload?.questionnaireResponse) {
+                                $scope.questionnaireResponse = msg.payload?.questionnaireResponse
+                                console.log($scope.questionnaireResponse)
+                            }
+
+
+
+                            if (hashResponse[msg.responseToMessageId]) {
+                                hashResponse[msg.responseToMessageId](msg)
+                                delete hashResponse[msg.responseToMessageId]
+
+                            }
+                        }
+
+
+
+
+/*
+                        switch (msgType) {
+                            case "sdc.ui.changedFocus":
+                                //console.log(msg.payload.linkId)
+                                break
+                            case 'sdc.ui.changedQuestionnaireResponse' :
+                                //setQR(msg.payload?.questionnaireResponse)
+                                break
+
+                            default :
+                                //this could be the response to an extract.
+                                //todo i should really track that message Id
+                                if (msg.payload?.extractedResources) {
+                                    $scope.processExtractBundle(msg.payload.extractedResources)
+                                    $scope.$digest()
+                                } else if (msg.payload?.questionnaireResponse) {
+                                   // setQR(msg.payload.questionnaireResponse)
+                                } else {
+                                    //console.log(angular.toJson(msg))
+                                    //console.log(msg.payload)
+                                    if (msg.payload?.status == 'error') {
+                                        let msg1 = "An error was returned from the last operation. Details are: \n"
+                                        for (const iss of msg.payload?.outcome?.issue) {
+                                            msg1 += iss.diagnostics + "\n"
+                                        }
+                                        msg1 += "A common cause of this is that the Data Server is unavailable"
+                                        alert(msg1)
+                                    }
+
+                                }
+
+                                break
+
+                        }
+
+                        */
+                    })
+
+
+
+
                 } else {
-                    alert("The forms iFrame was not loaded. You can continue. Contact dev support. ")
+                    alert("The forms iFrame was not loaded. You can continue but form preview won't work. Contact dev support. ")
                 }
 
             }
@@ -101,8 +167,32 @@ angular.module("pocApp")
                 formViewerSetup()
             },2000)
 
+            //for the display of the generated item in the
+            $scope.getItemForPath = function (path) {
+                if (! $scope.pathIndex) {
+                    return
+                }
+                let item = $scope.pathIndex.get(path)
+                if (! item) {
+                    return {error:"Item not found"}
+                }
+                delete item["_segment"]
+                delete item["_path"]
+                delete item["item"]
+                return item
+            }
+
+            $scope.showQItemHierarchy = function (path) {
+                let item =  $scope.getItemForPath(path)
+                makeQHelperSvc.showItemDetailsDlg(item,$scope.fullQ)
+
+            }
+
             //display the current form in the rendered forms panel
             $scope.previewQ = function () {
+
+                delete $scope.input.renderIssues      //issues from rendering
+
                 let model = $scope.selectedModel
                 if (! model) {
                     return
@@ -111,35 +201,44 @@ angular.module("pocApp")
                 let allElements = snapshotSvc.getFullListOfElements(model.name)
 
                 let config = {expandVS:true,enableWhen:true}
+
                 config.namedQueries = {} //hashNamedQueries
                 config.hashAllDG = $scope.hashAllDG
                 config.fhirType = model.type// Used for definition based extraction
                 config.expandVS = false     //use proxy to expand vs
                 config.name = model.name
 
+
                 let qName = `${$scope.world.name}-${model.name}`
                 qName = qName.replace(/\s+/g, "");
+                config.id =  config.id = `clinfhir-${qName}`
                 config.url = `${$scope.systemConfig.qUrlPrefix}/${qName}`
 
                 //config.url = qName
 
                 vsSvc.getAllVS(allElements, function () {
                     let voQ = makeQSvc.makeHierarchicalQFromDG(model,allElements,config)
+
                     let Q = voQ.Q
+
+                    $scope.pathIndex = voQ.pathIndex    //a map (not hash) of item by path
+
+                    console.log(voQ.pathIndex)
 
                     $scope.qErrorLog = voQ.errorLog
 
                     $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:Q});
 
                     $scope.fullQ = Q //for the display
-                    console.log(voQ)
+                    //console.log(voQ)
 
                 })
-
             }
 
 
-            $scope.sendMessage = function(messageType, payload) {
+            let hashResponse = {}
+
+            $scope.sendMessage = function(messageType, payload,fnResponse) {
                 let messagingHandle = $scope.messagingHandle
 
                 const iframe = document.getElementById('formPreview');
@@ -149,6 +248,11 @@ angular.module("pocApp")
                 }
 
                 const messageId = `msg-${++$scope.messageCounter}`;
+
+                if (fnResponse) {
+                    hashResponse[messageId] = fnResponse
+                }
+
                 const message = {
                     messagingHandle,
                     messageId,
@@ -158,8 +262,6 @@ angular.module("pocApp")
 
                 const targetWindow = iframe.contentWindow;
                 const targetOrigin = '*' //http://localhost:8081'; // must match iframe origin
-
-
 
                 console.log('Sending message:', message);
                 targetWindow.postMessage(message, targetOrigin);
@@ -175,6 +277,8 @@ angular.module("pocApp")
                 let type = ed?.type?.[0]
                 if (! type ) {return false}
                 if ( type == 'Group') {return true}
+
+                return
 
                 if ($scope.fhirDataTypes.indexOf(type) >-1) {return false}    //a standard FHIR DT
 
@@ -247,10 +351,6 @@ console.log(`Not adding ${path}`)
                 },100)
 
             }
-
-
-
-
 
             $timeout(function () {
                 utilsSvc.getConfig().then(
@@ -518,6 +618,7 @@ console.log(`Not adding ${path}`)
                         config.status = dg.pubStatus || 'draft'   //the current status
                         //we make the Q with the new version. If it is not published, then the dg won't be updated so all good
 
+                        config.id = `clinfhir-${qName}`
                         config.url = `${$scope.systemConfig.qUrlPrefix}/${qName}`
 
 
@@ -592,7 +693,7 @@ console.log(`Not adding ${path}`)
                         config.name = qName
                         config.url = `${$scope.systemConfig.qUrlPrefix}/${qName}`
                         config.status = model.pubStatus || 'draft'
-
+                        config.id = `clinfhir-${qName}`
                         //set the version to the next one that will be published
                         let version = model.pubVersion || 0
                         config.version = version +1 + '-draft'
@@ -1856,7 +1957,6 @@ console.log(`Not adding ${path}`)
                         },
                         parentEd : function () {
 
-
                             //$scope.selectedModel.diff.
                             if ($scope.selectedNode && $scope.selectedNode.data) {
                                 return $scope.selectedNode.data.ed
@@ -1869,6 +1969,9 @@ console.log(`Not adding ${path}`)
                         },
                         initialTab : function () {
                             return initialTab
+                        },
+                        DG : function () {
+                            return $scope.selectedModel
                         }
                     }
 
@@ -2016,6 +2119,7 @@ console.log(`Not adding ${path}`)
                                 ed1.extractAsObservation = ed.extractAsObservation
                                 ed1.displayAfter = ed.displayAfter
                                 ed1.displayBefore = ed.displayBefore
+                                ed1.linkId = ed.linkId
 
                                 setValue(ed1,'qFixedValues',ed.qFixedValues,'array')
                                 /*
@@ -2038,27 +2142,7 @@ console.log(`Not adding ${path}`)
 
                         if (! found) {
                             alert("Error editing item - saved not changed")
-                            //The attribute that was edited (eg edscription) is inherited
-                            //Need to create an 'override' element and add to the DG
 
-                            //now see if this is element is in the snapshot. If it is, then need to use the same Id - conditionals use it
-                            //otherwise, create a new one
-                            /* - feb2 2026 - no overrides
-
-                            let ar = $scope.fullElementList.filter(item => item.ed.path == ed.path)
-                            if (ar.length > 0) {
-                                //should only be one... todo ?raise an error
-                                ed.id = ar[0].ed.id    //re-use the id
-                            } else {
-                                ed.id = utilsSvc.getUUID()  //this is a new ed
-                            }
-
-
-                            ed.path = $filter('dropFirstInPath')(ed.path)   //eds in the diff don't have the leading dgname
-
-                            $scope.selectedModel.diff.push(ed)
-                            //traceSvc.addAction({action:'add-override',model:$scope.selectedModel,path:ed.path})
-                            */
 
                         }
 
@@ -2124,17 +2208,7 @@ console.log(`Not adding ${path}`)
                 //locate the DG with this name and set it active. This will select it in the DG tab
                 $scope.selectedModel = $scope.hashAllDG[item.DGName]
                 $scope.selectModel($scope.selectedModel)
-/*
-                $("#allDGTree").jstree().deselect_all(true);
-                $('#allDGTree').jstree('select_node', item.DGName);
-       */
 
-/*
-                if ($("#sectionDGTree").jstree().deselect_all) {
-                    $("#sectionDGTree").jstree().deselect_all(true);
-                    $('#sectionDGTree').jstree('select_node', item.DGName);
-                }
-*/
 
 
                 //$scope.selectModel
@@ -2231,7 +2305,7 @@ console.log(`Not adding ${path}`)
                             return url
                         }, termServer : function () {
 
-                            return $scope.selectedModel.termSvr
+                            return $scope.selectedModel?.termSvr
 
                         }
                     }
@@ -2491,9 +2565,8 @@ console.log(`Not adding ${path}`)
                 delete $scope.selectedNode
                 delete $scope.input.showDGList
                 delete $scope.selectedCompositionNode
+                delete $scope.questionnaireResponse
 
-                //$('#htmlHISO').contents().find('html').html('');
-                //delete $scope.input.showDGChildren
             }
 
 
@@ -2526,7 +2599,7 @@ console.log(`Not adding ${path}`)
                 $scope.dgNamedQueries = snapshotSvc.getNamedQueries(dg.name)
                 $scope.variablesForDG =snapshotSvc.getVariables(dg.name)
                 $scope.SDfromDG = modelDGSvc.makeSD(dg)
-console.log($scope.SDfromDG)
+
                 $scope.dgContainingThis = snapshotSvc.dgContainedBy(dg.name)    //all DGs that have a reference to this one or any of its children
 
 
@@ -2541,7 +2614,7 @@ console.log($scope.SDfromDG)
                 $http.get(`frozen/${name}`).then(
                     function (data) {
                         $scope.componentVersion = data.data
-                        //console.log(data.data)
+
 
                     }, function(err) {
                         //console.log(`${name} not found in component store (Not necessarily an error`)
@@ -2551,7 +2624,6 @@ console.log($scope.SDfromDG)
 
 
                 $scope.refreshUpdates()     //update the xref
-
 
                 //by supplying the dg in the call, the eds will be annotatded with 'definedOnDG' for those in the diff
                 $scope.fullElementList = snapshotSvc.getFullListOfElements(dg.name)// vo.allElements
@@ -2615,7 +2687,6 @@ console.log($scope.SDfromDG)
                 //all the dependencies (enableWhen)
                 $scope.allDependencies = modelDGSvc.getAllEW($scope.fullElementList,$scope.selectedModel.name)
 
-
             }
 
 
@@ -2631,7 +2702,6 @@ console.log($scope.SDfromDG)
                     $scope.selectedModel = dg
 
                     $scope.fhirResourceType = igSvc.findResourceType(dg,$scope.hashAllDG)   //not sure if this is used wo fsh stuff
-
 
                     //re-create the forms preview using the lab
                     $scope.previewQ()
@@ -3025,7 +3095,35 @@ console.log($scope.SDfromDG)
 
         }
 
-            $scope.localCopyToClipboard = function(text) {
+
+        //bundleQSummary
+
+            $scope.localCopyToClipboard = function(value) {
+
+                let copy
+                //might be an object
+                if (typeof text === 'string') {
+                    copy=value
+                } else if (typeof value === 'object') {
+                    copy = angular.toJson(value,true)
+                }
+
+
+                navigator.clipboard.writeText(copy)
+                    .then(function () {
+                        alert(('Copied to the clipboard'))
+                    })
+                    .catch(function (err) {
+                        alert('Copy failed:', err);
+                    });
+                return
+
+                navigator.clipboard.writeText(copy).then(() => {
+                    console.log('Copied to the clipboard');
+                });
+
+
+
                 let textArea = document.createElement("textarea");
                 textArea.value = text;
 

@@ -41,7 +41,10 @@ angular.module("pocApp")
             }
             $scope.editAdHocExtension = function (ed,dg) {
                 //element can be ed or  DG. Both have adHocExtension
-                // let adHocExten
+               
+
+
+
                 $uibModal.open({
                     templateUrl: 'modalTemplates/adHocExtension.html',
                     backdrop: 'static',
@@ -69,6 +72,9 @@ angular.module("pocApp")
                         },
                         canEdit : function () {
                             return $scope.canEdit()
+                        },
+                        DG : function () {
+                            return $scope.selectedModel
                         }
                     }
                 }).result.then(function (ext) {
@@ -193,6 +199,8 @@ angular.module("pocApp")
             }
 
 
+
+
             $scope.cloneDGDEP = function (dg) {
                 $uibModal.open({
                     templateUrl: 'modalTemplates/getName.html',
@@ -243,60 +251,7 @@ angular.module("pocApp")
                         $scope.makeAllDTList()  //create the various lists (and trees) for the dt list
                         $scope.$emit('updateDGList',{name:newDG.name})
                     }
-/*
-                    modelsSvc.isUniqueNameOnLibrary(vo.name,'dg').then(
-                        function () {
-                            let newDG = angular.copy(dg)
-                            newDG.name = vo.name
-                            newDG.title = vo.title
-                            newDG.description = vo.description
-                            newDG.checkedOut = $scope.user.email
-                            newDG.author = $scope.user.email
 
-                            //save a copy to the Library (as we do with DGs). As it's new, it won't be downloaded
-                            librarySvc.checkOut(newDG,$scope.user)
-                            traceSvc.addAction({description:`Checkout as part of DG clone ${newDG.name}`,
-                                action:"checkout",
-                                model:newDG})
-
-
-                            //Any elements that have 'enableWhen' elements need to have  the source element
-                            //updated as the first segment may refer to the old DG name
-                            let oldName = dg.name
-                            let newName = vo.name
-
-                            if (newDG.diff) {
-                                newDG.diff.forEach(function (ed) {
-                                    if (ed.enableWhen) {
-                                        ed.enableWhen.forEach(function (ew) {
-                                            let ar = ew.source.split('.')
-                                            if (ar[0] == oldName) {
-                                                ar[0] = newName
-                                                ew.source = ar.join('.')
-                                            }
-                                        })
-                                    }
-                                })
-                            }
-
-
-
-                            $scope.hashAllDG[newDG.name] = newDG
-
-                            $scope.makeSnapshots()
-
-                            traceSvc.addAction({action:'clone-model',model:newDG})
-
-                            $scope.makeAllDTList()  //create the various lists (and trees) for the dt list
-
-                            $scope.$emit('updateDGList',{name:newDG.name})
-
-                        }, function() {
-                            alert(`Sorry, this name (${vo.name}) is not unique`)
-                        }
-                    )
-
-                    */
                 })
             }
 
@@ -810,7 +765,8 @@ angular.module("pocApp")
                 } else {
                     //The attribute that was edited (eg edscription) is inherited
                     //Need to create an 'override' element and add to the DG
-alert("Creating override - shouldn't really need to do this so there is something weird happening...")
+                    //note - as of Sep2026 allowing this
+                    alert("Creating override element rather than deleting")
                     //set the minimum required elements..
                     let ed = {path:pathToDelete,mult:"0..0",type:item.type,title:item.title,description:item.description}
 
@@ -855,7 +811,7 @@ alert("Creating override - shouldn't really need to do this so there is somethin
             }
 
             //locate the model where this item was defined
-            //todo - this could be removed after refactoring
+
             $scope.getSourceModelName = function (ed) {
 
                 if (ed) {

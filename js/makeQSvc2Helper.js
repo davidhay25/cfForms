@@ -44,7 +44,7 @@ angular.module('pocApp')
         }
 
 
-        function hideItem(item) {
+        function hideItem(ed,item) {
             //create a hidden extension and add to the item
             let ext = {url:extHidden,valueBoolean:true}
             addExtension(item,ext)
@@ -52,26 +52,53 @@ angular.module('pocApp')
         }
 
         function addExtension(item,ext) {
+
             item.extension = item.extension || []
             item.extension.push(ext)
         }
 
         function processCC(item,ed) {
-            //console.log('fixed',ed.fixedCoding)
-            if (ed.fixedCoding) {
-                //the definition must be to the .coding - even if category is multiple
-                let concept = ed.fixedCoding
-                delete concept.fsn
-                item.initial = [{valueCoding:concept}]
-                // don't automatically hide - hideItem(item)
+            //fixed values are only used in extraction and need to be added to the parent (which I don't have here)
+            //for now, just add an adhoc extension for fixed values
+            if (false && ed.fixedCoding && ed.definition) {
+                //
+                /*
+
+                let definition = `http://hl7.org/fhir/StructureDefinition/Observation#${ed.definition}`
+
+                //let definition = `http://hl7.org/fhir/StructureDefinition/Observation#Observation.status`
+                let cc = {coding:[ed.fixedCoding]}
+                addFixedValue(item, definition, 'CodeableConcept', cc)
+
+*/
             }
 
             if (ed.defaultCoding) {
                 //the definition must be to the .coding - even if category is multiple
                 let concept = ed.defaultCoding
                 delete concept.fsn
-                item.initial = [{valueCoding:concept}]
-                // don't automatically hide - hideItem(item)
+
+
+                //it seems that just setting initial doesn't work - and we can't have initial & answerOption
+                let addConcept = true
+                item.answerOption = item.answerOption || []
+                for (let opt of item.answerOption) {
+                    if (opt.valueCoding.code == concept.code && opt.valueCoding.system == concept.system) {
+                        opt.initialSelected = true
+                        addConcept = false
+                        break
+                    }
+                }
+
+                if (addConcept) {
+
+                    item.answerOption.push({valueCoding:concept,initialSelected:true})
+                }
+
+
+
+               // item.initial = [{valueCoding:concept}]
+
             }
 
         }
@@ -122,6 +149,25 @@ angular.module('pocApp')
 
         return {
 
+            checkForHtml : function (ed,item) {
+                //if the ed has htmlDisplay or is html (crude - has both > and < ) if so, add the rendering-xhtml extension
+                //to the item.text element
+
+                let title = ed.title
+                if (ed.htmlDisplay ||  title?.indexOf('>') > -1 && title?.indexOf('>') > -1) {
+                    let html = ed.htmlDisplay || title
+                    item["_text"] = item["_text"] || {}
+                    item["_text"].extension = []
+
+
+                    let ext = {url:"http://hl7.org/fhir/StructureDefinition/rendering-xhtml"}
+                    ext.valueString = html
+                    item["_text"].extension.push(ext)
+
+                }
+
+            },
+
             getControlDetails : function(ed){
 
 
@@ -135,6 +181,7 @@ angular.module('pocApp')
                 if (ed.options && ed.options.length > 0) {
                     controlHint = "drop-down"
                     controlType = "choice"
+                    //controlType = "open-choice"
                 }
 
                 if (ed.type) {

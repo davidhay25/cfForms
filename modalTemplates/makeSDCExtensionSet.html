@@ -1,0 +1,163 @@
+<div>
+  <!--<div ng-controller="newResourceCtrl">-->
+
+
+  <div class="modal-header">
+    <div class="row">
+      <div class="col-md-8 col-sm-8">
+        <h3 class="modal-title">
+          Add set of SDC extensions
+        </h3>
+      </div>
+
+
+      <div class="col-md-4 col-sm-4">
+        <button class="btn btn-link pull-right" ng-click="$dismiss()">Cancel</button>
+
+          <!--
+        <button ng-show = "input.name"
+                class="btn btn-primary pull-right" ng-click="save()">Close</button>
+          -->
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-body">
+
+
+      <div class="row">
+          <div class="col-md-3">
+            <div class="list-group">
+                <div ng-class="{'list-group-item':true,listItemSelected:selectedType == type}"
+                     style="cursor: pointer"
+                     ng-click="selectType(type)"
+                     ng-repeat="type in extTypes">{{type.display}}</div>
+            </div>
+          </div>
+          <div class="col-md-9">
+
+
+              <div ng-if="selectedType.name == 'prepop-pop'">
+                  <em>Adds the extensions to support pre-population using an
+                      <a target="_blank" href="https://build.fhir.org/fhir-xquery.html">xFHIR query</a> Will add 3 extensions:</em>.
+
+                  <div class="row">
+
+                      <div class="col-md-2">
+
+                      </div>
+                      <div class="col-md-10">
+                          <table class="table">
+                              <tr><td>variable</td><td>Creates the variable containing the response Bundle</td></tr>
+                              <tr><td>itemPopulationContext</td><td>Creates the resource variable for each resource in the bundle</td></tr>
+                              <tr><td>item control</td><td>set to <em>table</em> for table layout</td></tr>
+
+                          </table>
+                      </div>
+                  </div>
+
+
+                  Note that the query variable could be on any ancestor item
+              </div>
+
+
+
+
+              <div ng-if="selectedType.name == 'extract'">
+                  <em>Defines the extensions to enable resource extraction. Will add 3 extensions:</em>
+                    <br/> <br/>
+                  <div class="row">
+
+                      <div class="col-md-2">
+
+                      </div>
+                      <div class="col-md-10">
+                          <table class="table">
+                              <tr><td>extractAllocateId</td><td>Creates the variable to refer to the extracted resource</td></tr>
+                              <tr><td>definitionExtract</td><td>The resource Type and fullUrl</td></tr>
+                              <tr><td>definitionExtractValue</td><td>A reference to the patient</td></tr>
+                          </table>
+                      </div>
+                  </div>
+
+
+
+
+                  <br/>
+                  <div class="row">
+
+                      <div class="col-md-2">
+                          Resource type
+                      </div>
+                      <div class="col-md-10">
+                          <!--
+                          <input class="form-control" ng-model="input.resourceType" placeholder="Must be a FHIR resource type - eg Condition"/>
+-->
+
+                          <input type="text" ng-model="input.resourceType"
+                                 placeholder="Must be a FHIR resource type - eg Condition"
+                                 typeahead-editable = "false"
+                                 ng-blurX="setControlOptions(input.selectedType)"
+                                 uib-typeahead="type for type in allTypes | filter:$viewValue"
+                                 class="form-control" />
+
+
+
+                          <div><em>
+                              The resource type to extract to.
+                          </em></div>
+                      </div>
+                  </div>
+
+                  <br/>
+                  <div class="row">
+                      <div class="col-md-2">
+                          Variable name
+                      </div>
+                      <div class="col-md-10">
+                          <input class="form-control" ng-model="input.variableName" placeholder=""/>
+                          <div><em>
+                              When the 'definitionExtract' extension is added, this will be the fullUrl property
+                              which defines the extracted resources identity and allows references to be made to it.
+                          </em></div>
+                      </div>
+
+                  </div>
+
+                  <div class="btn btn-primary pull-right" ng-click="addExtensions('extract')">Add extensions</div>
+
+
+              </div>
+
+
+
+          </div>
+      </div>
+
+
+  </div>
+  <div class="modal-header">
+      <div class="row">
+
+          <div class="col-md-3">
+              Current path: {{currentPath}}
+          </div>
+
+          <div class="col-md-3">
+              <div><a href="https://hl7.org/fhirpath/N1/" target="_blank">FHIRPath spec</a> </div>
+          </div>
+
+          <div class="col-md-3">
+              <div><a href="https://dev.fhirpath-lab.com/FhirPath" target="_blank">FHIRPath tester</a> </div>
+          </div>
+          <div class="col-md-3">
+              <div><a href="https://docs.google.com/document/d/1dBY8U8mWaiTH6wxu_vrQqrLWv_qZfq_PnTXmcRtxH7Y/edit?tab=t.0" target="_blank">Documentation</a> </div>
+
+
+          </div>
+      </div>
+
+
+
+  </div>
+</div>

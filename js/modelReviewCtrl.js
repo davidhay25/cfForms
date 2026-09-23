@@ -368,6 +368,8 @@ angular.module("pocApp")
 
 
                 */
+
+
                 window.addEventListener('message',function (data) {
                     let msg = data.data
                     let msgType = msg.messageType
@@ -531,7 +533,6 @@ angular.module("pocApp")
                 let options = {bundle:bundle,
                     hashErrors:{},
                     serverRoot:""}
-
 
                 let vo = v2ToFhirSvc.makeGraph1(options);
                 console.log(vo)
@@ -823,6 +824,7 @@ angular.module("pocApp")
 
             }
 
+            //this is passed on the url -
             if (modelName) {
 
                 if (modelName.startsWith('q-')) {
@@ -852,7 +854,7 @@ angular.module("pocApp")
                                 alert(`Error contacting server: ${qry}`)
                             }
                         })
-                } else if (modelName.startsWith('pub-'))  {
+                } else if (modelName.startsWith('pub-')) {
                     //the format is pub-{name}|{version}
                     //http://localhost:9500/modelReview.html?pub-SkinProject-skin_request%7C2
 
@@ -875,10 +877,18 @@ angular.module("pocApp")
                         }
                     )
 
-                }
+                } else if (modelName.startsWith('cache-')) {
+                    //passed in the browser cache. Must come from same domain...
+                    let Q = $localStorage[modelName]
 
-            } else {
-                //alert("You'll need to paste in a Questionnaire (Json) format")
+                    if (Q) {
+                        $scope.fullQ = Q
+                        processQ($scope.fullQ)  //update internal variables
+                        $scope.input.mainTabActive = 1
+                    } else {
+                        alert(`A cache object with the name ${modelName} was not found.`)
+                    }
+                }
             }
 
 
