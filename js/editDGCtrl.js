@@ -7,6 +7,8 @@ angular.module("pocApp")
 
             $scope.worldDG = worldDG    //a hash of all DG's in the collection. Used in the SS importer
 
+            $scope.prePopConfig = $localStorage['ppConfig']
+
 
             $scope.model =  angular.copy(model)     //edit a copy of teh DG
             $scope.input = {}
@@ -40,7 +42,7 @@ angular.module("pocApp")
                 $scope.input.pastedQ = $localStorage.pastedQ
             }
 
-            //get configuration - specifically the default terminology server
+            //get system configuration - specifically the default terminology server
             $scope.config = {}
             $http.get('config').then(
                 function (data) {
@@ -51,6 +53,36 @@ angular.module("pocApp")
                     }
                 }
             )
+
+
+            //----   prepop
+            $scope.setPrepop = function (prepopConfig) {
+                $scope.model.prepopConfig = prepopConfig
+            }
+
+            //retrieve the bundle & get the QR from it
+            function getBundle(bundleId) {
+                let qry = `https://clinfhir.com/clinfhir/api/Bundle/${bundleId}`
+                $http.get(qry).then(
+                    function (data) {
+                        console.log(data.data)
+
+                        let bundle = data.data
+
+
+                        let ar = bundle?.entry?.filter(entry => entry.resource?.resourceType == 'QuestionnaireResponse')
+                        if (ar.length == 1) {
+                            $scope.qr = ar[0].resource
+                        }
+                    }
+                )
+            }
+
+            if ($scope.prePopConfig?.bundleEntry?.bundleId) {
+                getBundle($scope.prePopConfig?.bundleEntry?.bundleId)
+            }
+
+
 
             //------------ functions for importing from a Spreadsheet
             //todo - automatically import missing components into collection

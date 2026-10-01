@@ -31,61 +31,114 @@
   <div class="modal-body">
 
     <uib-tabset>
-      <uib-tab heading="Graph">
-        <div class="row">
-          <div class="col-md-6">
-            <div id="resourceGraph"></div>
-          </div>
-          <div class="col-md-6">
-            <uib-tabset>
-              <uib-tab heading="Json">
-                <pre>{{selectedResourceFromGraph | json}}</pre>
-              </uib-tab>
-              <uib-tab heading="Validation">
-              <!--  <div>
-                  <div class="clickable pull-right" ng-click="validate(selectedResourceFromGraph)">Perform validation</div>
-                </div>
-                <div class="clearfix"></div>
+      <uib-tab heading="Contents">
 
-                -->
-                <br/>
+        <uib-tabset>
+          <uib-tab heading="Graph">
+            <div class="row">
+              <div class="col-md-6">
+                <div id="resourceGraph"></div>
+              </div>
+
+              <div class="col-md-6">
+                <uib-tabset>
+                  <uib-tab heading="Json">
+                    <pre>{{input.selectedResourceFromGraph | json}}</pre>
+                  </uib-tab>
+                  <uib-tab heading="Validation">
+                    <!--  <div>
+                        <div class="clickable pull-right" ng-click="validate(selectedResourceFromGraph)">Perform validation</div>
+                      </div>
+                      <div class="clearfix"></div>
+
+                      -->
+                    <br/>
+                    <div class="myScroll">
+                      <table class="table-bordered table">
+                        <tr ng-repeat="iss in OO.issue">
+                          <td>{{iss.severity}}</td>
+                          <td>
+                            {{iss.diagnostics}}
+                            <div><em>{{iss.location[0]}}</em></div>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+
+
+
+                    <!--
+                                    <pre>{{OO | json}}</pre>
+                                    -->
+
+                  </uib-tab>
+                </uib-tabset>
+
+
+
+
+
+
+              </div>
+            </div>
+          </uib-tab>
+          <uib-tab heading="List">
+            <div class="row">
+              <div class="col-md-3">
+                <div class="list-group">
+                  <div ng-class="{'list-group-item':true,listItemSelected:input.selectedEntry == entry }"
+                       ng-click="input.selectedEntry = entry"
+                       style="cursor: pointer"
+                       ng-repeat="entry in bundle.entry">
+                    {{entry.resource.resourceType}}
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-9">
                 <div class="myScroll">
-                  <table class="table-bordered table">
-                    <tr ng-repeat="iss in OO.issue">
-                      <td>{{iss.severity}}</td>
-                      <td>
-                        {{iss.diagnostics}}
-                        <div><em>{{iss.location[0]}}</em></div>
-                      </td>
-                    </tr>
-                  </table>
+                  <pre>{{input.selectedEntry | json}}</pre>
                 </div>
 
+              </div>
+            </div>
+          </uib-tab>
+          <uib-tab heading="QR">
+            <qrviewer qr="qr"></qrviewer>
+          </uib-tab>
+        </uib-tabset>
 
 
-<!--
-                <pre>{{OO | json}}</pre>
-                -->
-
-              </uib-tab>
-            </uib-tabset>
+      </uib-tab>
 
 
 
+      <uib-tab>
+        <uib-tab-heading>Extraction issues <span class="badge">{{renderIssues.length}}</span> </uib-tab-heading>
+          <br/>
+
+          <table class="table-bordered table">
+            <tr ng-repeat = "iss in renderIssues">
+              <td>{{iss.severity}}</td>
+              <!--<td>{{iss.code}}</td>-->
+              <td>
+                {{iss.diagnostics}}
+                {{iss.details.text}}
+              </td>
+            </tr>
+
+          </table>
 
 
-
-          </div>
-        </div>
       </uib-tab>
 
       <uib-tab heading="Validate Bundle">
         <div>
-          <div class="clickable pull-right" ng-click="validate()">Perform validation</div>
+          <div class="clickable pull-right" ng-click="validate(bundle)">Perform validation</div>
         </div>
         <div class="clearfix"></div>
 
 
+        <pre>{{OO | json}}</pre>
 
 
 

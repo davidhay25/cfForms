@@ -74,7 +74,7 @@ angular.module("pocApp")
 
 
 
-            $scope.localEditAdHocExtension = function () {
+            $scope.localEditAdHocExtensionDEP = function () {
 
                 $uibModal.open({
                     templateUrl: 'modalTemplates/adHocExtension.html',
@@ -95,6 +95,12 @@ angular.module("pocApp")
                             return true
                         }, DG : function () {
                             return DG
+                        },
+                        item : function () {
+                            return  $scope.getItemForPath($scope.item.ed.path)
+                        },
+                        Q : function () {
+                            return $scope.fullQ
                         }
                     }
                 }).result.then(function (ext) {

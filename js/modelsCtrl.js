@@ -16,11 +16,23 @@ angular.module("pocApp")
                 $scope.modelInfoClass = 'modelInfoLocal'
             } else if ( host.indexOf('test.') > -1 ) {
                 $scope.modelInfoClass = 'modelInfoTest'
+
             }
+
+            $scope.utilsSvc = utilsSvc
 
             $scope.version = utilsSvc.getVersion()
             $scope.input = {}
             $scope.input.showFullModel = true
+
+
+            //qr directive test
+            $http.get('https://clinfhir.com/bqry/bv1790546929438/QuestionnaireResponse').then(
+                function (data) {
+                    $scope.testQR = data.data.entry[0].resource
+                }
+            )
+            //$scope.testQR = $localStorage.world
 
 
             //if there is no world then this is the first time this browser has been used to access forms
@@ -172,6 +184,7 @@ angular.module("pocApp")
                 if (! $scope.pathIndex) {
                     return
                 }
+
                 let item = $scope.pathIndex.get(path)
                 if (! item) {
                     return {error:"Item not found"}
@@ -180,6 +193,15 @@ angular.module("pocApp")
                 delete item["_path"]
                 delete item["item"]
                 return item
+            }
+
+            $scope.getQRoot = function () {
+                if ($scope.fullQ) {
+                    let q = angular.copy($scope.fullQ)
+                    delete q.item
+                    return q
+                }
+
             }
 
             $scope.showQItemHierarchy = function (path) {
@@ -2830,6 +2852,45 @@ console.log(`Not adding ${path}`)
                     $scope.$digest()
                 })
 
+                //experimental - a side tree of the DG contents
+                drawSideDGTree(treeData)
+
+            }
+
+
+
+            //todo - experimantal view
+            function drawSideDGTree(treeData) {
+                $('#dgSideTree').jstree('destroy');
+
+                let config = {'core':
+                        {'multiple': false,
+                            'animation' : 0,
+                            'data': treeData,
+                            'themes': {name: 'proton', responsive: true}},
+                    'check_callback' : true,
+                    plugins:['state']
+                }
+
+                let x = $('#dgSideTree').jstree(
+                    config
+                ).on('select_node.jstree', function (e, data) {
+                    // the node selection event...
+
+
+                    //need to check data.event to see if this was user selected todo ? check the other jstree handler
+                    if (data.event && data.node) {
+                        $scope.selectedNode = data.node;
+
+                        $scope.edForJsonDisplay = data.node.data.ed
+                        $scope.editDGItem($scope.selectedNode.data)
+
+                    }
+
+
+
+                    $scope.$digest();       //as the event occurred outside of angular...
+                })
             }
 
             $scope.$on('redrawTree',function(){

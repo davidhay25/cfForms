@@ -88,7 +88,9 @@
                           Expression
                       </div>
                       <div class="col-md-9">
-                          <textarea class="form-control" rows = 4  ng-model="input.vExpression"></textarea>
+                          <textarea class="form-control" rows = 4
+                                    placeholder="{{expressionPlaceholder}}"
+                                    ng-model="input.vExpression"></textarea>
                       </div>
                   </div>
 
@@ -98,6 +100,19 @@
                   <button class="btn btn-primary pull-right"
                           ng-if="input.vName && input.vExpression"
                           ng-click="save('variable')">Save</button>
+
+
+                  <strong>Examples</strong>
+
+                  <div ng-non-bindable>
+                      MedicationStatement?Condition={{%patient.id}}<br/>
+                      %questionnaire.repeat(item).where(linkId = 'my-id').answer.valueString
+                      </div>
+
+
+                  <br/>
+                  <div><em>Note that more x-fhir-query queries are supported by a FHIR server but not the
+                  Bundle pre-pop</em></div>
 
 
               </div>
@@ -125,7 +140,7 @@
                           <input class="form-control" ng-model="input.vName" placeholder="Spaces will be removed"/>
                       </div>
                       <div class="col-md-5">
-                          <em>To insert a linkId, use the elements tab to copy it to the clipboard then paste in here</em>
+                         <em>This is the variable name that children can access</em>
                       </div>
                   </div>
                   <br/>
@@ -145,6 +160,13 @@
                   <button class="btn btn-primary pull-right"
                           ng-if="input.vName && input.vExpression"
                           ng-click="save('popContext')">Save</button>
+
+
+                  <strong>Examples</strong>
+
+                  <div ng-non-bindable>
+                      %questionnaire.repeat(item).where(linkId='group1')<br/>
+                  </div>
 
 
               </div>

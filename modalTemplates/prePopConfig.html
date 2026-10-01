@@ -3,15 +3,25 @@
 
   <div class="modal-header">
     <div class="row">
-      <div class="col-md-8 col-sm-8">
+      <div class="col-md-6">
         <h3 class="modal-title">
           Prepopulation config
         </h3>
       </div>
 
+      <div class="col-md-3">
+        <div class="navbar-text">
+          Source: {{prePopConfig.source}}
+        </div>
 
-      <div class="col-md-4 col-sm-4">
-        <button class="btn btn-primary pull-right" ng-click="save()">Save config</button>
+
+      </div>
+
+
+      <div class="col-md-3">
+        <button class="btn btn-primary pull-right"
+                ng-show="canSave"
+                ng-click="save()">Save config</button>
         <button class="btn btn-link pull-right" ng-click="$dismiss()">Close</button>
 
       </div>
@@ -27,17 +37,43 @@
           <div class="col-md-2">
             Prepop type
           </div>
-          <div class="col-md-9">
+          <div class="col-md-4">
             <div class="btn-group">
-              <label class="btn btn-default" ng-model="input.prepopType" uib-btn-radio="'query'">REST query</label>
-              <label class="btn btn-default" ng-model="input.prepopType" uib-btn-radio="'bundle'">Resource bundle</label>
+
+              <!-- <label class="btn btn-default" ng-model="input.prepopType" uib-btn-radio="'query'">REST query</label>
+              <label class="btn btn-default" ng-model="input.prepopType" uib-btn-radio="'bundle'">Resource bundle</label>-->
+
+              <label class="btn btn-default" ng-model="prePopConfig.source" uib-btn-radio="'query'">REST query</label>
+              <label class="btn btn-default"
+                     ng-click="setSelectedBundle()"
+                     ng-model="prePopConfig.source"
+
+                     uib-btn-radio="'bundle'">Resource bundle</label>
 
             </div>
           </div>
+          <div class="col-md-6">
+            <div ng-show="prePopConfig.source == 'bundle'">
+              <strong style="font-size: large">Current settings</strong>
+
+              <div><strong>Bundle Name: </strong>{{prePopConfig.bundleEntry.name}}
+                ({{prePopConfig.bundleEntry.description}})</div>
+
+              <div><strong>Bundle Id: </strong>{{prePopConfig.bundleEntry.bundleId}}</div>
+
+              <div><strong>Patient: </strong>{{prePopConfig.bundlePatientId.fullUrl}}
+                ({{prePopConfig.bundlePatientId.display}})</div>
+
+              <div><strong>Author: </strong>{{prePopConfig.bundleAuthorId.fullUrl}}
+                ({{prePopConfig.bundleAuthorId.display}})</div>
+
+            </div>
+          </div>
+
         </div>
         <br/>
 
-        <div ng-show="input.prepopType == 'query'">
+        <div ng-show="prePopConfig.source == 'query'">
           <h4>RESTful queries against a FHIR server</h4>
           <table class="table-bordered table">
             <tr>
@@ -60,49 +96,9 @@
 
         </div>
 
-<!--
 
-        <div ng-show="input.prepopType == 'local-bundle'">
-          <div class="row">
-            <div class="col-md-6">
-              <table class="table table-bordered">
-                <tr><th>Name</th><th>Description</th></tr>
-                <tr ng-repeat="entry in localBundleEntries"
-                    style="cursor: pointer"
-                    ng-class="{listItemSelected:list=selectedList}"
-                    ng-click="selectList(list)">
-                  <td>{{list.name}}</td>
-                  <td>{{list.description}}</td>
-                </tr>
-              </table>
+        <div ng-show="prePopConfig.source == 'bundle'">
 
-            </div>
-            <div class="col-md-6">
-              <table class="table table-bordered">
-                <tr ng-repeat="entry in selectedList.entries"
-                    style="cursor: pointer"
-                    ng-class="{listItemSelected:entry==selectedBundleEntry}"
-                    ng-click="selectBundleEntry(entry.bundleId)"
-                    ng-if="entry.type == 'bundle'" >
-                  <td>{{entry.name}}</td>
-                  <td>{{entry.description}}</td>
-                  <td><div class="clickable" ng-click="makeActive(entry)">Select</div> </td>
-                </tr>
-              </table>
-
-
-            </div>
-          </div>
-        </div>
-
--->
-
-        <div ng-show="input.prepopType == 'bundle'">
-
-          <h4>Current settings</h4>
-
-          <div>Bundle:{{prePopConfig.bundleEntry.name}}  ({{prePopConfig.bundleEntry.description}})</div>
-          <div>Patient: {{prePopConfig.bundlePatientId.reference}} ({{prePopConfig.bundlePatientId.display}})</div>
 
           <h4>Available Bundles from the <a target="_blank" href="https://clinfhir.com/clinfhir/bundleViewer.html">clinFHIR Bundle Viewer</a></h4>
 
@@ -131,6 +127,7 @@
                     ng-if="entry.type == 'bundle'" >
                   <td>{{entry.name}}</td>
                   <td>{{entry.description}}</td>
+                  <td><div class="clickable" ng-click="viewBundle(entry)">View</div> </td>
                   <!--
                   <td><div class="clickable" ng-click="selectBundleEntry(entry)">Select</div> </td>
                   -->
@@ -146,7 +143,69 @@
 
       </uib-tab>
 
-      <uib-tab heading="Upload resource">
+      <uib-tab ng-if="prePopConfig.source == 'bundle'" heading="Bundle descriptor">
+        <pre>{{prePopConfig.bundleEntry | json}}</pre>
+      </uib-tab>
+
+      <uib-tab ng-if="prePopConfig.source == 'bundle'" heading="">
+        <uib-tab-heading>Bundle contents <span class="badge">{{dataBundle.entry.length}}</span> </uib-tab-heading>
+
+
+        <div class="row">
+          <div class="col-md-3">
+            <div class="myScroll">
+              <div class="list-group">
+              <div ng-class="{'list-group-item':true,listItemSelected:input.selectedEntry == entry }"
+                   ng-click="input.selectedEntry = entry"
+                   style="cursor: pointer"
+                   ng-repeat="entry in dataBundle.entry">
+                {{entry.resource.resourceType}}
+              </div>
+            </div>
+            </div>
+          </div>
+          <div class="col-md-9">
+            <div class="myScroll">
+              <uib-tabset>
+                <uib-tab heading="Entry">
+                  <pre>{{input.selectedEntry | json}}</pre>
+                </uib-tab>
+
+                <uib-tab heading="Resource">
+                  <pre>{{input.selectedEntry.resource | json}}</pre>
+                </uib-tab>
+
+                <uib-tab heading="FHIRPath">
+                  <fhirpath resource="input.selectedEntry.resource"></fhirpath>
+
+                  Example
+                  QuestionnaireResponse.repeat(item).where(linkId = 'wwU9bg')
+                </uib-tab>
+
+
+
+              </uib-tabset>
+
+
+
+            </div>
+
+          </div>
+        </div>
+
+
+
+
+      </uib-tab>
+
+      <uib-tab ng-if="qr" heading="QR viewer">
+        <br/>
+        <qrviewer qr="qr"></qrviewer>
+
+
+      </uib-tab>
+
+      <uib-tab  ng-if="prePopConfig.source == 'query'" heading="Upload resource">
         <strong>Server: {{prePopConfig.dataServer}}</strong>
         <br/>
         <textarea class="form-control" rows="10" ng-model="input.resource">
@@ -159,7 +218,16 @@
 
       </uib-tab>
 
-      <uib-tab heading="Query server">
+      <uib-tab heading="x-query tester">
+
+<!--
+        MedicationStatement?patient={{%patient.id}}
+-->
+
+
+      </uib-tab>
+
+      <uib-tab  ng-if="prePopConfig.source == 'query'" heading="Query FHIR server">
         <strong>Server: {{prePopConfig.dataServer}}</strong>
         <br/> <br/>
         <div class="row">
@@ -218,6 +286,11 @@
 
   </div>
   <div class="modal-header">
+
+    <div ng-hide="canSave">
+      You can select different bundles / servers to view and query, but you
+      cannot change the default pre-pop so it's safe to experiment.
+    </div>
 
     {{displayQuery}}
   </div>

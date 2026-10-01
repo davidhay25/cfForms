@@ -203,6 +203,8 @@
         </div>
     </nav>
 
+
+
     <div style="padding-top: 8px">
 
 
@@ -376,11 +378,11 @@
                             </div>
                         </uib-tab>
 
-                        <uib-tab ng-if="false" heading = "Category">
-                            <em>Matching what's in the image</em>
-                            <div class="myScroll">
-                                <div id="categoryDGTree"></div>
-                            </div>
+                        <uib-tab ng-if="selectedModel" heading = "Selected DG Tree">
+                            <br/>
+
+                            <div id="dgSideTree"></div>
+
 
                         </uib-tab>
 
@@ -652,9 +654,14 @@
                     <pre>{{playGroundHistory | json}}</pre>
                 </uib-tab>
 
+                <uib-tab heading="Test cases">
+                    list of TC. edit.
+                </uib-tab>
+
                 <uib-tab heading="Metadata Json">
                     <pre>{{getWorldMeta() | json}}</pre>
                 </uib-tab>
+
 
 
 
@@ -673,6 +680,17 @@
         </uib-tab>
 
 
+        <uib-tab heading="Test QR viewer" select="setInitialTab(4)">
+            <div class="row">
+                <div class="col-md-3">
+
+                </div>
+                <div class="col-md-6">
+                    <qrviewer qr="testQR"></qrviewer>
+                </div>
+            </div>
+
+        </uib-tab>
 
 
     </uib-tabset>
@@ -873,6 +891,9 @@
 <script src="js/makeSDCExtensionSetCtrl.js"></script>
 <script src="js/resourceTypeSvc.js"></script>
 <script src="js/miniBundleViewerCtrl.js"></script>
+
+<script src="directive/fhirpath/fhirpath.js"></script>
+<script src="directive/qrviewer/qrviewer.js"></script>
 
 <script>
     const firebaseConfig = {

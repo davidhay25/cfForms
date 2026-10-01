@@ -1,0 +1,96 @@
+<div>
+
+
+    <uib-tabset>
+
+        <uib-tab heading="LinkId">
+            <br/>
+            <div class="row">
+                <div class="col-md-3">
+
+                    <div class="list-group myScroll">
+                        <div ng-class="{'list-group-item':true,listItemSelected:selectedLinkId==linkId }"
+                             style="cursor: pointer"
+                             ng-repeat="linkId in allLinkIds"
+                             ng-click="findAnswers(linkId)">
+                            {{linkId}}
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-md-9">
+                    <strong>{{expression}}</strong>
+                    <div class="myScroll">
+                        <pre>{{answers | json}}</pre>
+                    </div>
+
+
+                </div>
+            </div>
+
+            todo: qrviewer.html add text to linkid, indent
+
+
+        </uib-tab>
+
+        <uib-tab heading="Table">
+            from Q viewer
+        </uib-tab>
+
+        <uib-tab heading="Tree">
+            Tree with text & linkId to left. select => item details to right
+        </uib-tab>
+
+        <uib-tab heading="AdHoc FHIRPath">
+            <br/>
+
+
+
+            change like fhirpath lab - expression to left, results below that, json to right
+
+
+            <div class="row">
+
+                <div class="col-md-8">
+                    <textarea class = "form-control" ng-model="input.JSONPath" type="text" placeholder="Enter FHIRPath expression"></textarea>
+                </div>
+                <div class="col-md-2 col-sm-1">
+                    <button class="btn btn-link pull-right" ng-click="executeJSONPath(input.JSONPath)">Execute</button>
+                </div>
+                <div class="col-md-1">
+                    <button class="btn btn-default pull-right" ng-click="copyToClipboard(input.JSONPath)">
+                        Clipboard</button>
+
+
+                </div>
+            </div>
+
+
+
+            <div>
+                <pre ng-show="FHIRPathResult" class="myScroll1">{{FHIRPathResult | json}}</pre>
+            </div>
+
+            <div ng-show="FHIRPathError" class="alert alert-danger">
+                {{FHIRPathError}}
+            </div>
+        </uib-tab>
+
+        <uib-tab heading="Help">
+            <br/>
+            <a href="http://hl7.org/fhirpath/" target="_blank">FHIRPath spec</a>
+            <br/>
+            <a style="margin-right: 16px" href="https://dev.fhirpath-lab.com/" target="_blank">Fhirpath Lab</a>
+            <br/>
+
+        </uib-tab>
+
+        <uib-tab heading="Json">
+            <pre>{{qr | json}}</pre>
+
+        </uib-tab>
+    </uib-tabset>
+
+
+
+</div>

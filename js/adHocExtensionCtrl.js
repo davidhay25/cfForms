@@ -1,17 +1,42 @@
 angular.module("pocApp")
     .controller('adHocExtensionCtrl',
-        function ($scope,currentExt,$uibModal,fullElementList,currentPath,canEdit,DG) {
+        function ($scope,currentExt,$uibModal,fullElementList,currentPath,canEdit,DG,$localStorage,item,Q) {
 
             $scope.currentExt = angular.copy(currentExt)
             $scope.currentPath = currentPath
             $scope.canEdit = canEdit
             $scope.input = {}
 
+            let inItem = item
+
             $scope.selectExt = function (ext,inx) {
                 $scope.selectedExt = ext
                 $scope.input.selectedExt = angular.toJson(ext,true)
                 $scope.input.selectedInx = inx
             }
+
+            $scope.showQItemHierarchy = function (path) {
+
+                $uibModal.open({
+
+                    size : 'xlg',
+                    templateUrl: 'modalTemplates/viewItem.html',
+                    controller: 'viewItemCtrl',
+
+                    resolve: {
+                        item: function () {
+                            return inItem
+                        }, Q: function () {
+                            return Q
+                        }
+                    }
+                })
+
+            }
+
+
+
+
 /* still not sure
             //determine all the active variables at this point
             let hash = {}
@@ -66,6 +91,29 @@ console.log(hash)
 
 */
 
+            $scope.loadPrePop = function () {
+                $uibModal.open({
+                    backdrop: 'static',      //means can't close by clicking on the backdrop.
+                    keyboard: false,       //same as above.
+                    size : 'lg',
+                    templateUrl: 'modalTemplates/prePopConfig.html',
+
+                    controller: 'prePopConfigCtrl',
+
+                    resolve: {
+                        prePopConfig: function () {
+                            return $localStorage.ppConfig
+                        },
+                        canSave:function () {
+                            return false
+                        }
+                    }
+
+                }).result.then(function (config) {
+
+
+                })
+            }
 
             //select the first one
             if ($scope.currentExt && $scope.currentExt.length > 0) {

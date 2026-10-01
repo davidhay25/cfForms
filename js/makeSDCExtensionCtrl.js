@@ -10,6 +10,7 @@ angular.module("pocApp")
             $scope.input.calcType = "fhirpath"
 
 
+            $scope.expressionPlaceholder="eg MedicationStatement?patient={{%patient.id}}"
 
 
             $scope.extTypes = []

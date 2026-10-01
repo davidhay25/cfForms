@@ -79,6 +79,9 @@ angular.module("pocApp")
                     resolve: {
                         prePopConfig: function () {
                             return prePopConfig
+                        },
+                        canSave:function () {
+                            return true
                         }
                     }
 

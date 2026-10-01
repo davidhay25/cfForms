@@ -41,8 +41,8 @@ angular.module("pocApp")
             }
             $scope.editAdHocExtension = function (ed,dg) {
                 //element can be ed or  DG. Both have adHocExtension
-               
 
+                let path = ed?.path || dg?.path
 
 
                 $uibModal.open({
@@ -75,6 +75,12 @@ angular.module("pocApp")
                         },
                         DG : function () {
                             return $scope.selectedModel
+                        },
+                        item : function () {
+                            return  $scope.getItemForPath(path)
+                        },
+                        Q : function () {
+                            return $scope.fullQ
                         }
                     }
                 }).result.then(function (ext) {
@@ -494,7 +500,7 @@ angular.module("pocApp")
 
 
             //is this element able to be sliced
-            $scope.canSlice = function (ed) {
+            $scope.canSliceDEP = function (ed) {
                 if ($scope.userMode == 'playground') {
                     return false
                 }
@@ -523,7 +529,7 @@ angular.module("pocApp")
             //slicing makes a copy of the ed and adds it as a child
             //note that the path in the ed includes the dg name
             //limit slicing to DG's - ie with a .diff  If we need to slice, say, identifiers then make an Identifier DG
-            $scope.slice = function (ed) {
+            $scope.sliceDEP = function (ed) {
                 let sliceName = prompt("Enter the name for the slice (no spaces). It will become a child of this one. Esc to exit.")
                 if (sliceName) {
 

@@ -1,14 +1,76 @@
 <div>
 
   <!-- handlers in qViewerCtrl -->
-
+<!--
   <button class="btn btn-link" ng-click="prePopDetails()">Prepop config</button>
+
+  -->
+
+
+  <div class="alert-warning alert"
+       style="cursor: pointer"
+       ng-click="prePopDetails()">
+    <div class="row">
+      <div class="col-md-2">
+        <strong>Prepop source: </strong>
+        <span>{{prePopConfig.source}}</span>
+      </div>
+      <div class="col-md-4">
+        <div ng-show="prePopConfig.source == 'bundle'">
+          <strong>Bundle: </strong>
+          <span>{{prePopConfig.bundleEntry.name}}</span>
+        </div>
+
+        <div ng-show="prePopConfig.source == 'query'">
+          <strong>Server: </strong>
+          <span>{{prePopConfig.dataServer}}</span>
+        </div>
+
+      </div>
+
+
+
+      <div class="col-md-4">
+        <div  ng-show="prePopConfig.source == 'query'">
+          <strong>Patient: </strong>
+          <span>{{prePopConfig.patient.display}}</span>
+        </div>
+        <div ng-show="prePopConfig.source == 'bundle'">
+          <span>{{prePopConfig.bundleEntry.description}}</span>
+        </div>
+
+
+      </div>
+
+      <!--
+      <div class="col-md-4">
+        <strong>Patient: </strong>
+        <div>{{prePopConfig.bundlePatientId.reference}}</div>
+      </div>
+      <div class="col-md-4">
+        <strong>Author: </strong>
+        <div>{{prePopConfig.bundleAuthorId.reference}}</div>
+
+      </div>
+      <div class="col-md-0">
+
+      </div>
+      -->
+
+
+    </div>
+  </div>
 
   <button ng-show="showRenderOptions"
           class="btn btn-link pull-right" ng-click="openInFPLab()">Open in Fhirpath lab</button>
 
+  <!--
   <button ng-show="showRenderOptions"
           class="btn btn-link pull-right" ng-click="expressionEditor()">Expression editor</button>
+-->
+
+  <button ng-show="showRenderOptions"
+          class="btn btn-link pull-right" ng-click="viewQR()">View QR</button>
 
   <button ng-show="showRenderOptions"
           class="btn btn-link pull-right" ng-click="getExtractBundle()">Get extract Bundle</button>
@@ -18,6 +80,10 @@
 
   <button class="btn btn-link pull-right" ng-click="previewQ()">Refresh</button>
 
-  <div class="clearfix"></div>
+
+
+
+
+
   <iframe id="formPreview" width="100%" height="800"></iframe>
 </div>

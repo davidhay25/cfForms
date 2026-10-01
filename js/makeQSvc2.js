@@ -716,6 +716,9 @@ angular.module('pocApp')
                 addPPExtension("user", "Practitioner", "The practitioner that is to be used to pre-populate the form")
                 // addExtension("encounter","Encounter","The current encounter")
 
+                //todo - testing
+                //addPPExtension("testobservation", "Patient", "testing")
+
 
                 //let ext = {url:extSourceQuery,valueReference:{reference:"#PrePopQuery"}}
 

@@ -1,8 +1,28 @@
 angular.module("pocApp")
     .controller('miniBundleViewerCtrl',
-        function ($scope,bundle,v2ToFhirSvc,$timeout,$http) {
+        function ($scope,bundle,v2ToFhirSvc,$timeout,$http,renderIssues,QR,utilsSvc) {
 
             $scope.bundle = bundle
+            $scope.input = {}
+
+            //console.log(angular.copy(bundle))
+
+            //create sorted list for list
+
+            $scope.resources = (bundle.entry ?? [])
+                .map(e => e.resource)
+
+            $scope.resources.sort(function (a,b) {
+                if (a.resourceType > b.resourceType) {
+                    return 1
+                } else {
+                    return -1
+                }
+            })
+
+
+
+            $scope.renderIssues = renderIssues  //really extraction issues
 
             //get the current lists from clinFHIR. We'll use this to save the bundle to the
             //cfLibrary. Will support a new bundle or updating an existing one.
@@ -18,9 +38,73 @@ angular.module("pocApp")
             $scope.updateBundle = function (entry) {
                 console.log(entry)
                 if (confirm("Are you sure you wish to replace this Bundle in the Library with the new one")) {
-                    let bundleEndpoint = `https://clinfhir.com/clinfhir/bv/bundle/${entry.bundleId}`
 
-                  console.log(bundleEndpoint)
+                    //where the bundleentry (not the list entry) is located for get and put
+                    let bundleEndpoint = `https://clinfhir.com/clinfhir/bv/bundle/${entry.bundleId}`
+/*
+
+                    //add id's to all the bundles. Can derive from the fullrl
+                    let patientId   //this is a uuid
+                    for (let entry of bundle.entry) {
+
+                        entry.resource.id = entry.fullUrl?.substring(9)
+                        if (entry.resource.resourceType == 'Patient') {
+                            patientId = entry.fullUrl
+                        }
+                    }
+
+                    if (! patientId) {
+                    //    alert("No patient found in the bundle. It cannot be updated.")
+                        return
+                    }
+
+                    */
+/*
+                    //add a subject reference
+                    QR.subject = {reference:patientId}
+
+                    //add the QR to the bundle
+
+                    let uuid = utilsSvc.getUUID()
+                    //QR.id = uuid
+
+                    let qrEntry = {fullUrl:`urn:uuid:${uuid}`,resource:QR}
+                    //qrEntry.fullUrl = `urn:uuid:${uuid}`
+                    qrEntry.request = {method:"POST",url:"QuestionnaireResponse"}
+                    bundle.entry.push(qrEntry)
+
+*/
+
+                    //entry.bundle = bundle
+
+
+                    console.log(bundleEndpoint,entry)
+
+                    //return
+
+                    //Need to retrieve the BundleEntry that corresponds to the bundle, update the bundle element
+                    //and sav it.
+                    $http.get(bundleEndpoint).then(
+                        function (data) {
+                            let bundleEntry = data.data
+                            delete bundleEntry["_id"]
+                            bundleEntry.bundle = bundle
+                            $http.put(bundleEndpoint,bundleEntry).then(
+                                function () {
+                                    alert('Bundle updated')
+                                },function (err) {
+                                    alert("Error saving bundle. Details in console.")
+                                    console.log(err.data)
+                                }
+                            )
+
+                        }, function (err) {
+                            alert("Error getting current bundle. Details in console.")
+                            console.log(err.data)
+                        }
+                    )
+
+
                 }
             }
 
@@ -49,13 +133,11 @@ angular.module("pocApp")
                         $scope.OO = data.data
 
                     },function (err) {
-                        alert(angular.toJson(err))
+                        console.log(angular.toJson(err))
 
 
                     }
                 )
-
-
 
             }
 
@@ -78,7 +160,13 @@ angular.module("pocApp")
             $scope.selectBundleEntry = function (bundleEntry) {
                 $scope.selectedBundleEntry = bundleEntry
 
+            }
 
+
+            //locate the QR
+            let ar = $scope.bundle.entry.filter(entry => entry.resource?.resourceType == 'QuestionnaireResponse')
+            if (ar.length == 1) {
+                $scope.qr = ar[0].resource
             }
 
             let options = {bundle:bundle,
@@ -125,7 +213,7 @@ angular.module("pocApp")
 
                         let node = vo.graphData.nodes.get(nodeId);
 
-                        $scope.selectedResourceFromGraph = node.resource
+                        $scope.input.selectedResourceFromGraph = node.resource
                         $scope.validate(node.resource)
 
 

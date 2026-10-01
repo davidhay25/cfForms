@@ -1,6 +1,6 @@
 angular.module("pocApp")
     .controller('qViewerCtrl',
-        function ($scope,$uibModal,$localStorage,$http) {
+        function ($scope,$uibModal,$localStorage,$http,utilsSvc) {
 
             //this controller is designed to be a child of a parent that establishes the interaction context
             //$scope.sendMessage() is created by the parent controller
@@ -10,7 +10,9 @@ angular.module("pocApp")
 
             $scope.showRenderOptions = true     //todo - can remove - possibly
 
-            let prePopConfig = $localStorage['ppConfig']
+            //prepopconfig has config for both query and bundle sources
+            $scope.prePopConfig = $localStorage['ppConfig']
+
 
             $scope.openInFPLab = function () {
 
@@ -27,9 +29,9 @@ angular.module("pocApp")
                 let qry = `${serverbase}/Questionnaire/${Q.id}`
 
                 $scope.redirectUrl = `${labUI}/Questionnaire/tester?tab=csiro+renderer&id=${qry}` //redirectUrl
-                $scope.redirectUrl += `&subject=${prePopConfig.patient.reference}`
-                $scope.redirectUrl += `&author=${prePopConfig.practitioner.reference}`
-                $scope.redirectUrl += `&dataserver=${prePopConfig.dataServer}`
+                $scope.redirectUrl += `&subject=${$scope.prePopConfig.patient.reference}`
+                $scope.redirectUrl += `&author=${$scope.prePopConfig.practitioner.reference}`
+                $scope.redirectUrl += `&dataserver=${$scope.prePopConfig.dataServer}`
 
 
                 console.log(qry)
@@ -59,7 +61,47 @@ angular.module("pocApp")
 
             }
 
-            $scope.expressionEditor = function () {
+            $scope.viewQR = function () {
+                //the parent will create $scope.questionnaireResponse as part of the message handling
+                console.log($scope.questionnaireResponse)   //created by parent
+
+                $scope.sendMessage('sdc.requestCurrentQuestionnaireResponse',{},function (msg) {
+                    console.log(msg)
+                    let QR = msg?.payload?.questionnaireResponse
+
+                    $uibModal.open({
+                        templateUrl: 'modalTemplates/viewQR.html',
+                        backdrop: 'static',
+                        size : 'xlg',
+                        controller : function ($scope,QR,Q) {
+                            $scope.QR = QR
+                            $scope.Q = Q
+
+
+                            $scope.copyToClipboard = function (obj) {
+                                navigator.clipboard.writeText(angular.toJson(obj))
+                            }
+
+
+                        },
+                        resolve: {
+                            QR: function () {
+                                return QR
+                            }, Q: function () {
+                                return $scope.fullQ
+                            }
+                        }
+                    })
+
+                })
+
+
+
+            }
+
+
+
+            $scope.expressionEditorDEP = function () {
                 //the parent will create $scope.questionnaireResponse as part of the message handling
                 console.log($scope.questionnaireResponse)   //created by parent
 
@@ -91,27 +133,45 @@ angular.module("pocApp")
 
             //parameters are set in the sdc.configureContext() and sdc.configure() calls
             //they are stored in $localStorage['ppConfig']
+
             $scope.setPrepop = function () {
 
-                let ppConfig = $localStorage['ppConfig']
+                //let ppConfig = $localStorage['ppConfig']
+               // $scope.ppConfig = ppConfig
+                //let serverRoot = `https://clinfhir.com/bqry/${ppConfig.bundleEntry.bundleId}`
 
-                let serverRoot = `https://clinfhir.com/bqry/${ppConfig.bundleEntry.bundleId}`
+                if ($scope.prePopConfig.source == 'bundle') {
+                    if (! $scope.prePopConfig?.bundleEntry?.bundleId) {
+                        return //no bundle pre-pop set
+                    }
 
+                    //set the server root so that it will only operate against the specified bundle
 
-
-                if (ppConfig.source == 'bundle') {
+                    let serverRoot = `https://clinfhir.com/bqry/${$scope.prePopConfig.bundleEntry.bundleId}`
                     let configureObj = {
-                        terminologyServer: ppConfig.termServer,
-                        formsServer: ppConfig.formServer,
+                        terminologyServer: $scope.prePopConfig.termServer,
+                        formsServer: $scope.prePopConfig.formServer,
                         dataServer:   serverRoot        //queries will be fulfilled by the bundle
                     }
 
 
+                    let testResource = {resourceType:'Patient',birthDate:"2000-02-02"}
                     let configureContextObj = {
                         context: {
-                            subject: ppConfig.bundlePatientId,
-                            author: ppConfig.bundleAuthorId}
+                            subject: $scope.prePopConfig.bundlePatientId,
+                            //temp author: $scope.prePopConfig.bundleAuthorId,
+                            launchContext: [
+                                {
+                                    name: 'myObservation',
+                                    contentReference: $scope.prePopConfig.practitioner
+                                }, {
+                                    name: 'testobservation',
+                                    contentResource: testResource
+                                }
+                            ]
+
                         }
+                    }
 
 
                 console.log(configureObj,configureContextObj)
@@ -120,12 +180,13 @@ angular.module("pocApp")
 
 
                     //set up the pyramid of doom
+                    // note that sendMessage is defined in parent - eg modelCtrl
                     $scope.sendMessage('sdc.configure',configureObj ,function () {
                         $scope.sendMessage('sdc.configureContext', configureContextObj,function () {
                             $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:questionnaire},function () {
                                 $scope.sendMessage('sdc.requestPrepopulate',{},function () {
-                                    $scope.sendMessage('sdc.requestCurrentQuestionnaireResponse',{},function () {
-
+                                    $scope.sendMessage('sdc.requestCurrentQuestionnaireResponse',{},function (msg) {
+                                        console.log(msg)
                                     })
                                 })
                             })
@@ -133,6 +194,7 @@ angular.module("pocApp")
                     })
 
                 } else {
+                    //this is the general x-query
                     setContext()
 
                     delete $scope.input.renderIssues
@@ -169,48 +231,93 @@ angular.module("pocApp")
 
             //get the extract bundle from the currently rendered form
             $scope.getExtractBundle = function () {
-                //delete $scope.extractOutcome
+
                 delete $scope.input.renderIssues
-                $scope.sendMessage('sdc.requestExtract', {},function (outcome) {
 
-                    console.log(outcome)
+                $scope.sendMessage('sdc.requestCurrentQuestionnaireResponse',{},function (msg) {
+                    console.log(msg)
+                    let QR = msg?.payload?.questionnaireResponse
+                    $scope.sendMessage('sdc.requestExtract', {},function (outcome) {
 
-                    if (outcome?.payload?.outcome?.issue) {
-                        $scope.input.renderIssues = outcome?.payload?.outcome?.issue
-                        $scope.$digest()
-                    }
+                        console.log(outcome)
 
-
-                    let cntResources = outcome?.payload?.extractedResources?.entry?.length
-                    if (! cntResources || cntResources < 1) {
-                        alert("There were no resources extracted")
-                        return
-                    }
-
-
-                    console.log("outcome of extraction",outcome)
-
-                    $uibModal.open({
-                        backdrop: 'static',      //means can't close by clicking on the backdrop.
-                        keyboard: false,       //same as above.
-                        size : 'xlg',
-                        templateUrl: 'modalTemplates/miniBundleViewer.html',
-
-                        controller: "miniBundleViewerCtrl",
-
-                        resolve: {
-                            bundle: function () {
-                                return outcome?.payload?.extractedResources
-                            }
+                        if (outcome?.payload?.outcome?.issue) {
+                            $scope.input.renderIssues = outcome?.payload?.outcome?.issue
+                            $scope.$digest()
                         }
 
-                    }).result.then(function (config) {
-                        $localStorage['ppConfig'] = config
-                        //getAllAdHoc()   //update the list
+                        console.log("outcome of extraction",outcome)
+
+                        /* not sure
+                        let cntResources = outcome?.payload?.extractedResources?.entry?.length
+                        if (! cntResources || cntResources < 1) {
+                            alert("There were no resources extracted")
+                            return
+                        }
+*/
+
+
+                        //add the QR to the extract bundle. Even if there are no extracted resources we want to see and save the QR
+                        let bundle = outcome?.payload?.extractedResources || {resourceType:'Bundle'}
+                        bundle.entry = bundle.entry || []
+
+                        //todo - add patient reference
+                        let uuid = utilsSvc.getUUID()
+
+
+                        let ar = bundle.entry.filter(entry => entry.resource?.resourceType == 'Patient')
+
+                        if (ar.length > 0) {
+                            let patientId = ar[0].fullUrl
+                            QR.subject = {reference:patientId}
+                        } else {
+                            alert("There is no Patient. This bundle will not be suitable for pre-population as a Patient seems to be required")
+                        }
+
+
+                        //QR.id = uuid
+
+                        let qrEntry = {fullUrl:`urn:uuid:${uuid}`,resource:QR}
+                        //qrEntry.fullUrl = `urn:uuid:${uuid}`
+                        qrEntry.request = {method:"POST",url:"QuestionnaireResponse"}
+                        bundle.entry.push(qrEntry)
+
+
+
+
+
+
+
+                        $uibModal.open({
+                            backdrop: 'static',      //means can't close by clicking on the backdrop.
+                            keyboard: false,       //same as above.
+                            size : 'xlg',
+                            templateUrl: 'modalTemplates/miniBundleViewer.html',
+
+                            controller: "miniBundleViewerCtrl",
+
+                            resolve: {
+                                bundle: function () {
+
+                                    return bundle
+                                }, renderIssues : function () {
+                                    return $scope.input.renderIssues
+                                }, QR : function () {
+                                    return QR
+                                }
+                            }
+
+                        }).result.then(function (config) {
+                          //  $localStorage['ppConfig'] = config
+                            //getAllAdHoc()   //update the list
+
+                        })
 
                     })
 
-                });
+                })
+
+
             }
 
 
@@ -225,12 +332,16 @@ angular.module("pocApp")
 
                     resolve: {
                         prePopConfig: function () {
-                            return prePopConfig
+                            return $scope.prePopConfig
+                        },
+                        canSave:function () {
+                            return true
                         }
                     }
 
                 }).result.then(function (config) {
                     $localStorage['ppConfig'] = config
+                    $scope.prePopConfig = config
 
                     console.log(config)
 
@@ -246,13 +357,13 @@ angular.module("pocApp")
                 //tod can the context be a resource
                 $scope.sendMessage('sdc.configureContext', {
                     context: {
-                        subject: prePopConfig.patient,
-                        author: prePopConfig.practitioner,
+                        subject: $scope.prePopConfig.patient,
+                        author: $scope.prePopConfig.practitioner,
 
                         launchContext: [
                             {
                                 name: 'source',
-                                contentReference: prePopConfig.practitioner
+                                contentReference: $scope.prePopConfig.practitioner
                             },{
                                 name: 'testObservation',
                                 contentResource: testResource
@@ -262,9 +373,9 @@ angular.module("pocApp")
                 })
 
                 $scope.sendMessage('sdc.configure', {
-                    terminologyServer: prePopConfig.termServer,// 'https://tx.fhir.org/r4',
-                    dataServer: prePopConfig.dataServer, //'https://hapi.fhir.org/baseR4',
-                    formsServer: prePopConfig.formServer //'https://hapi.fhir.org/baseR4'
+                    terminologyServer: $scope.prePopConfig.termServer,// 'https://tx.fhir.org/r4',
+                    dataServer: $scope.prePopConfig.dataServer, //'https://hapi.fhir.org/baseR4',
+                    formsServer: $scope.prePopConfig.formServer //'https://hapi.fhir.org/baseR4'
                 });
             }
 
