@@ -231,6 +231,7 @@ angular.module("pocApp")
                 config.name = model.name
 
 
+
                 let qName = `${$scope.world.name}-${model.name}`
                 qName = qName.replace(/\s+/g, "");
                 config.id =  config.id = `clinfhir-${qName}`

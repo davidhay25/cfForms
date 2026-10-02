@@ -453,7 +453,7 @@
                       <div ng-repeat="type in selectedNode.data.ed.type">
 
 
-                      <div ng-if="fhirDataTypes.indexOf(type) > -1" class="pull-right">
+                      <div ng-if="false && fhirDataTypes.indexOf(type) > -1" class="pull-right">
                         <a style="padding-right: 12px" target = "_blank" ng-href="{{fhirRoot}}datatypes.html#{{type}}">Details in spec </a>
                       </div>
 
@@ -486,33 +486,15 @@
                   </tr>
 
 
-                  <tr ng-if = "selectedNode.data.ed.path !== selectedModel.name && selectedNode.data.ed.type[0] !== 'Group'" && qControlOptions>
+                  <tr ng-if = "selectedNode.data.ed.controlHint ">
                     <td class="detailName">Input control</td>
                     <td>
                       <div class="row">
                         <div class="col-md-12">
-
-
-
                           {{selectedNode.data.ed.controlHint}}
-
-                          <!-- Apr 8
-                          <span ng-repeat = "opt in qControlOptions">
-                            <input type="radio"
-                                   ng-change="setControlHint(selectedNode.data.ed,opt)"
-                                   ng-model="input.controlHint" value="{{opt}}"> {{opt}}
-                          </span>
-                          -->
-
-
-
                         </div>
-
                       </div>
-
                     </td>
-
-
                     </td>
                   </tr>
 
@@ -652,7 +634,7 @@
                     </td>
                   </tr>
 
-                  <tr>
+                  <tr ng-if="false">
                     <td class="detailName">Id</td>
 
                     <td>

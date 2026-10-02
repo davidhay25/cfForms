@@ -374,10 +374,13 @@ angular.module("pocApp")
                                 }
 
                                 //check for a coding with no code
+                                /* i don't think this is a useful check
+
                                 if (ew.value && ! ew.value.code) {
                                     entry.error = (entry.error || '') + ' Missing code';
 
                                 }
+                                */
 
 
 

@@ -1,17 +1,15 @@
 <div>
 
   <!-- handlers in qViewerCtrl -->
-<!--
-  <button class="btn btn-link" ng-click="prePopDetails()">Prepop config</button>
-
-  -->
 
 
-  <div class="alert-warning alert"
+
+  <!--  Only show the pre-pop panel in the designer-->
+  <div ng-hide="input.application == 'viewerXX'"  class="alert-warning alert"
        style="cursor: pointer"
        ng-click="prePopDetails()">
     <div class="row">
-      <div class="col-md-2">
+      <div class="col-md-3">
         <strong>Prepop source: </strong>
         <span>{{prePopConfig.source}}</span>
       </div>
@@ -27,9 +25,6 @@
         </div>
 
       </div>
-
-
-
       <div class="col-md-4">
         <div  ng-show="prePopConfig.source == 'query'">
           <strong>Patient: </strong>
@@ -38,30 +33,12 @@
         <div ng-show="prePopConfig.source == 'bundle'">
           <span>{{prePopConfig.bundleEntry.description}}</span>
         </div>
-
-
       </div>
-
-      <!--
-      <div class="col-md-4">
-        <strong>Patient: </strong>
-        <div>{{prePopConfig.bundlePatientId.reference}}</div>
-      </div>
-      <div class="col-md-4">
-        <strong>Author: </strong>
-        <div>{{prePopConfig.bundleAuthorId.reference}}</div>
-
-      </div>
-      <div class="col-md-0">
-
-      </div>
-      -->
-
-
     </div>
   </div>
 
   <button ng-show="showRenderOptions"
+          ng-hide="input.application == 'viewer'"
           class="btn btn-link pull-right" ng-click="openInFPLab()">Open in Fhirpath lab</button>
 
   <!--
@@ -69,20 +46,20 @@
           class="btn btn-link pull-right" ng-click="expressionEditor()">Expression editor</button>
 -->
 
+
+
   <button ng-show="showRenderOptions"
+          ng-hide="input.application == 'viewer'"
           class="btn btn-link pull-right" ng-click="viewQR()">View QR</button>
 
   <button ng-show="showRenderOptions"
+          ng-hide="input.application == 'viewerXX'"
           class="btn btn-link pull-right" ng-click="getExtractBundle()">Get extract Bundle</button>
 
   <button ng-show="showRenderOptions"
           class="btn btn-link pull-right" ng-click="setPrepop()">Set pre-populate</button>
 
   <button class="btn btn-link pull-right" ng-click="previewQ()">Refresh</button>
-
-
-
-
 
 
   <iframe id="formPreview" width="100%" height="800"></iframe>

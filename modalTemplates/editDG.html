@@ -587,9 +587,14 @@
                         <br/><br/>
 
                         <div ng-show="prePopConfig.source == 'bundle'">
+
+                            <button class="btn-primary btn" ng-click="setPrepop(prePopConfig)">Set as default for this DG</button>
+
+
                             <div ng-show="prePopConfig.bundleEntry.bundleId !== model.prepopConfig.bundleEntry.bundleId">
                                 <button class="btn-primary btn" ng-click="setPrepop(prePopConfig)">Set as default for this DG</button>
                             </div>
+
                             <div ng-hide="prePopConfig.bundleEntry.bundleId !== model.prepopConfig.bundleEntry.bundleId">
                                 This is already the configured default prepop Bundle for this DG
                             </div>
@@ -610,8 +615,6 @@
 
 
             </uib-tab>
-
-
 
             <uib-tab ng-if="false" heading="Named queries">
                 <br/>

@@ -6,6 +6,10 @@ angular.module("pocApp")
 
             $scope.input = {}
 
+            //so that the prepop knows to look in the Q for the default pre-pop bundle.
+            //todo - consider impact on query prepop
+            $scope.input.application = 'viewer'
+
             $scope.input.SDCOnly = false
 
             $scope.extensionUrls = makeQHelperSvc.getExtensionUrls()
@@ -18,8 +22,32 @@ angular.module("pocApp")
             $scope.input.publishers = {All:"All"}
             $scope.input.selectedPublisher = "All"
 
+            let cansharePrePopExt = "http://canshare.co.nz/fhir/StructureDefinition/prepopContext"
+
 
             //todo - UI for adding forms servers. Store in db. Only I can remove
+//col-md-offset-2
+
+            //toggling rendered form view
+            $scope.input.paneState = 'single'
+
+
+            $scope.toggleDetailView = function () {
+
+                if ($scope.input.paneState == 'single') {
+                    $scope.input.paneState = 'double'
+                    //both
+                    $scope.input.leftPane = "col-md-7"
+                    $scope.input.rightPane = "col-md-5"
+                } else {
+                    //single form only
+                    $scope.input.paneState = 'single'
+                    $scope.input.leftPane = "col-md-12"
+                    $scope.input.rightPane = "col-md-0"
+                }
+
+
+            }
 
 
          //   $timeout(function () {
@@ -67,7 +95,7 @@ angular.module("pocApp")
 
 
             //display and/or edit the pre-pop details
-            $scope.prePopDetails = function () {
+            $scope.prePopDetailsDEP = function () {
                 $uibModal.open({
                     backdrop: 'static',      //means can't close by clicking on the backdrop.
                     keyboard: false,       //same as above.
@@ -273,6 +301,39 @@ angular.module("pocApp")
             //
             //https://github.com/brianpos/sdc-smart-web-messaging
 
+
+            $scope.sendMessage = function(messageType, payload,fnResponse) {
+                let messagingHandle = $scope.messagingHandle
+
+                const iframe = document.getElementById('formPreview');
+
+                //should never happen...
+                if (!iframe || !iframe.contentWindow) {
+                    alert('Iframe not loaded yet!');
+                    return;
+                }
+
+                const messageId = `msg-${++$scope.messageCounter}`;
+
+                if (fnResponse) {
+                    hashResponse[messageId] = fnResponse
+                }
+
+                const message = {
+                    messagingHandle,
+                    messageId,
+                    messageType,
+                    payload
+                };
+
+                const targetWindow = iframe.contentWindow;
+                const targetOrigin = '*' //http://localhost:8081'; // must match iframe origin
+
+                console.log('Sending message:', message);
+                targetWindow.postMessage(message, targetOrigin);
+                return messageId
+            };
+
             $scope.input.hideEmptyRows = true
 
             let setContext = function () {
@@ -467,7 +528,8 @@ angular.module("pocApp")
             //send a message to the iframe. Assume that formViewerSetup() has been called to create the messaging handle
             //returns the message id
             let hashResponse = {}
-            $scope.sendMessage = function(messageType, payload,fnResponse) {
+
+            $scope.sendMessageDEP = function(messageType, payload,fnResponse) {
                 let messagingHandle = $scope.messagingHandle
 
                 const iframe = document.getElementById('formPreview');
@@ -508,7 +570,7 @@ angular.module("pocApp")
 
             //instruct the renderer to pre-pop
             //parameters are set in the sdc.configureContext() and sdc.configure() calls
-            $scope.setPrepop = function () {
+            $scope.setPrepopDEP = function () {
                 let responseFn = function () {
                     $scope.sendMessage('sdc.requestCurrentQuestionnaireResponse',{})
                 }
@@ -518,7 +580,7 @@ angular.module("pocApp")
             }
 
             //get the extract bundle from the currently rendered form
-            $scope.getExtractBundle = function () {
+            $scope.getExtractBundleDEP = function () {
                 delete $scope.extractOutcome
                 $scope.sendMessage('sdc.requestExtract', {},function (outcome) {
 
@@ -748,8 +810,39 @@ angular.module("pocApp")
             }
 
             //update the other local variables from the Q
+            //todo - the valueset handling is quite scruffy.
             function processQ(Q) {
                 $scope.hashEd = {}
+
+                //if there is an extension for the pre-pop bundle, then create a $scope.prePopConfig object for the renderer(
+                let ar1 = Q.extension?.filter(ext => ext.url == cansharePrePopExt)
+                if (ar1.length == 1) {
+                    let ext = ar1[0]    //the complex pre-pop extension
+                    $scope.prePopConfig = {source:'',bundleEntry:{}}
+
+                    for (let child of ext.extension || []) {
+                        switch (child.url) {
+                            case "source" :
+                                $scope.prePopConfig.source = child.valueCode
+                                break
+                            case "bundleId" :
+                                $scope.prePopConfig.bundleEntry = {bundleId:child.valueString}
+                                break
+                            case "bundleName" :
+                                $scope.prePopConfig.bundleEntry = $scope.prePopConfig.bundleEntry || {}
+                                $scope.prePopConfig.bundleEntry.name = child.valueString
+                                break
+                            case "termServer" :
+                                $scope.prePopConfig.termServer = child.valueString
+                                break
+                            case "patientId" :
+                                $scope.prePopConfig.bundlePatientId = {reference:child.valueString}
+
+                        }
+                    }
+                }
+
+
 
                 //get all the VS in the Q - returne
                 //also constructs a hashEd with an ED generated from the item - as best as possible
@@ -769,8 +862,6 @@ angular.module("pocApp")
 
                     console.log(voReport)
 
-
-
                     //a graph of items
                     //very slow with large graphs todo - ? only look for small Q
                     try {
@@ -781,7 +872,12 @@ angular.module("pocApp")
                     }
 
 
-                    $scope.previewQ(Q)
+                   // console.log('setting up preview',Q)
+                    //todo - diagnostic
+                    $timeout(function () {
+                        $scope.previewQ(Q)
+                    },4000)
+
 
                 })
             }

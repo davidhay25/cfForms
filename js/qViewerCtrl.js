@@ -10,8 +10,23 @@ angular.module("pocApp")
 
             $scope.showRenderOptions = true     //todo - can remove - possibly
 
+            //$scope.input. application  set by hosting controller - viewer or designer (null = designer)
+
+
             //prepopconfig has config for both query and bundle sources
-            $scope.prePopConfig = $localStorage['ppConfig']
+            //handling prepopConfig is a bit different in designer and viewer. In designer it's an opbect
+            //stored in locatstorage and possibly set as a default in the Q (but the localstorage one is the
+            //one that is executed.
+            //in the viewer it is set only if there is a default on the Q (via the extension). If there is no
+            //extension then pre-pop is disabled (for now).
+
+
+
+            if ($scope.input.application == 'viewer') {
+                //in the viewer, will get the pre-pop from the Q extension in the processQ function
+            } else {
+                $scope.prePopConfig = $localStorage['ppConfig']
+            }
 
 
             $scope.openInFPLab = function () {
@@ -101,7 +116,7 @@ angular.module("pocApp")
 
 
 
-            $scope.expressionEditorDEP = function () {
+            $scope.expressionEditorDEP = async function () {
                 //the parent will create $scope.questionnaireResponse as part of the message handling
                 console.log($scope.questionnaireResponse)   //created by parent
 
@@ -134,64 +149,108 @@ angular.module("pocApp")
             //parameters are set in the sdc.configureContext() and sdc.configure() calls
             //they are stored in $localStorage['ppConfig']
 
-            $scope.setPrepop = function () {
+            $scope.setPrepop = async function () {
 
-                //let ppConfig = $localStorage['ppConfig']
-               // $scope.ppConfig = ppConfig
-                //let serverRoot = `https://clinfhir.com/bqry/${ppConfig.bundleEntry.bundleId}`
+
+
 
                 if ($scope.prePopConfig.source == 'bundle') {
+
+
                     if (! $scope.prePopConfig?.bundleEntry?.bundleId) {
                         return //no bundle pre-pop set
                     }
 
-                    //set the server root so that it will only operate against the specified bundle
-
-                    let serverRoot = `https://clinfhir.com/bqry/${$scope.prePopConfig.bundleEntry.bundleId}`
-                    let configureObj = {
-                        terminologyServer: $scope.prePopConfig.termServer,
-                        formsServer: $scope.prePopConfig.formServer,
-                        dataServer:   serverRoot        //queries will be fulfilled by the bundle
-                    }
+                    //we have to retrieve that patient from the bundle before calling preprp. This is because
+                    //the patient id can change whenever the source prepop bundle is updated...
 
 
-                    let testResource = {resourceType:'Patient',birthDate:"2000-02-02"}
-                    let configureContextObj = {
-                        context: {
-                            subject: $scope.prePopConfig.bundlePatientId,
-                            //temp author: $scope.prePopConfig.bundleAuthorId,
-                            launchContext: [
-                                {
-                                    name: 'myObservation',
-                                    contentReference: $scope.prePopConfig.practitioner
-                                }, {
-                                    name: 'testobservation',
-                                    contentResource: testResource
+                    //let serverRoot = `https://clinfhir.com/bqry/${$scope.prePopConfig.bundleEntry.bundleId}`
+                    let patient
+                    let qry = `https://clinfhir.com/clinfhir/api/Bundle/${$scope.prePopConfig.bundleEntry.bundleId}`
+                    $http.get(qry).then (
+                        function (data) {2
+                            let bundle = data.data
+                            let ar = bundle.entry?.filter(entry => entry.resource.resourceType == 'Patient')
+                            if (ar.length >0) {
+                                //patient = ar[0].patient
+
+
+                                let patientEntry = ar[0]
+
+                                //ppConfig.bundlePatientId = {reference:`Patient/${patientEntry.resource.id}`}
+                                let id = patientEntry.resource.id || patientEntry.fullUrl?.replace("urn:uuid:", "") //in case the Patient has no id
+
+
+                              //  response.patient = {reference:`Patient/${id}`}
+                              //  response.patientFullUrl = patientEntry.fullUrl      //this is the identity within the bundle
+
+
+                                $scope.prePopConfig.bundlePatientId = {reference:`Patient/${id}`}   //used below to set the form context
+
+
+
+
+
+                            } else {
+                                alert(`No patient we found in the bundle ${$scope.prePopConfig.bundleEntry.name}. Prepop will fail.`)
+                            }
+
+
+
+                            //set the server root so that it will only operate against the specified bundle
+
+                            let serverRoot = `https://clinfhir.com/bqry/${$scope.prePopConfig.bundleEntry.bundleId}`
+                            let configureObj = {
+                                terminologyServer: $scope.prePopConfig.termServer,
+                                //formsServer: $scope.prePopConfig.formServer,
+                                dataServer:   serverRoot        //queries will be fulfilled by the bundle
+                            }
+
+                            let testResource = {resourceType:'Patient',birthDate:"2000-02-02"}
+                            let configureContextObj = {
+                                context: {
+                                    subject: $scope.prePopConfig.bundlePatientId,
+                                    //temp author: $scope.prePopConfig.bundleAuthorId,
+                                    launchContext: [
+                                        {
+                                            name: 'myObservation',
+                                            contentReference: $scope.prePopConfig.practitioner
+                                        }, {
+                                            name: 'testobservation',
+                                            contentResource: testResource
+                                        }
+                                    ]
+
                                 }
-                            ]
-
-                        }
-                    }
+                            }
 
 
-                console.log(configureObj,configureContextObj)
+                            console.log(configureObj,configureContextObj)
 
-                    let questionnaire = $scope.fullQ        //this is defined in the parent controller (forms). Need to check for use in QV
+                            let questionnaire = $scope.fullQ        //this is defined in the parent controller (forms). Need to check for use in QV
 
 
-                    //set up the pyramid of doom
-                    // note that sendMessage is defined in parent - eg modelCtrl
-                    $scope.sendMessage('sdc.configure',configureObj ,function () {
-                        $scope.sendMessage('sdc.configureContext', configureContextObj,function () {
-                            $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:questionnaire},function () {
-                                $scope.sendMessage('sdc.requestPrepopulate',{},function () {
-                                    $scope.sendMessage('sdc.requestCurrentQuestionnaireResponse',{},function (msg) {
-                                        console.log(msg)
+                            //set up the pyramid of doom
+                            // note that sendMessage is defined in parent - eg modelCtrl
+                            $scope.sendMessage('sdc.configure',configureObj ,function () {
+                                $scope.sendMessage('sdc.configureContext', configureContextObj,function () {
+                                    $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:questionnaire},function () {
+                                        $scope.sendMessage('sdc.requestPrepopulate',{},function () {
+                                            $scope.sendMessage('sdc.requestCurrentQuestionnaireResponse',{},function (msg) {
+                                                console.log(msg)
+                                            })
+                                        })
                                     })
                                 })
                             })
-                        })
-                    })
+
+
+                        }, function (err) {
+                            alert("Unable to retrieve the patient. Prepop won't work.")
+                        }
+                    )
+
 
                 } else {
                     //this is the general x-query
@@ -214,16 +273,6 @@ angular.module("pocApp")
 
                     $scope.sendMessage('sdc.requestPrepopulate',{},responseFn)
                 }
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -282,36 +331,34 @@ angular.module("pocApp")
                         qrEntry.request = {method:"POST",url:"QuestionnaireResponse"}
                         bundle.entry.push(qrEntry)
 
+                        if ($scope.input.application !== 'viewer') {
+                            $uibModal.open({
+                                backdrop: 'static',      //means can't close by clicking on the backdrop.
+                                keyboard: false,       //same as above.
+                                size : 'xlg',
+                                templateUrl: 'modalTemplates/miniBundleViewer.html',
 
+                                controller: "miniBundleViewerCtrl",
 
+                                resolve: {
+                                    bundle: function () {
 
-
-
-
-                        $uibModal.open({
-                            backdrop: 'static',      //means can't close by clicking on the backdrop.
-                            keyboard: false,       //same as above.
-                            size : 'xlg',
-                            templateUrl: 'modalTemplates/miniBundleViewer.html',
-
-                            controller: "miniBundleViewerCtrl",
-
-                            resolve: {
-                                bundle: function () {
-
-                                    return bundle
-                                }, renderIssues : function () {
-                                    return $scope.input.renderIssues
-                                }, QR : function () {
-                                    return QR
+                                        return bundle
+                                    }, renderIssues : function () {
+                                        return $scope.input.renderIssues
+                                    }, QR : function () {
+                                        return QR
+                                    }
                                 }
-                            }
 
-                        }).result.then(function (config) {
-                          //  $localStorage['ppConfig'] = config
-                            //getAllAdHoc()   //update the list
+                            }).result.then(function (config) {
+                                //  $localStorage['ppConfig'] = config
+                                //getAllAdHoc()   //update the list
 
-                        })
+                            })
+                        }
+
+
 
                     })
 
@@ -322,6 +369,12 @@ angular.module("pocApp")
 
 
             $scope.prePopDetails = function () {
+
+                //in the viewer, clicking the planel does not invoke the prepop config - only from the designer
+                if ($scope.input.application == 'viewer') {
+                    return
+                }
+
                 $uibModal.open({
                     backdrop: 'static',      //means can't close by clicking on the backdrop.
                     keyboard: false,       //same as above.
@@ -375,7 +428,7 @@ angular.module("pocApp")
                 $scope.sendMessage('sdc.configure', {
                     terminologyServer: $scope.prePopConfig.termServer,// 'https://tx.fhir.org/r4',
                     dataServer: $scope.prePopConfig.dataServer, //'https://hapi.fhir.org/baseR4',
-                    formsServer: $scope.prePopConfig.formServer //'https://hapi.fhir.org/baseR4'
+                  //  formsServer: $scope.prePopConfig.formServer //'https://hapi.fhir.org/baseR4'
                 });
             }
 

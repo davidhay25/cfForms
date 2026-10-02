@@ -24,6 +24,8 @@ angular.module('pocApp')
 
             let choiceOrientation = "http://hl7.org/fhir/StructureDefinition/questionnaire-choiceOrientation"
 
+            let cansharePrePopExt = "http://canshare.co.nz/fhir/StructureDefinition/prepopContext"
+
 //"http://hl7.org/fhir/questionnaire-item-control"
             //let extHTMLRender = "http://hl7.org/fhir/StructureDefinition/rendering-xhtml"
 
@@ -61,6 +63,8 @@ angular.module('pocApp')
 
 
             this.buildQuestionnaireFromFlat =  function (inItems, dg, config) {
+
+                console.log(config)
                 const warnings = [];
                 const pathIndex = new Map();    //a hash of item by path
                 const idIndex = {}                 //hash by id - used for conditionals
@@ -203,6 +207,35 @@ angular.module('pocApp')
 
                 // 3. Clean out synthetic/underscore properties and empty items
                 const cleanQ = cleanQuestionnaire(questionnaire);
+
+
+
+                //add the extension for prepopconfig
+                if (dg.prepopConfig) {
+                    let ext = {url:cansharePrePopExt,extension:[]}
+                    ext.extension.push({url:'source',valueCode:dg.prepopConfig.source})
+                    if (dg.prepopConfig.source == 'bundle') {
+                        ext.extension.push({url:'bundleId',valueString:dg.prepopConfig?.bundleEntry?.bundleId})
+                        ext.extension.push({url:'bundleName',valueString:dg.prepopConfig?.bundleEntry?.name})
+
+                        let patientId = dg.prepopConfig.bundlePatientId.reference
+                        ext.extension.push({url:'patientId',valueString:patientId})
+
+                    }
+                    if (dg.prepopConfig.source == 'query') {
+                        ext.extension.push({url:'dataServer',valueString:dg.prepopConfig.dataServer})
+                    }
+
+
+
+                    if (dg.termSvr) {
+                        ext.extension.push({url:'termServer',valueString:dg.termSvr})
+                    }
+
+                    cleanQ.extension.push(ext)
+
+                }
+
 
 
 

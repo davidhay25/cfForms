@@ -159,6 +159,8 @@
     <script src="js/prePopConfig.js"></script>
     <script src="js/makeQSvc2Helper.js"></script>
     <script src="js/libs/angular-sanitize.js"></script>
+    <script src="js/qViewerCtrl.js"></script>
+    <script src="js/miniBundleViewerCtrl.js"></script>
 
 </head>
 
@@ -169,7 +171,7 @@
         style="height: 80px">
 
         <div class="container-fluid">
-            <div class="col-md-6">
+            <div class="col-md-8">
                     <span>
                         <a class="navbar-brand" href="https://clinfhir.com">
                             Questionnaire viewer<span ng-show="fullQ" style="padding-top: 8px">: {{fullQ.title || fullQ.name}}</span>
@@ -178,11 +180,7 @@
                             </div>
                         </a>
                     </span>
-
-
             </div>
-
-
 
 
             <div class="col-md-1 col-sm-1">
@@ -191,20 +189,15 @@
                 </form>
             </div>
 
-            <div class="col-md-2">
-                <div class="navbar-text">
-                  <!--  <checkbox ng-model="showHelp"></checkbox> Show Help -->
-                </div>
-            </div>
+
 
             <div class="col-md-1">
                 <div class="navbar-text">
-                    <!--
-                                       <a target="_blank"
-                                           href="https://docs.google.com/document/d/10bZaUD1EHO2LNSA2HO-jKko00e9BWNLQhtcBLUqXWcw/edit?tab=t.0#heading=h.21ovmlyx779m">Documentation</a>
 
-                                       <checkbox ng-model="input.technical"></checkbox> Technical view
-                                       -->
+                        <a target="_blank" href="https://docs.google.com/document/d/1uE7hYQ4fJz2BcMlh6DaQL_dV1t7RqTyU1KzyrLvO_iQ/edit?tab=t.0">
+                            <i style="font-size: 24px;padding-top: 8px" class="clickable icon pull-right glyphicon glyphicon-question-sign" ></i>
+                        </a>
+
 
                 </div>
             </div>
@@ -223,6 +216,21 @@
         </div>
     </nav>
 
+
+
+
+
+        <span>
+
+
+                <span ng-show="input.mainTabActive ==2">
+
+
+
+
+                        <style="margin-top: 4px" class="pull-right clickable btn btn-default" ng-click="toggleDetailView()">
+                    Toggle detail view  </span>
+            </span>
 
     <uib-tabset active="input.mainTabActive">
 
@@ -542,34 +550,95 @@
 
             </div>
 
-
+            <!-- todo What is this doing?-->
             <renderform2 q="fullQ" hash-ed="hashEd" technicalview="input.technical" errors="errorLog"></renderform2>
+
+
         </uib-tab>
 
 
         <uib-tab ng-show="fullQ"  heading="Rendered Form">
 
+
+
             <div class="row">
-                <div class="col-md-7">
-
-
-                    <ng-include src="'includes/qViewer.html'"></ng-include>
-
+                <div class="{{input.leftPane}}">
+                    <div ng-controller = "qViewerCtrl">
+                        <ng-include src="'includes/qViewer.html'"></ng-include>
+                    </div>
                 </div>
-                <div class="col-md-5">
+                <div class="{{input.rightPane}}">
+
 
 
                     <ng-include src="'includes/qrAnalysis.html'"></ng-include>
+                </div>
+            </div>
+        </uib-tab>
 
 
+
+        <uib-tab  ng-show="fullQ" heading="Questionnaire Graph">
+            <br>
+            <div class="row">
+                <div class="col-md-7">
+                    <div id="itemGraph"></div>
+                </div>
+                <div class="col-md-5">
+                    <!--
+                                        <div class="rounded-box">
+                                            <checkbox ng-model="input.graph.hideDisplay"></checkbox> Hide display items
+                                        </div>
+                    -->
+                    <uib-tabset>
+                        <uib-tab heading="Details">
+                            <table class="table-bordered table">
+                                <tr>
+                                    <td>Text</td><td>{{selectedNodeFromItemGraph.item.text}}</td>
+                                </tr>
+                                <tr>
+                                    <td>Type</td><td>{{selectedNodeFromItemGraph.item.type}}</td>
+                                </tr>
+                                <tr ng-click="viewItem(selectedNodeFromItemGraph.item)">
+                                    <td>LinkId</td>
+                                    <td>
+                                        <div class="clickable" ng-click="viewItem(selectedNodeFromItemGraph.item)">
+                                            {{selectedNodeFromItemGraph.item.linkId}}
+                                        </div>
+
+                                    </td></tr>
+
+                                <tr ng-if="selectedNodeFromItemGraph.meta.extractType">
+                                    <td>Extract type</td><td>{{selectedNodeFromItemGraph.meta.extractType}}</td>
+                                </tr>
+
+                                <tr ng-if="selectedNodeFromItemGraph.item.definition">
+                                    <td>Definition</td><td>{{selectedNodeFromItemGraph.item.definition}}</td>
+                                </tr>
+                                <tr>
+                                    <td>Prepop</td><td>todo </td>
+                                </tr>
+
+
+
+                            </table>
+
+
+
+                        </uib-tab>
+                        <uib-tab heading="Json">
+                            <pre>{{selectedNodeFromItemGraph | json}}</pre>
+                        </uib-tab>
+                    </uib-tabset>
+
+                    <div>Currently active extensions - plus where each is defined (or overridden)</div>
 
                 </div>
             </div>
-
-
-
-
         </uib-tab>
+
+
+
 
         <uib-tab ng-show="false"  heading="Table view">
             <br>
@@ -982,65 +1051,6 @@
                 </tr>
             </table>
 
-        </uib-tab>
-
-        <uib-tab  ng-show="fullQ" heading="Questionnaire Graph">
-            <br>
-            <div class="row">
-                <div class="col-md-7">
-                    <div id="itemGraph"></div>
-                </div>
-                <div class="col-md-5">
-<!--
-                    <div class="rounded-box">
-                        <checkbox ng-model="input.graph.hideDisplay"></checkbox> Hide display items
-                    </div>
--->
-                    <uib-tabset>
-                        <uib-tab heading="Details">
-                            <table class="table-bordered table">
-                                <tr>
-                                    <td>Text</td><td>{{selectedNodeFromItemGraph.item.text}}</td>
-                                </tr>
-                                <tr>
-                                    <td>Type</td><td>{{selectedNodeFromItemGraph.item.type}}</td>
-                                </tr>
-                                <tr ng-click="viewItem(selectedNodeFromItemGraph.item)">
-                                    <td>LinkId</td>
-                                    <td>
-                                        <div class="clickable" ng-click="viewItem(selectedNodeFromItemGraph.item)">
-                                            {{selectedNodeFromItemGraph.item.linkId}}
-                                        </div>
-
-                                    </td></tr>
-
-                                <tr ng-if="selectedNodeFromItemGraph.meta.extractType">
-                                    <td>Extract type</td><td>{{selectedNodeFromItemGraph.meta.extractType}}</td>
-                                </tr>
-
-                                <tr ng-if="selectedNodeFromItemGraph.item.definition">
-                                    <td>Definition</td><td>{{selectedNodeFromItemGraph.item.definition}}</td>
-                                </tr>
-                                <tr>
-                                    <td>Prepop</td><td>todo </td>
-                                </tr>
-
-
-
-                            </table>
-
-
-
-                        </uib-tab>
-                        <uib-tab heading="Json">
-                            <pre>{{selectedNodeFromItemGraph | json}}</pre>
-                        </uib-tab>
-                    </uib-tabset>
-
-                    <div>Currently active extensions - plus where each is defined (or overridden)</div>
-
-                </div>
-            </div>
         </uib-tab>
 
 
