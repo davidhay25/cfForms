@@ -28,12 +28,17 @@ angular.module("pocApp")
             //cfLibrary. Will support a new bundle or updating an existing one.
             let listsSource = "https://clinfhir.com/bqry/lists"
 
-            $http.get(listsSource).then(
-                function (data) {
-                    $scope.lists = data.data
-                    console.log(data.data)
-                }
-            )
+            function getLists() {
+                $http.get(listsSource).then(
+                    function (data) {
+                        $scope.lists = data.data
+                        console.log(data.data)
+                    }
+                )
+            }
+            getLists()
+
+
 
             $scope.updateBundle = function (entry) {
                 console.log(entry)
@@ -108,17 +113,52 @@ angular.module("pocApp")
                 }
             }
 
-            $scope.addToList = function () {
-                if (confirm("Are you sure you wish to add this Bundle to this list")) {
+            $scope.addBundle = function () {
+                if (confirm(`Are you sure you wish to add this Bundle to the ${$scope.selectedList.name} list`)) {
+
+
+                    if (! $scope.selectedList.id) {
+                        alert("Sorry - this list has no Id and cannot be edited here")
+                        return
+                    }
+
+                    //The bundleEntry is how the bundle is stored in the bvBundles collection.
+                    //elements from it are used by the opeation for the list entry
+                    let bundleEntry = {id:`bv${new Date().getTime()}`,date:new Date()}
+
+                    bundleEntry.name = $scope.input.newName
+                    bundleEntry.description = $scope.input.newDescription
+                    bundleEntry.bundle = bundle
+                    bundleEntry.author = "Not specified"
+
+
 
                     //Update the list
 
                     //Add the bundle
 
+// app.post('/bqry/addToList/:listId', async function(req,res){
+                    let bundleEndpoint = `https://clinfhir.com/clinfhir//bqry/addToList/${$scope.selectedList.id}`
+                    $http.post(bundleEndpoint,bundleEntry).then(
+                        function (data) {
+                            console.log(data.data)
 
-                    let bundleEndpoint = `https://clinfhir.com/clinfhir/bv/bundle/${entry.bundleId}`
+                            $scope.selectedList.entries.push({name: bundleEntry.name,description:bundleEntry.description})
 
-                    console.log(bundleEndpoint)
+                            //delete $scope.bundleEntry.name
+                            //delete $scope.bundleEntry.description
+
+                            alert("Bundle has been added to list")
+
+
+                            //selectedList.entries
+                           // getLists()
+                        }, function (err) {
+                            alert(angular.toJson(err.data))
+                        }
+                    )
+
+                    console.log(bundleEndpoint,bundleEntry)
                 }
             }
 

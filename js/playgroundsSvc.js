@@ -7,7 +7,7 @@ angular.module("pocApp")
             let ed = {}
             ed.path =  path //arCols[9]  //`${currentPath}.${path}`
 
-
+            ed.linkId = arCols[7]
             ed.title = arCols[4] || arCols[5] || arCols[6] || ed.path
             ed.description = arCols[10]
             ed.mult = arCols[11] || '0..1'
@@ -169,6 +169,8 @@ angular.module("pocApp")
                     let eleTitle = arCols[4]
                     let eleTitle1 = arCols[5]
                     let eleTitle2 = arCols[6]
+
+                    //let linkId = arCols[7]
 
                     // Determine nesting level from title columns
                     let level = -1;
@@ -451,7 +453,7 @@ angular.module("pocApp")
                         }
 
                         //Other elements from the old that copy across
-                        for (const eleName of  ['controlHint','definition','prePop','hiddenInQ','options','mult','otherType']) {
+                        for (const eleName of  ['controlHint','definition','prePop','hiddenInQ','options','mult','otherType','linkId']) {
                             if (edFromOld[eleName]) {
                                 ed[eleName] = edFromOld[eleName]
                             }

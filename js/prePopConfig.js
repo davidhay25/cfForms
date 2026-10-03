@@ -8,8 +8,10 @@ angular.module("pocApp")
             //make a copy of the config and use that for editing. Save returns the edited copy. Cancel abandons changes.
             $scope.prePopConfig = angular.copy(prePopConfig)
 
+            $scope.prePopConfig = $scope.prePopConfig || {}
+
             $scope.input = {}
-            $scope.input.prepopType = prePopConfig.source || 'query'
+            $scope.input.prepopType = $scope.prePopConfig.source || 'query'
 
 
 
@@ -42,31 +44,6 @@ angular.module("pocApp")
                     console.log(data.data)
                     $scope.setSelectedBundle()
 
-                    //now set the selectedList valie
-                    /*
-                    if ($scope.prePopConfig.source == 'bundle') {
-
-                        for (let lst of $scope.lists) {
-                            if (lst.name == $scope.prePopConfig.listName) {
-                                $scope.selectedList = lst
-
-                                //now set the selected bundle entry
-                                for (let bundleEntry of lst.entries) {
-                                    if (bundleEntry.bundleId == $scope.prePopConfig.bundleEntry?.bundleId) {
-                                        $scope.selectedBundleEntry = bundleEntry
-                                        break
-                                    }
-                                }
-
-                                //$scope.selectedBundleEntry
-
-
-                                break
-                            }
-                        }
-                    }
-
-                    */
 
 
                 }
@@ -111,8 +88,8 @@ angular.module("pocApp")
             }
 
             //load the current bundle if the prepop source is currently 'bundle'
-            if (prePopConfig.source == 'bundle' ) {
-                let bundleId = prePopConfig.bundleEntry?.bundleId
+            if ($scope.prePopConfig.source == 'bundle' ) {
+                let bundleId = $scope.prePopConfig.bundleEntry?.bundleId
                 if (bundleId) {
                     getBundle(bundleId)
                 }
@@ -127,36 +104,12 @@ angular.module("pocApp")
 
 
 
-                //$scope.prePopConfig.source = $scope.prePopConfig.source
-
                 $scope.$close($scope.prePopConfig)
-/*
-                $scope.prePopConfig.source = $scope.input.prepopType
-                $scope.bundleEntry = $scope.selectedBundleEntry
 
-                if ($scope.input.prepopType == 'bundle') {
-                    //need to get the Patient and Practitioner from the bundle
-
-                    setPatient($scope.selectedBundleEntry,$scope.prePopConfig,function (ok) {
-                        if (ok) {
-                            $scope.$close($scope.prePopConfig)
-                        } else {
-                            alert("Unable to save these settings")
-                        }
-                    })
-
-
-
-
-                } else {
-                    $scope.$close($scope.prePopConfig)
-                }
-                */
 
             }
 
-           // $scope.localBundles = []
-            //$scope.hashLocalBundles = {}
+
 
             //select one of the curated lists. Will update the display of the list contents
             $scope.selectList = function (list) {
@@ -205,15 +158,13 @@ angular.module("pocApp")
                 //the extract the Patient (required) and Practitioner (if any) from the bundle
 
 
-                //prePopConfig.bundleEntry = bundleEntry
 
-               // $localStorage.selectedBundleEntry = bundleEntry
             }
 
             $scope.doQuery = function (inQry) {
                 delete $scope.qryError
                 delete $scope.responseJson
-                let qry = `${prePopConfig.dataServer}/${inQry}`
+                let qry = `${$scope.prePopConfig.dataServer}/${inQry}`
                 $scope.displayQuery = qry
                 $http.get(qry).then(
                     function (data) {
@@ -256,7 +207,7 @@ angular.module("pocApp")
                 }
 
 
-                let qry = `${prePopConfig.dataServer}/${type}/${id}`
+                let qry = `${$scope.prePopConfig.dataServer}/${type}/${id}`
                 if (confirm(`Are you sure you want to upload ${qry}`)) {
                     $http.put(qry,json).then(
                         function () {

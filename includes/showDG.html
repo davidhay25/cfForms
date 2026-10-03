@@ -1707,14 +1707,12 @@
           <div class="tableFixHead">
             <table class="table-condensed table table-bordered">
               <thead style="position:sticky;top:0">
-              <tr><th>Title</th><th>Description</th><th>Card.</th><th>Type</th><th style="width: 10%"></th></tr>
+              <tr><th>Title</th><th>Description</th><th>LinkId</th><th>Card.</th><th>Type</th><th style="width: 10%"></th></tr>
               </thead>
               <tbody>
               <tr ng-repeat="ed in selectedModel.diff">
                 <td>
-                  <!--
-                  <div class="clickableDotted" ng-click="input.selectedDiff = ed">{{ed.path}}</div>
-  -->
+
 
                   <div  ng-style="{ 'padding-left': (ed.path | pathindent) }">
 
@@ -1724,7 +1722,14 @@
                   </div>
                 </td>
 
-                <td>{{ed.description}}</td>
+                <td><textarea class="form-control" ng-model="ed.description"></textarea>
+
+                </td>
+                <td>
+
+                  <input type="text" class="form-control" ng-model="ed.linkId"/>
+
+                </td>
                 <td>{{ed.mult}}</td>
                 <td>{{ed.type[0]}}</td>
                 <td>
@@ -1848,8 +1853,11 @@
     </uib-tab>
 
     <uib-tab ng-show="qErrorLog.length > 0" heading="">
-      <uib-tab-heading> <div >Q generation log
-        <span class="badge">{{qErrorLog.length}}</span> </div> </uib-tab-heading>
+
+      <uib-tab-heading>
+        <div style="color: red">Q generation log
+        <span class="badge">{{qErrorLog.length}}</span> </div>
+      </uib-tab-heading>
 
       <br/>
 

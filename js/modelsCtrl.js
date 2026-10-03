@@ -246,7 +246,7 @@ angular.module("pocApp")
 
                     $scope.pathIndex = voQ.pathIndex    //a map (not hash) of item by path
 
-                    console.log(voQ.pathIndex)
+                    //console.log(voQ.pathIndex)
 
                     $scope.qErrorLog = voQ.errorLog
 
@@ -649,6 +649,7 @@ console.log(`Not adding ${path}`)
                         let Q = voQ.Q
 
                         $scope.qErrorLog = voQ.errorLog
+
 
 
                         $uibModal.open({

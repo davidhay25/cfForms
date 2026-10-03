@@ -29,7 +29,7 @@ angular.module("pocApp")
 //col-md-offset-2
 
             //toggling rendered form view
-            $scope.input.paneState = 'single'
+
 
 
             $scope.toggleDetailView = function () {
@@ -43,11 +43,12 @@ angular.module("pocApp")
                     //single form only
                     $scope.input.paneState = 'single'
                     $scope.input.leftPane = "col-md-12"
-                    $scope.input.rightPane = "col-md-0"
+                    $scope.input.rightPane = "hidden"
                 }
-
-
             }
+
+            $scope.input.paneState = 'double'
+            $scope.toggleDetailView()
 
 
          //   $timeout(function () {
@@ -840,6 +841,9 @@ angular.module("pocApp")
 
                         }
                     }
+                } else {
+                    //don't show pre-pop options if there is no bundle specofoed.
+                    $scope.hidePrepop = true
                 }
 
 

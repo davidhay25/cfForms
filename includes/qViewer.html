@@ -5,7 +5,7 @@
 
 
   <!--  Only show the pre-pop panel in the designer-->
-  <div ng-hide="input.application == 'viewerXX'"  class="alert-warning alert"
+  <div ng-hide="hidePrepop"  class="alert-warning alert"
        style="cursor: pointer"
        ng-click="prePopDetails()">
     <div class="row">
@@ -52,11 +52,13 @@
           ng-hide="input.application == 'viewer'"
           class="btn btn-link pull-right" ng-click="viewQR()">View QR</button>
 
-  <button ng-show="showRenderOptions"
-          ng-hide="input.application == 'viewerXX'"
+  <button ng-show="showRenderOptions "
           class="btn btn-link pull-right" ng-click="getExtractBundle()">Get extract Bundle</button>
 
-  <button ng-show="showRenderOptions"
+  <button ng-show="showRenderOptions && ! hidePrepop"
+          class="btn btn-link pull-right" ng-click="applyQR()">Apply QR</button>
+
+  <button ng-show="showRenderOptions && ! hidePrepop"
           class="btn btn-link pull-right" ng-click="setPrepop()">Set pre-populate</button>
 
   <button class="btn btn-link pull-right" ng-click="previewQ()">Refresh</button>

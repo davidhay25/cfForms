@@ -149,6 +149,18 @@ angular.module('pocApp')
 
         return {
 
+            findDuplicateLinkIds : function (Q) {
+                let hashLinkId = {}
+
+                function processItem(item) {
+                    hashLinkId[item.linkId] = hashLinkId[item.linkId] || []
+                    hashLinkId[item.linkId].push()
+
+
+                }
+
+            },
+
             checkForHtml : function (ed,item) {
                 //if the ed has htmlDisplay or is html (crude - has both > and < ) if so, add the rendering-xhtml extension
                 //to the item.text element

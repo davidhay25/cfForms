@@ -61,10 +61,15 @@ angular.module('pocApp')
                 item.extension.push(ext)
             }
 
+            let hashLinkId = {}         //contains all the ed.path by linkId. Used for duplicate check.
 
+            //todo - should I make a copy of inItems & dg and operate on those?
+            //right now, changes made to ed / dg are persisted back in the model...
             this.buildQuestionnaireFromFlat =  function (inItems, dg, config) {
 
-                console.log(config)
+                hashLinkId = {}
+
+                //console.log(config)
                 const warnings = [];
                 const pathIndex = new Map();    //a hash of item by path
                 const idIndex = {}                 //hash by id - used for conditionals
@@ -86,6 +91,14 @@ angular.module('pocApp')
                     //ensure there is an id
                     ed.id = ed.id || utilsSvc.getUUID()
 
+
+                    //if a linkId is specified then record it for the duplicate check. If not, then it will be a hash of the ed.id so can be ignored
+                    if (ed.linkId) {
+                        hashLinkId[ed.linkId] = hashLinkId[ed.linkId] || []
+                        hashLinkId[ed.linkId].push(ed.path)
+                    }
+
+
                     if (inx == 0) {
                         //this is the first item, then check to see if the DG is tabbed. if so, add a flag to the ed and the 'insertItem()' will add the extension
                         if (dg.isTabbedContainer) {
@@ -93,6 +106,9 @@ angular.module('pocApp')
                         }
                         ed.type = ['display']
                         ed._isMainDG = dg
+
+                        ed.linkId = dg.name
+
                     }
 
                     //if the ed has a conditional then add a cloned copy for each conditional and don't add the original to the list
@@ -151,6 +167,7 @@ angular.module('pocApp')
                                 //add a text box with a dependency
 
                                 let newEd = {id:utilsSvc.getUUID(),path:`${ed.path}-other`, type:['string'],title:`Other ${ed.title}`}
+                                newEd.linkId = `${ed.linkId}Other`
 
                                 newEd.enableWhen = ed.enableWhen || [] //same hide/show as 'parent'
                                 let ew = {source:ed.path,operator:'='}
@@ -164,6 +181,7 @@ angular.module('pocApp')
                             case "always" :
                                 //always add the 'other' option
                                 let newEd1 = {id:utilsSvc.getUUID(),path:`${ed.path}-other`, type:['string'],title:`Other ${ed.title}`}
+                                newEd1.linkId = `${ed.linkId}Other`
                                 items.push(newEd1)
                                 break
 
@@ -237,6 +255,15 @@ angular.module('pocApp')
                 }
 
 
+
+                console.log(hashLinkId)
+                for (const linkId of Object.keys(hashLinkId)) {
+                    if (hashLinkId[linkId].length > 1) {
+                        let msg = `There are multiple occurrences of ${linkId} : ${hashLinkId[linkId].join(", ")}`
+
+                        warnings.push({lvl: 'err', msg: msg});
+                    }
+                }
 
 
                 return {questionnaire: cleanQ, warnings,pathIndex};
@@ -320,6 +347,13 @@ angular.module('pocApp')
 
                 // temp item.linkId = ed.linkId || utilsSvc.getUUIDHash(ed.id) //ed.linkId || item.linkId;
                 item.linkId = ed.linkId || utilsSvc.getUUIDHash(ed.path) //ed.linkId || item.linkId;
+
+
+
+             //   hashLinkId[item.linkId] = hashLinkId[item.linkId] || []
+
+             //   hashLinkId[item.linkId].push(ed.path)
+
 
                 item.text = ed.title;
 
@@ -570,13 +604,13 @@ angular.module('pocApp')
                             .map(cond => resolveEnableWhenCondition(cond, pathIndex, idIndex, warnings))
                             .filter(Boolean);
 
-                        console.log(resolved)
+                        //console.log(resolved)
 
                         //sep 3 2026
                         if (resolved.length > 0) {
                             for(let item of resolved) {
                                 if (item.answerCoding) {
-                                    console.log(item.answerCoding)
+                                    //console.log(item.answerCoding)
                                     delete item.answerCoding.fsn
                                 }
                             }
@@ -769,7 +803,7 @@ angular.module('pocApp')
             //processes attributes defined on the DG
             function processDG(dg, item, warnings) {
                 //set the preferrred terminology server
-                warnings.push({lvl: 'info', msg: `Processing DG: ${dg.name}, type: ${dg.type}`});
+             //   warnings.push({lvl: 'info', msg: `Processing DG: ${dg.name}, type: ${dg.type}`});
 
                 if (dg.termSvr) {
                     let ext = {url: extensionUrls.peferredTerminologyServer, valueUrl: dg.termSvr}
@@ -835,7 +869,7 @@ angular.module('pocApp')
 
 
                     addExtension(item, ext)
-                    warnings.push({lvl: 'info', msg: `Setting Extraction type (${dg.type}) for  DG: ${dg.name}`});
+                  //  warnings.push({lvl: 'info', msg: `Setting Extraction type (${dg.type}) for  DG: ${dg.name}`});
 
                     //specific processing for an Observation if defined on the DG (rather than an item)
                     if (dg.type == 'Observation') {

@@ -5,10 +5,14 @@ angular.module("pocApp")
             //this controller is designed to be a child of a parent that establishes the interaction context
             //$scope.sendMessage() is created by the parent controller
 
+            //https://github.com/brianpos/sdc-smart-web-messaging?utm_source=chatgpt.com
+
             let serverbase = "https://fhir.forms-lab.com"      //where the API to save a Q is
             let labUI = "https://dev.fhirpath-lab.com"         //to load the lab UI
 
             $scope.showRenderOptions = true     //todo - can remove - possibly
+
+           // $scope.showPrepop = true        //if the pre-pop link and pane are displayed.
 
             //$scope.input. application  set by hosting controller - viewer or designer (null = designer)
 
@@ -23,7 +27,7 @@ angular.module("pocApp")
 
 
             if ($scope.input.application == 'viewer') {
-                //in the viewer, will get the pre-pop from the Q extension in the processQ function
+                //in the viewer, will get the pre-pop from the Q extension in the processQ function of modelReviewCtrl.js
             } else {
                 $scope.prePopConfig = $localStorage['ppConfig']
             }
@@ -146,13 +150,51 @@ angular.module("pocApp")
 
             }
 
-            //parameters are set in the sdc.configureContext() and sdc.configure() calls
+
+
+            //apply a QR directly to a Q. ie load the Q with that QR
+            $scope.applyQR = async function (bundleId) {
+                bundleId = bundleId || $scope.prePopConfig?.bundleEntry?.bundleId
+                if (! bundleId) {
+                    alert('No bundle specified')
+                    return
+                }
+
+                let qry = `https://clinfhir.com/clinfhir/api/Bundle/${$scope.prePopConfig.bundleEntry.bundleId}`
+                $http.get(qry).then (
+                    function (data) {
+                        let bundle = data.data
+                        let ar = bundle.entry?.filter(entry => entry.resource.resourceType == 'QuestionnaireResponse')
+                        if (ar.length > 0) {
+                            let QR = ar[0].resource
+                            let questionnaire = $scope.fullQ        //this is defined in the parent controller (forms). Need to check for use in QV
+
+                            $scope.sendMessage('sdc.displayQuestionnaire', {questionnaire:questionnaire},function () {
+                                $scope.sendMessage('sdc.displayQuestionnaireResponse',{questionnaireResponse:QR},function () {
+                                    $scope.sendMessage('sdc.requestCurrentQuestionnaireResponse',{},function (msg) {
+                                        console.log(msg)
+                                    })
+                                })
+                            })
+
+
+
+                        } else {
+                            alert(`No QR found in the bundle: ${bundleId}`)
+                        }
+
+                    }
+                )
+
+
+            }
+
+
+                //parameters are set in the sdc.configureContext() and sdc.configure() calls
             //they are stored in $localStorage['ppConfig']
 
+            //gets the data bundle and calls the pre-pop action
             $scope.setPrepop = async function () {
-
-
-
 
                 if ($scope.prePopConfig.source == 'bundle') {
 
@@ -169,28 +211,14 @@ angular.module("pocApp")
                     let patient
                     let qry = `https://clinfhir.com/clinfhir/api/Bundle/${$scope.prePopConfig.bundleEntry.bundleId}`
                     $http.get(qry).then (
-                        function (data) {2
+                        function (data) {
                             let bundle = data.data
                             let ar = bundle.entry?.filter(entry => entry.resource.resourceType == 'Patient')
                             if (ar.length >0) {
-                                //patient = ar[0].patient
-
-
                                 let patientEntry = ar[0]
-
-                                //ppConfig.bundlePatientId = {reference:`Patient/${patientEntry.resource.id}`}
                                 let id = patientEntry.resource.id || patientEntry.fullUrl?.replace("urn:uuid:", "") //in case the Patient has no id
 
-
-                              //  response.patient = {reference:`Patient/${id}`}
-                              //  response.patientFullUrl = patientEntry.fullUrl      //this is the identity within the bundle
-
-
                                 $scope.prePopConfig.bundlePatientId = {reference:`Patient/${id}`}   //used below to set the form context
-
-
-
-
 
                             } else {
                                 alert(`No patient we found in the bundle ${$scope.prePopConfig.bundleEntry.name}. Prepop will fail.`)
@@ -253,7 +281,7 @@ angular.module("pocApp")
 
 
                 } else {
-                    //this is the general x-query
+                    //this is the general REST x-query
                     setContext()
 
                     delete $scope.input.renderIssues
@@ -266,10 +294,6 @@ angular.module("pocApp")
                             $scope.$digest()
                         }
                     }
-
-
-
-
 
                     $scope.sendMessage('sdc.requestPrepopulate',{},responseFn)
                 }

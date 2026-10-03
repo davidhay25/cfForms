@@ -135,7 +135,17 @@
         <div>
           <div class="clickable pull-right" ng-click="validate(bundle)">Perform validation</div>
         </div>
+
+
         <div class="clearfix"></div>
+
+        <table class="table-bordered table">
+          <tr ng-repeat="iss in OO.issue">
+            <td>{{iss.severity}}</td>
+            <td>{{iss.diagnostics}}</td>
+            <td>{{iss.location[0]}}</td>
+          </tr>
+        </table>
 
 
         <pre>{{OO | json}}</pre>
@@ -165,7 +175,7 @@
           </div>
 
           <div ng-show="selectedList" class="col-md-6">
-            <em>Select Bundles from this list</em>
+            <em>Select Bundle from {{selectedList.name}} list ({{selectedList.id}})</em>
             <table class="table table-bordered">
               <tr><th>Name</th><th>Description</th></tr>
               <tr ng-repeat="entry in selectedList.entries"
@@ -180,7 +190,16 @@
                 <td><div class="clickable" ng-click="selectBundleEntry(entry)">Select</div> </td>
                 -->
               </tr>
+              <tr>
+                <td><input class="form-control" type="text" ng-model="input.newName"/> </td>
+                <td><textarea class="form-control" ng-model="input.newDescription"></textarea></td>
+                <td><div ng-show="input.newDescription && input.newName"
+                        class="clickable" ng-click="addBundle()">Add</div></td>
+              </tr>
+
             </table>
+
+
 
 
           </div>

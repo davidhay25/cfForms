@@ -143,7 +143,6 @@ angular.module("pocApp")
 
                     $scope.input.newModelName = $scope.model.name
 
-                    //$scope.isNew = true
                     $scope.checkName($scope.input.newModelName,true)
                     $scope.input.newModelTitle= $scope.model.title
 
